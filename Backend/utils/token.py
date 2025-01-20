@@ -1,17 +1,18 @@
-from datetime import datetime, timedelta
 import jwt
+from datetime import datetime, timedelta
 from config import Config
 
-def generate_token(self, user_id):
+def generate_token(user_id, user_role):
     """生成 JWT token"""
     payload = {
         'user_id': user_id,
+        'userRole': user_role,
         'exp': datetime.utcnow() + timedelta(days=1),  # token 過期時間
         'iat': datetime.utcnow()  # token 建立時間
     }
     return jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
 
-def verify_token(self, token):
+def verify_token(token):
     """驗證 JWT token"""
     try:
         payload = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
