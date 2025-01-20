@@ -12,7 +12,7 @@ class UserController:
             data = request.get_json()
             
             # 檢查必填欄位
-            required_fields = ['username', 'password', 'email']
+            required_fields = ['username', 'password', 'email', 'userRole']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -49,7 +49,38 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(create_user) {str(e)}",
             }, 500
+    @staticmethod
+    def login():
+        try:
+            data = request.get_json()
+            if not data or 'email' not in data or 'password' not in data:
+                return {
+                    "message": "請提供電子郵件和密碼",
+                }, 400
 
+            token, user = user_service.login(data['email'], data['password'])
+            
+            if not token or not user:
+                return {
+                    "message": "電子郵件或密碼錯誤",
+                }, 401
+
+            # 移除敏感資訊
+            user.pop('password', None)
+            user['_id'] = str(user['_id'])
+            
+            return {
+                "message": "登入成功",
+                "body": {
+                    "user": user,
+                    "token": token
+                }
+            }, 200
+
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(login) {str(e)}",
+            }, 500
     @staticmethod
     def get_user(user_id):
         try:
