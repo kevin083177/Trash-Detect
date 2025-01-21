@@ -16,7 +16,7 @@ def verify_token(token):
     """驗證 JWT token"""
     try:
         payload = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
-        return payload['user_id']
+        return payload
     except jwt.ExpiredSignatureError:
         return None  # token 已過期
     except jwt.InvalidTokenError:
