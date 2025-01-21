@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from utils.logger_config import logger
 
 # 載入 .env 檔案
 load_dotenv()
@@ -17,7 +18,7 @@ class Config:
     # Flask 設定
     SECRET_KEY = os.getenv("SECRET_KEY")
     DEBUG = True  # 開發環境設為 True
-    PORT = int(os.getenv("PORT", 8000))  # 讀取 PORT，預設值為 8000
+    PORT = int(os.getenv("PORT"))
 
     # 組合 MongoDB 連接 URI
     MONGO_URI = (
@@ -31,6 +32,6 @@ def init_db():
         client = MongoClient(Config.MONGO_URI)
         db = client[Config.DB_NAME]
     except Exception as e:
-        print(f"Database connection error: {str(e)}")
+        logger.error(f"MongoDB connection failed: {str(e)}")
         raise e
     return db
