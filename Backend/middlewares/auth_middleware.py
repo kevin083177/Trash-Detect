@@ -55,7 +55,7 @@ def admin_required(f):
             return jsonify({"message": "Token 無效或已過期"}), 401
 
         if token_data['userRole'] != 'admin':
-            return jsonify({"message": "需要管理員權限"}), 403
+            return jsonify({"message": "權限不足"}), 403
 
         user = user_service.get_user(token_data['user_id'])
         if not user:
@@ -63,5 +63,38 @@ def admin_required(f):
 
         user['userRole'] = token_data['userRole']
         return f(user, *args, **kwargs)
+    
+    return decorated
+
+def self_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        requested_user_id = kwargs.get('user_id')  # 從路由參數獲取目標用戶ID
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({"message": "Token 格式錯誤"}), 401
+
+        if not token:
+            return jsonify({"message": "缺少 Token"}), 401
+
+        token_data = verify_token(token)
+        if not token_data:
+            return jsonify({"message": "Token 無效或已過期"}), 401
+
+        # 檢查是否為本人或管理員
+        if token_data['user_id'] != requested_user_id and token_data['userRole'] != 'admin':
+            return jsonify({"message": "權限不足"}), 403
+
+        user = user_service.get_user(token_data['user_id'])
+        if not user:
+            return jsonify({"message": "使用者不存在"}), 401
+
+        user['userRole'] = token_data['userRole']
+        return f(*args, **kwargs)
     
     return decorated
