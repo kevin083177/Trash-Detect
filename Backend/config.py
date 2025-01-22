@@ -17,7 +17,7 @@ class Config:
 
     # Flask 設定
     SECRET_KEY = os.getenv("SECRET_KEY")
-    DEBUG = True  # 開發環境設為 True
+    ENV = os.getenv("FLASK_ENV")
     PORT = int(os.getenv("PORT"))
 
     # 組合 MongoDB 連接 URI
