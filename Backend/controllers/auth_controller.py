@@ -48,7 +48,7 @@ class AuthController:
             
         except Exception as e:
             return {
-                "message": f"伺服器錯誤(create_user) {str(e)}",
+                "message": f"伺服器錯誤(register) {str(e)}",
             }, 500
     @staticmethod
     def login():
@@ -81,4 +81,21 @@ class AuthController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(login) {str(e)}",
+            }, 500
+    @staticmethod
+    def logout(user):
+        try:
+            # 執行登出操作
+            if auth_service.logout(user['_id']):
+                return {
+                    "message": "登出成功",
+                }, 200
+            else:
+                return {
+                    "message": "登出失敗",
+                }, 500
+
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(logout) {str(e)}",
             }, 500

@@ -3,11 +3,13 @@ import bcrypt
 from models.user_model import User
 from utils.token import generate_token
 from services.db_service import DatabaseService
+from services.record_service import RecordService
 
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
         self.users = self.collections['users'] # 查詢users資訊
+        self.record_service = RecordService(mongo_uri)
         
     def login(self, email, password):
         """使用者登入"""
@@ -40,8 +42,24 @@ class AuthService(DatabaseService):
             password=hashed_password
         )
         result = self.users.insert_one(user.__dict__)
+        
+        self.record_service.init_record(result.inserted_id)
+        
         return str(result.inserted_id)
-    
+    def logout(self, token):
+        """使用者登出
+        
+        Args:
+            token (str): 使用者的認證token
+            
+        Returns:
+            bool: 登出是否成功
+        """
+        try:
+            return True
+        except Exception as e:
+            print(f"Logout error: {str(e)}")
+            return False
     def verify_password(self, plain_password, hashed_password):
         return bcrypt.checkpw(
             plain_password.encode('utf-8'),
