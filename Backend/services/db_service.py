@@ -8,6 +8,8 @@ class DatabaseService:
         
         self.collections = {
             'users': self.db.users,
+            'records': self.db.records,
+            
         }
     
     def get_collection(self, collection_name):
