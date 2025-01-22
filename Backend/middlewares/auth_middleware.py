@@ -30,7 +30,7 @@ def token_required(f):
             return jsonify({"message": "使用者不存在"}), 401
         
         # 將用戶角色添加到請求中
-        user['userRole'] = token_data['role']
+        user['userRole'] = token_data['userRole']
         return f(user, *args, **kwargs)
     
     return decorated
