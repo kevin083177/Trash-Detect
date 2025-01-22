@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from config import Config, init_db
 from routes.user_route import user_blueprint
+from routes.auth_route import auth_blueprint
 from utils.logger_config import logger
 from gevent import pywsgi
 import sys, signal
@@ -31,6 +32,7 @@ def create_app():
         
         # Blueprint
         app.register_blueprint(user_blueprint, url_prefix="/users")
+        app.register_blueprint(auth_blueprint, url_prefix="/auth")
         
         # Log server startup
         logger.info(f"listening on *:{Config.PORT}")
