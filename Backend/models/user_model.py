@@ -2,11 +2,12 @@ from datetime import datetime
 from bson import ObjectId
 
 class User:
-    def __init__(self, userRole, username, email, password):
+    def __init__(self, userRole, username, email, password, price):
         self.userRole = userRole
         self.username = username
         self.email = email
         self.password = password
+        self.price = int(price)
         self.created_at = datetime.utcnow()
 
     def to_dict(self):

@@ -4,12 +4,14 @@ from models.user_model import User
 from utils.token import generate_token
 from services.db_service import DatabaseService
 from services.record_service import RecordService
+from services.purchase_service import PurchaseService
 
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
         self.users = self.collections['users'] # 查詢users資訊
         self.record_service = RecordService(mongo_uri)
+        self.purchase_service = PurchaseService(mongo_uri)
         
     def login(self, email, password):
         """使用者登入"""
@@ -21,7 +23,6 @@ class AuthService(DatabaseService):
             return None, None  # 密碼錯誤
         
         try:
-            # 確保 userRole 不是元組格式
             user_role = user['userRole']
             token = generate_token(str(user['_id']), user_role)
             return token, user
@@ -39,12 +40,15 @@ class AuthService(DatabaseService):
             userRole=user_data['userRole'],
             username=user_data['username'],
             email=user_data['email'],
-            password=hashed_password
+            password=hashed_password,
+            price = 0
         )
         result = self.users.insert_one(user.__dict__)
         
-        self.record_service.init_record(result.inserted_id)
+        self.record_service.init_user_record(result.inserted_id) # 初始化使用者回收紀錄
         
+        self.purchase_service.init_user_purchase(result.inserted_id) # 初始化使用者購買商品
+                
         return str(result.inserted_id)
     def logout(self, token):
         """使用者登出
@@ -61,6 +65,7 @@ class AuthService(DatabaseService):
             print(f"Logout error: {str(e)}")
             return False
     def verify_password(self, plain_password, hashed_password):
+        """驗證密碼是否正確"""
         return bcrypt.checkpw(
             plain_password.encode('utf-8'),
             hashed_password.encode('utf-8')
