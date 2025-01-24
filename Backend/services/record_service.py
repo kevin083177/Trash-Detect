@@ -6,7 +6,7 @@ class RecordService(DatabaseService):
         super().__init__(mongo_uri)
         self.record = self.collections['records']
     
-    def init_record(self, user_id):
+    def init_user_record(self, user_id):
         try:
             record = Record(
                 user_id = user_id,
