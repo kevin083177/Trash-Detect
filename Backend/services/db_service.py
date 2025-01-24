@@ -9,6 +9,8 @@ class DatabaseService:
         self.collections = {
             'users': self.db.users,
             'records': self.db.records,
+            'purchases': self.db.user_purchases,
+            'products': self.db.products,
             
         }
     
