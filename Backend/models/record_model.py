@@ -1,5 +1,3 @@
-
-
 class Record:
     def __init__(self, user_id, paper, plastic, cans, containers, bottles):
         self.user_id = user_id

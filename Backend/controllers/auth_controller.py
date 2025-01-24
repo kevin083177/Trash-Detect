@@ -1,4 +1,3 @@
-
 from flask import request
 from services.auth_service import AuthService
 from config import Config
