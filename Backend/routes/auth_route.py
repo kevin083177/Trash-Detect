@@ -1,4 +1,3 @@
-
 from flask import Blueprint
 
 from middlewares.log_middleware import log_request
