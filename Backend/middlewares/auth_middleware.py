@@ -62,7 +62,7 @@ def admin_required(f):
             return jsonify({"message": "使用者不存在"}), 401
 
         user['userRole'] = token_data['userRole']
-        return f(user, *args, **kwargs)
+        return f(*args, **kwargs)
     
     return decorated
 
