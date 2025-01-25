@@ -1,9 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from config import Config, init_db
-from routes.user_route import user_blueprint
-from routes.auth_route import auth_blueprint
-from routes.admin_route import admin_blueprint
+from routes import register_blueprints
 from utils.logger_config import logger
 # from utils.reloader import start_file_watcher
 from gevent import pywsgi
@@ -34,9 +32,7 @@ def create_app():
         logger.info(f"success: connect to mongoDB @{Config.MONGO_HOST}")
         
         # Blueprint
-        app.register_blueprint(user_blueprint, url_prefix="/users")
-        app.register_blueprint(auth_blueprint, url_prefix="/auth")
-        app.register_blueprint(admin_blueprint, url_prefix="/admin")
+        register_blueprints(app)
         
         # Log server startup
         logger.info(f"listening on *:{Config.PORT}")
@@ -47,6 +43,7 @@ def create_app():
         raise e
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
     
     app = create_app()
@@ -61,7 +58,7 @@ if __name__ == "__main__":
             host='0.0.0.0',
             port=Config.PORT,
             debug=True,
-            # use_reloader=False
+            use_reloader=False
         )
         # finally:
         #     observer.stop()
