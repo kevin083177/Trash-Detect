@@ -1,5 +1,6 @@
 from models.product_model import Product
 from services.db_service import DatabaseService
+from bson import ObjectId
 
 class ProductService(DatabaseService):
     VALID_CATEGORIES = {'paper', 'plastic', 'cans', 'containers', 'bottles'}
@@ -50,7 +51,23 @@ class ProductService(DatabaseService):
             if not isinstance(amount, int) or amount <= 0:
                 raise ValueError(f"分類所需該數量必須為整數")
            
-    def check_product_exists(self, name):
-        """檢查商品是否存在"""
-        result = self.products.find_one({"name": name})
-        return bool(result)
+    def check_product_exists(self, identifier):
+        try:
+            query = {"$or": [
+                {"name": identifier},
+                {"_id": ObjectId(identifier)}
+            ]}
+            result = self.products.find_one(query)
+            return bool(result)
+        except Exception as e:
+            print(f"Check Product Exists Error: {str(e)}")
+            return False
+    
+    def get_product_name(self, product_id):
+        """使用product_id尋找商品名稱"""
+        try:
+            result = self.products.find_one({"_id": ObjectId(product_id)})
+            return result["name"]
+        except Exception as e:
+            print(f"Get Product Name Error: {str(e)}")
+            raise
