@@ -84,7 +84,7 @@
 
 **日誌格式:**
 ```json
-# 請求日誌
+/* 請求日誌 */
 {
  "method": "POST",
  "url": "http://example.com/api/v1/users",
@@ -92,13 +92,13 @@
  "body": "{request data}"
 }
 
-# 響應日誌 
+/* 響應日誌 */
 {
  "status_code": 200,
  "duration": "0.123s"
 }
 
-# 錯誤日誌
+/* 錯誤日誌 */
 {
  "error": "錯誤訊息",
  "status_code": 500
