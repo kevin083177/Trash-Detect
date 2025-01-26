@@ -5,6 +5,7 @@ from utils.token import generate_token
 from services.db_service import DatabaseService
 from services.record_service import RecordService
 from services.purchase_service import PurchaseService
+from utils.logger_config import logger
 
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -25,6 +26,9 @@ class AuthService(DatabaseService):
         try:
             user_role = user['userRole']
             token = generate_token(str(user['_id']), user_role)
+            
+            logger.info(f"{user_role} {user["username"]} login")
+            
             return token, user
         except Exception as e:
             print(f"Token generation error: {str(e)}")
@@ -50,7 +54,7 @@ class AuthService(DatabaseService):
         self.purchase_service.init_user_purchase(result.inserted_id) # 初始化使用者購買商品
                 
         return str(result.inserted_id)
-    def logout(self, token):
+    def logout(self, user_id):
         """使用者登出
         
         Args:
@@ -60,6 +64,11 @@ class AuthService(DatabaseService):
             bool: 登出是否成功
         """
         try:
+            user = self.users.find_one({"_id": user_id})
+            if not user:
+                return False
+            
+            logger.info(f"{user['userRole']} {user['username']} logout")
             return True
         except Exception as e:
             print(f"Logout error: {str(e)}")
