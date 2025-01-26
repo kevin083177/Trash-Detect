@@ -70,7 +70,11 @@ def self_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        requested_user_id = kwargs.get('user_id')  # 從路由參數獲取目標用戶ID
+        data = request.get_json()  # 取得body資料
+        requested_user_id = data.get('user_id') if data else kwargs.get('user_id')  # 從路由參數或是body獲取目標用戶ID
+        
+        if not requested_user_id:
+            return jsonify({"message": "缺少 user_id"}), 400
         
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
