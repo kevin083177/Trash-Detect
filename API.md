@@ -2,6 +2,14 @@
 
 ## Auth
 
+### Middleware
++ #### Auth
+    + [**token_required**](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#token_required): 驗證 API 請求是否包含有效的 JWT token，確保用戶已登入
+    + [**admin_required**](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#admin_required): 確認用戶是否具有管理員權限，僅允許管理員訪問特定功能
+    + [**self_required**](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#self_required): 驗證請求的用戶是否為擁有者，只允許用戶操作自己的資料
++ #### Log
+    + [**log_request**](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#log_request): 記錄 API 請求的資訊，包含請求方法、路徑、狀態碼等
+
 ### Login
 + **URL**
     + `POST auth/login`
@@ -18,7 +26,7 @@
     ```json
     {
         "body": {
-            "token": "<token>",
+            "token": "token",
             "user": {
                 "_id": "67924db047f2215a859e005c",
                 "created_at": "Thu, 23 Jan 2025 14:09:52 GMT",
@@ -102,7 +110,7 @@
     Headers:
     ```json
     {
-        "Authorization": "Bearer {token}" 
+        "Authorization": "Bearer token" 
     }
     ```
 + #### Response
