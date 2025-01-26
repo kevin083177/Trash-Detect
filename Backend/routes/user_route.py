@@ -10,3 +10,15 @@ user_blueprint = Blueprint('users', __name__)
 @self_required
 def get_user(user_id):
     return UserController.get_user(user_id)
+
+@user_blueprint.route('/money/add', methods=['PUT'])
+@log_request
+@self_required
+def add_money():
+    return UserController.add_money()
+
+@user_blueprint.route('/money/subtract', methods=['PUT'])
+@log_request
+@self_required
+def subtract_money():
+    return UserController.subtract_money()
