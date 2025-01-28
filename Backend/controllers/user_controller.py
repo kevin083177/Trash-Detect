@@ -32,13 +32,13 @@ class UserController:
     def _handle_money_operation(operation_type, error_type):
         try:
             data = request.get_json()
-            required_fields = ['user_id', 'price']
+            required_fields = ['user_id', 'money']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
                 return {"message": f"缺少: {', '.join(missing_fields)}"}, 400
 
-            result = operation_type(data['user_id'], data['price'])
+            result = operation_type(data['user_id'], data['money'])
             if result:  
                 result.pop("password", None)
                 result["_id"] = str(result["_id"])

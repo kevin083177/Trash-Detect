@@ -5,7 +5,7 @@ from middlewares.log_middleware import log_request
 
 user_blueprint = Blueprint('users', __name__)
 
-@user_blueprint.route('/get_own_user/<user_id>', methods=['GET'])
+@user_blueprint.route('/<user_id>', methods=['GET'])
 @log_request
 @self_required
 def get_user(user_id):
