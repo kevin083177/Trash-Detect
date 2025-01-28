@@ -24,7 +24,7 @@ class RecordService(DatabaseService):
             raise
     
     # record_controller
-    # use record id to get user record
+    # use record_id to get user record
     def get_record_by_id(self, record_id):
         try:
             record = self.record.find_one({"_id": ObjectId(record_id)})
@@ -44,4 +44,20 @@ class RecordService(DatabaseService):
         
         except Exception as e:
             print(f"Error get user record: {str(e)}")
+            raise
+    
+    def get_category_count(self, record_id, category):
+        try:
+            valid_categories = ['paper', 'plastic', 'cans', 'containers', 'bottles']
+            if category not in valid_categories:
+                return False
+                
+            record = self.record.find_one(
+                {"_id": ObjectId(record_id)}, 
+                {category: 1}
+            )
+            return int(record[category]) if record else False
+                
+        except Exception as e:
+            print(f"Error getting {category} count: {str(e)}")
             raise
