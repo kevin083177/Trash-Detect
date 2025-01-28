@@ -1,7 +1,6 @@
 from flask import Blueprint
-from controllers.user_controller import UserController
-from middlewares.auth_middleware import token_required
-from middlewares.log_middleware import log_request
+from controllers import UserController
+from middlewares import token_required, log_request
 
 user_blueprint = Blueprint('users', __name__)
 

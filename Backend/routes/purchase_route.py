@@ -1,8 +1,7 @@
 from flask import Blueprint
 
-from middlewares.log_middleware import log_request
-from middlewares.auth_middleware import token_required
-from controllers.purchase_controller import PurchaseController
+from middlewares import token_required, log_request
+from controllers import PurchaseController
 
 purchase_blueprint = Blueprint('purchase', __name__)
 

@@ -1,5 +1,5 @@
-from services.db_service import DatabaseService
-from models.record_model import Record
+from services import DatabaseService
+from models import Record
 from bson import ObjectId
 
 class RecordService(DatabaseService):

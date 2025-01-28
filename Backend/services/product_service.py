@@ -1,5 +1,5 @@
-from models.product_model import Product
-from services.db_service import DatabaseService
+from models import Product
+from services import DatabaseService
 from bson import ObjectId
 
 class ProductService(DatabaseService):

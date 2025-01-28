@@ -1,5 +1,5 @@
 from bson import ObjectId
-from services.db_service import DatabaseService
+from services import DatabaseService
 
 class UserService(DatabaseService):
     def __init__(self, mongo_uri):

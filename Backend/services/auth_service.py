@@ -1,10 +1,10 @@
 
 import bcrypt
-from models.user_model import User
+from models import User
 from utils.token import generate_token
-from services.db_service import DatabaseService
-from services.record_service import RecordService
-from services.purchase_service import PurchaseService
+from services import DatabaseService
+from .record_service import RecordService
+from .purchase_service import PurchaseService
 from utils.logger_config import logger
 
 class AuthService(DatabaseService):

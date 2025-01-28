@@ -1,6 +1,5 @@
-from services.db_service import DatabaseService
-from services.product_service import ProductService
-
+from services import DatabaseService
+from .product_service import ProductService
 
 class AdminService(DatabaseService):
     def __init__(self, mongo_uri):

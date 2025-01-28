@@ -1,7 +1,7 @@
 from bson import ObjectId
 
-from services.db_service import DatabaseService
-from models.purchase_model import Purchase
+from services import DatabaseService
+from models import Purchase
 
 class PurchaseService(DatabaseService):
     def __init__(self, mongo_uri):

@@ -1,8 +1,7 @@
 from flask import Blueprint
 
-from middlewares.auth_middleware import token_required
-from middlewares.log_middleware import log_request
-from controllers.record_controller import RecordController
+from middlewares import token_required, log_request
+from controllers import RecordController
 
 record_blueprint = Blueprint('record', __name__)
 
