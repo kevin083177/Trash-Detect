@@ -70,12 +70,22 @@ def self_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        data = request.get_json()  # 取得body資料
-        requested_user_id = data.get('user_id') if data else kwargs.get('user_id')  # 從路由參數或是body獲取目標用戶ID
-        
+        requested_user_id = None
+       
+        # 優先從路由參數取得user_id
+        requested_user_id = kwargs.get('user_id')
+       
+        if not requested_user_id:
+            try:
+                data = request.get_json()
+                if data and data.get('user_id'):
+                    requested_user_id = data.get('user_id')
+            except:
+                pass
+           
         if not requested_user_id:
             return jsonify({"message": "缺少 user_id"}), 400
-        
+            
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             try:
@@ -90,7 +100,6 @@ def self_required(f):
         if not token_data:
             return jsonify({"message": "Token 無效或已過期"}), 401
 
-        # 檢查是否為本人或管理員
         if token_data['user_id'] != requested_user_id and token_data['userRole'] != 'admin':
             return jsonify({"message": "權限不足"}), 403
 
