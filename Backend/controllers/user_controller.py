@@ -60,9 +60,9 @@ class UserController:
         return UserController._handle_money_operation(user_service.subtract_money, 'subtract_money')
     
     @staticmethod
-    def get_user_record(user_id):
+    def get_record_by_user_id(user_id):
         try:
-            user = record_service.get_user_record(user_id)
+            user = record_service.get_record_by_user_id(user_id)
             
             if user:
                 user.pop("user_id", None)
@@ -78,5 +78,5 @@ class UserController:
         
         except Exception as e:
             return {
-                "message": f"伺服器錯誤(get_user_record) {str(e)}"
+                "message": f"伺服器錯誤(get_record_by_user_id) {str(e)}"
             }, 500

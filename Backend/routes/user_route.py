@@ -26,5 +26,5 @@ def subtract_money():
 @user_blueprint.route('/record/<user_id>', methods=['GET'])
 @log_request
 @self_required
-def get_user_record(user_id):
-    return UserController.get_user_record(user_id)
+def get_record_by_user_id(user_id):
+    return UserController.get_record_by_user_id(user_id)
