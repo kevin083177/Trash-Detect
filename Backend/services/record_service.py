@@ -1,5 +1,6 @@
 from services.db_service import DatabaseService
 from models.record_model import Record
+from bson import ObjectId
 
 class RecordService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -21,5 +22,14 @@ class RecordService(DatabaseService):
         except Exception as e:
             print(f"Error initializing record: {str(e)}")
             raise
+    
+    # user_controller
+    def get_user_record(self, user_id):
+        try:
+            user = self.record.find_one({"user_id": ObjectId(user_id)})
             
+            return user if user else False
         
+        except Exception as e:
+            print(f"Error get user record: {str(e)}")
+            raise

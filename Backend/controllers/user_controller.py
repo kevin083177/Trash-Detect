@@ -1,9 +1,11 @@
 from flask import jsonify, request
 from services.user_service import UserService
+from services.record_service import RecordService
 from config import Config
 from bson import ObjectId
 
 user_service = UserService(Config.MONGO_URI)
+record_service = RecordService(Config.MONGO_URI)
 
 class UserController:
     @staticmethod
@@ -13,12 +15,17 @@ class UserController:
             if user:
                 user.pop('password', None)
                 user['_id'] = str(user['_id'])
-                return jsonify(user), 200
-            return {"error": "無法找到使用者"}, 404
+                return {
+                    "message": "成功找到使用者",
+                    "body": user
+                }, 200
+            return {
+                "message": "無法找到使用者"
+            }, 404
             
         except Exception as e:
             return {
-                "message": f"伺服器錯誤(get_user) {str(e)}",
+                "message": f"伺服器錯誤(get_user) {str(e)}"
             }, 500
             
     @staticmethod
@@ -51,3 +58,25 @@ class UserController:
     @staticmethod  
     def subtract_money():
         return UserController._handle_money_operation(user_service.subtract_money, 'subtract_money')
+    
+    @staticmethod
+    def get_user_record(user_id):
+        try:
+            user = record_service.get_user_record(user_id)
+            
+            if user:
+                user.pop("user_id", None)
+                user["_id"] = str(user["_id"])
+                return {
+                    "message": "成功找到使用者回收紀錄",
+                    "body": user
+                }, 200
+            
+            return {
+                "message": "無法找到使用者",
+            }, 404
+        
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_user_record) {str(e)}"
+            }, 500
