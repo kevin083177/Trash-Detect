@@ -23,8 +23,20 @@ class RecordService(DatabaseService):
             print(f"Error initializing record: {str(e)}")
             raise
     
+    # record_controller
+    # use record id to get user record
+    def get_record_by_id(self, record_id):
+        try:
+            record = self.record.find_one({"_id": ObjectId(record_id)})
+            
+            return record if record else False
+        except Exception as e:
+            print(f"Error get record: {str(e)}")
+            raise
+    
     # user_controller
-    def get_user_record(self, user_id):
+    # use user_id to get user record
+    def get_record_by_user_id(self, user_id):
         try:
             user = self.record.find_one({"user_id": ObjectId(user_id)})
             
