@@ -2,6 +2,7 @@ from bson import ObjectId
 
 from services import DatabaseService
 from models import Purchase
+from .payment_strategy import PaymentStrategy, MoneyPayment, RecyclePayment
 
 class PurchaseService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -32,17 +33,48 @@ class PurchaseService(DatabaseService):
             print(f"Check Product Purchased Error: {str(e)}")
             raise
     
-    def purchase_product(self, user_id, product_id):
+    def purchase_product(self, user_id, product_id, payment_type):
         try:
+            if payment_type not in ["money", "recycle"]:
+                return False, "付款方式必須為 money 或是 recycle"
+            
+            # 取得商品資訊
+            product = self.product.find_one({"_id": ObjectId(product_id)})
+            if not product:
+                return False, "商品不存在"
+            
+            # 選擇支付策略
+            payment_strategies = {
+                "money": MoneyPayment,
+                "recycle": RecyclePayment
+            }
+            payment_strategy: PaymentStrategy = payment_strategies[payment_type](self)
+                
+            # 執行支付
+            if payment_type == "money":
+                success, message = payment_strategy.pay(user_id, product['price'])
+            else:  # recycle
+                success, message = payment_strategy.pay(user_id, product_id)
+                
+            if not success:
+                return False, message
+                
+            # 更新購買紀錄
             result = self.purchase.update_one(
                 {"user_id": ObjectId(user_id)},
                 {"$push": {"product": ObjectId(product_id)}}
             )
+            
             if result.modified_count > 0:
-                product = self.product.find_one({"_id": ObjectId(product_id)})
-                product['_id'] = str(product['_id'])
-                return product
-            return False
+                return True, {
+                    "message": "購買成功",
+                    "product": {
+                        **product,
+                        "_id": str(product['_id'])
+                    }
+                }
+            return False, "購買紀錄更新失敗"
+            
         except Exception as e:
             print(f"Purchase Product Error: {str(e)}")
             raise

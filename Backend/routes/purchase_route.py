@@ -5,8 +5,8 @@ from controllers import PurchaseController
 
 purchase_blueprint = Blueprint('purchase', __name__)
 
-@purchase_blueprint.route('/purchase_product/<product_id>', methods=['POST'])
+@purchase_blueprint.route('/purchase_product', methods=['POST'])
 @log_request
 @token_required
-def purchase_product(user, product_id):
-    return PurchaseController.purchase_product(user, product_id)
+def purchase_product(user):
+    return PurchaseController.purchase_product(user)
