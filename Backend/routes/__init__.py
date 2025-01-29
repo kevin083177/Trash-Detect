@@ -5,6 +5,7 @@ from .auth_route import auth_blueprint
 from .admin_route import admin_blueprint
 from .purchase_route import purchase_blueprint
 from .record_route import record_blueprint
+from .product_route import product_blueprint
 
 api_prefix = '/api/v1/'
 
@@ -14,3 +15,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(admin_blueprint, url_prefix=f"{api_prefix}admin")
     app.register_blueprint(purchase_blueprint, url_prefix=f"{api_prefix}purchase")
     app.register_blueprint(record_blueprint, url_prefix=f"{api_prefix}record")
+    app.register_blueprint(product_blueprint, url_prefix=f"{api_prefix}product")

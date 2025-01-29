@@ -23,9 +23,9 @@ class ProductService(DatabaseService):
         except Exception as e:
             raise e
     
-    def get_product(self, _id):
+    def get_product(self, product_id):
         """取得商品訊息"""
-        result = self.products.find_one({"_id": _id})
+        result = self.products.find_one({"_id": ObjectId(product_id)})
         result['_id'] = str(result['_id'])
         return result
     
