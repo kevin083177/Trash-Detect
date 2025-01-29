@@ -2,6 +2,7 @@ from services.user_service import UserService
 from services.record_service import RecordService
 from config import Config
 from bson import ObjectId
+from flask import request
 
 user_service = UserService(Config.MONGO_URI)
 record_service = RecordService(Config.MONGO_URI)
@@ -28,8 +29,22 @@ class UserController:
             }, 500
 
     @staticmethod
-    def add_money(user_id, money):
+    def add_money(user_id):
         try:
+            data = request.get_json()
+            
+            if 'money' not in data:
+                return {
+                    "message": f"缺少: {'money'}",
+                }, 400
+            
+            money = data['money']
+            
+            if not (isinstance(money, int) and money > 0):
+                return {
+                    "message": "money 必須為正整數"
+                }, 400
+            
             result = user_service.add_money(user_id, money)
             if result:  
                 result.pop("password", None)
@@ -44,8 +59,22 @@ class UserController:
             return {"message": f"伺服器錯誤(add_money) {str(e)}"}, 500
 
     @staticmethod  
-    def subtract_money(user_id, money):
+    def subtract_money(user_id):
         try:
+            data = request.get_json()
+            
+            if 'money' not in data:
+                return {
+                    "message": f"缺少: {'money'}",
+                }, 400
+            
+            money = data['money']
+            
+            if not (isinstance(money, int) and money > 0):
+                return {
+                    "message": "money 必須為正整數"
+                }, 400
+            
             result = user_service.subtract_money(user_id, money)
             if result:  
                 result.pop("password", None)
