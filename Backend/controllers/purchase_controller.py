@@ -22,13 +22,10 @@ class PurchaseController:
             
             product_id = data['product_id']
             payment_type = data['payment_type']
-                            
-            if not product_service.check_product_exists(product_id):
-                return {"message": "商品不存在"}, 404
-                
+                                           
             if purchase_service.check_product_purchased(user['_id'], product_id):
                 return {
-                    "message": f"商品: {product_service.get_product_name(product_id)} 已購買"
+                    "message": f"商品:{product_service.get_product_name(product_id)} 已購買"
                 }, 409
             
             success, result = purchase_service.purchase_product(
