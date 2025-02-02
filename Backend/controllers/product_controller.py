@@ -59,3 +59,30 @@ class ProductController:
             return {
                 "message": f"伺服器錯誤(add_product) {str(e)}",
             }, 500
+    
+    def delete_product_by_id():
+        try:
+            data = request.get_json()
+            
+            if "product_id" not in data:
+                return {
+                    "message": "缺少: product_id"
+                }, 400
+                
+            product_id = data["product_id"]
+            
+            deleted_count, affected_users = product_service.delete_product_by_id(product_id)
+            
+            if deleted_count:
+                return {
+                    "message": f"刪除商品成功 已修改 {affected_users} 位用戶之購買紀錄",
+                }, 200
+            
+            return {
+                "message": "無法找到商品"
+            }, 404
+        
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(delete_product) {str(e)}",
+            }, 500

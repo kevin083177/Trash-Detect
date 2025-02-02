@@ -7,7 +7,8 @@ class ProductService(DatabaseService):
     
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
-        self.products = self.collections['products'] # 查詢users資訊
+        self.products = self.collections['products']
+        self.purchase = self.collections['purchases']
         
     def add_product(self, product_data):
         """新增商品"""
@@ -23,11 +24,42 @@ class ProductService(DatabaseService):
         except Exception as e:
             raise e
     
+    def delete_product_by_id(self, product_id):
+        """刪除商品"""
+        try:
+            # 先檢查商品是否存在
+            product = self.get_product(product_id)
+            
+            if not product:
+                return False
+            
+            # 從所有用戶的購買紀錄中移除此商品
+            updated_user = self.purchase.update_many(
+                {"product": ObjectId(product_id)},
+                {"$pull": {"product": ObjectId(product_id)}}
+            )
+            
+            # 刪除商品
+            result = self.products.delete_one({"_id": ObjectId(product_id)})
+            return result.deleted_count, updated_user.modified_count
+
+        except Exception as e:
+            print(f"Delete Product Error: {str(e)}")
+            raise
+    
     def get_product(self, product_id):
         """取得商品訊息"""
-        result = self.products.find_one({"_id": ObjectId(product_id)})
-        result['_id'] = str(result['_id'])
-        return result
+        try:
+            result = self.products.find_one({"_id": ObjectId(product_id)})
+            if not result:
+                return None
+                
+            result['_id'] = str(result['_id'])
+            return result
+            
+        except Exception as e:
+            print(f"Get Product Error: {str(e)}")
+            return None
     
     def _validate_recycle_requirement(self, requirement):
         """檢查recycle_requirment是否符合要求
