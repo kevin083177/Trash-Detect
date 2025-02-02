@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from middlewares import token_required, log_request
+from middlewares import token_required, log_request, admin_required
 from controllers import ProductController
 
 product_blueprint = Blueprint('product', __name__)
@@ -10,3 +10,9 @@ product_blueprint = Blueprint('product', __name__)
 @token_required
 def get_product_by_id(user, product_id):
     return ProductController.get_product_by_id(user, product_id)
+
+@product_blueprint.route('/add_product', methods=['POST'])
+@admin_required
+@log_request
+def add_product():
+    return ProductController.add_product()

@@ -51,13 +51,10 @@ class ProductService(DatabaseService):
             if not isinstance(amount, int) or amount <= 0:
                 raise ValueError(f"分類所需該數量必須為整數")
            
-    def check_product_exists(self, identifier):
+    def check_product_exists(self, name):
+        """檢查商品名稱是否已存在"""
         try:
-            query = {"$or": [
-                {"name": identifier},
-                {"_id": ObjectId(identifier)}
-            ]}
-            result = self.products.find_one(query)
+            result = self.products.find_one({"name": name})
             return bool(result)
         except Exception as e:
             print(f"Check Product Exists Error: {str(e)}")
