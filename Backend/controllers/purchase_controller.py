@@ -25,7 +25,7 @@ class PurchaseController:
                                            
             if purchase_service.check_product_purchased(user['_id'], product_id):
                 return {
-                    "message": f"商品:{product_service.get_product_name(product_id)} 已購買"
+                    "message": f"商品: {product_service.get_product_name(product_id)} 已購買"
                 }, 409
             
             success, result = purchase_service.purchase_product(
