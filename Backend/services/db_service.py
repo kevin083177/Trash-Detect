@@ -1,8 +1,8 @@
 from pymongo import MongoClient
-from bson import ObjectId
+from config import Config
 
 class DatabaseService:
-    def __init__(self, mongo_uri, db_name="Trash"):
+    def __init__(self, mongo_uri, db_name=Config.DB_NAME):
         self.client = MongoClient(mongo_uri)
         self.db = self.client[db_name]
         
