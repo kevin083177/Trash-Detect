@@ -1,5 +1,5 @@
 from bson import ObjectId
-
+from typing import Optional
 from services import DatabaseService
 from models import Purchase
 from .payment_strategy import PaymentStrategy, MoneyPayment, RecyclePayment
@@ -10,14 +10,17 @@ class PurchaseService(DatabaseService):
         self.purchase = self.collections['purchases']
         self.product = self.collections['products']
         
-    def init_user_purchase(self, user_id):
+    def init_user_purchase(self, user_id: str | ObjectId) -> Optional[ObjectId]:
         try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            
             purchase = Purchase(
                 user_id = user_id,
                 product = None
             )
-            result = self.purchase.insert_one(purchase.__dict__)
+            result = self.purchase.insert_one(purchase.to_dict())
             return result.inserted_id
+        
         except Exception as e:
             print(f"Error initializing user_purchases: {str(e)}")
             raise
