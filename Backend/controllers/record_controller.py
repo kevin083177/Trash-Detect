@@ -41,3 +41,39 @@ class RecordController:
             return {
                 "message": f"伺服器錯誤(get_category_count) {str(e)}"
             }, 500
+            
+    @staticmethod
+    def add_category_count(user):
+        try:
+            data = request.get_json()
+            
+            required_fields = ['category', 'count']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                return {
+                    "message": f"缺少: {', '.join(missing_fields)}",
+                }, 400
+            
+            user_id = user['_id']
+            category = data['category']
+            count = data['count']
+            
+            result = record_service.add_category_count(user_id, category, count)
+            if result:
+                record = record_service.get_record_by_user_id(user_id)
+                record["_id"] = str(record["_id"])
+                record.pop("user_id", None)
+                
+                return {
+                    "message": f"成功增加 {category} 數量",
+                    "body": record
+                }, 200
+            return {
+                "message": "無法找到回收資料或分類不存在"
+            }, 404
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(add_category_count) {str(e)}"
+            }, 500
+            

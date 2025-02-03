@@ -16,3 +16,9 @@ def get_record_by_id(user, record_id):
 @token_required
 def get_category_count(user, record_id, category):
    return RecordController.get_category_count(user, record_id, category)
+
+@record_blueprint.route('/add', methods=['POST'])
+@log_request
+@token_required
+def add_category_count(user):
+    return RecordController.add_category_count(user)
