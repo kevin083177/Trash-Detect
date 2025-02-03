@@ -10,17 +10,16 @@ class RecordService(DatabaseService):
         self.valid_categories = ['paper', 'plastic', 'cans', 'containers', 'bottles']
         
     
-    def init_user_record(self, user_id):
+    def init_user_record(self, user_id: str | ObjectId):
         try:
-            record = Record(
-                user_id = user_id,
-                paper = 0,
-                plastic = 0,
-                cans = 0,
-                containers = 0,
-                bottles = 0
-            )
-            result = self.record.insert_one(record.__dict__)
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            default_record = {
+                'user_id': user_id,
+                **{category: 0 for category in self.valid_categories}
+            }
+            
+            record = Record(**default_record)
+            result = self.record.insert_one(record.to_dict())
             return result.inserted_id
         except Exception as e:
             print(f"Error initializing record: {str(e)}")
