@@ -2,7 +2,7 @@ from functools import wraps
 from flask import request
 from datetime import datetime
 import json
-from utils.logger_config import logger
+from utils import logger
 
 def log_request(f):
     @wraps(f)

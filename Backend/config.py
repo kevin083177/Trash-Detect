@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from utils.logger_config import logger
+from utils import logger
 
 # 載入 .env 檔案
 load_dotenv()

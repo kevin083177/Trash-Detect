@@ -1,9 +1,8 @@
 
 import bcrypt
 from models import User
-from utils.token import generate_token
+from utils import generate_token, logger
 from services import DatabaseService
-from utils.logger_config import logger
 
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):

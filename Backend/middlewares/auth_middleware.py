@@ -1,8 +1,8 @@
 from functools import wraps
 from flask import request, jsonify
-from services.user_service import UserService
+from services import UserService
 from config import Config
-from utils.token import verify_token
+from utils import verify_token
 
 user_service = UserService(Config.MONGO_URI)
 

@@ -1,23 +1,26 @@
+import os
 import jwt
 from datetime import datetime, timedelta
-from config import Config
 
-def generate_token(user_id, user_role):
-    """生成 JWT token"""
-    payload = {
-        'user_id': user_id,
-        'userRole': user_role,
-        'exp': datetime.utcnow() + timedelta(days=1),  # token 過期時間
-        'iat': datetime.utcnow()  # token 建立時間
-    }
-    return jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
+def get_secret_key():
+    return os.getenv("SECRET_KEY")
+
+def generate_token(user_id, userRole):
+    try:
+        payload = {
+            'user_id': str(user_id),
+            'userRole': userRole,
+            'exp': datetime.utcnow() + timedelta(days=1)
+        }
+        return jwt.encode(payload, get_secret_key(), algorithm='HS256')
+    except Exception as e:
+        print(f"Error generating token: {str(e)}")
+        return None
 
 def verify_token(token):
-    """驗證 JWT token"""
     try:
-        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
-        return payload
+        return jwt.decode(token, get_secret_key(), algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
-        return None  # token 已過期
+        return None
     except jwt.InvalidTokenError:
-        return None  # token 無效
+        return None
