@@ -1,6 +1,5 @@
 from flask import request
-from services.admin_service import AdminService
-from services.product_service import ProductService
+from services import AdminService, ProductService
 from config import Config
 
 admin_service = AdminService(Config.MONGO_URI)

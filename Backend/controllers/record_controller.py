@@ -1,6 +1,6 @@
 from flask import request
 
-from services.record_service import RecordService
+from services import RecordService
 from config import Config
 
 record_service = RecordService(Config.MONGO_URI)

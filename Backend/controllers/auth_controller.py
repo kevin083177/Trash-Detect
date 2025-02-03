@@ -1,8 +1,5 @@
 from flask import request
-from services.auth_service import AuthService
-from services.user_service import UserService
-from services.record_service import RecordService
-from services.purchase_service import PurchaseService
+from services import AuthService, PurchaseService, RecordService, UserService
 from config import Config
 
 auth_service = AuthService(Config.MONGO_URI)

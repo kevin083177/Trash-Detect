@@ -1,6 +1,5 @@
 from flask import request
-from services.purchase_service import PurchaseService
-from services.product_service import ProductService
+from services import PurchaseService, ProductService
 from config import Config
 
 purchase_service = PurchaseService(Config.MONGO_URI)

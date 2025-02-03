@@ -1,4 +1,4 @@
-from services.product_service import ProductService
+from services import ProductService
 from config import Config
 from flask import request
 

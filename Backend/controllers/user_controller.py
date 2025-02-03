@@ -1,5 +1,4 @@
-from services.user_service import UserService
-from services.record_service import RecordService
+from services import UserService, RecordService
 from config import Config
 from bson import ObjectId
 from flask import request
