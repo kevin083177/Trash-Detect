@@ -3,16 +3,12 @@ import bcrypt
 from models import User
 from utils.token import generate_token
 from services import DatabaseService
-from .record_service import RecordService
-from .purchase_service import PurchaseService
 from utils.logger_config import logger
 
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
         self.users = self.collections['users'] # 查詢users資訊
-        self.record_service = RecordService(mongo_uri)
-        self.purchase_service = PurchaseService(mongo_uri)
         
     def login(self, email, password):
         """使用者登入"""
@@ -47,12 +43,8 @@ class AuthService(DatabaseService):
             password=hashed_password,
             money = 0
         )
-        result = self.users.insert_one(user.__dict__)
+        result = self.users.insert_one(user.to_dict())
         
-        self.record_service.init_user_record(result.inserted_id) # 初始化使用者回收紀錄
-        
-        self.purchase_service.init_user_purchase(result.inserted_id) # 初始化使用者購買商品
-                
         return str(result.inserted_id)
     def logout(self, user_id):
         """使用者登出
