@@ -1,9 +1,14 @@
 from flask import request
 from services.auth_service import AuthService
+from services.user_service import UserService
+from services.record_service import RecordService
+from services.purchase_service import PurchaseService
 from config import Config
-from controllers.user_controller import user_service
 
 auth_service = AuthService(Config.MONGO_URI)
+user_service = UserService(Config.MONGO_URI)
+record_service = RecordService(Config.MONGO_URI)
+purchase_service = PurchaseService(Config.MONGO_URI)
 
 class AuthController:
     @staticmethod
@@ -32,11 +37,21 @@ class AuthController:
                     "message": "電子郵件已被註冊",
                 }, 409
                 
+            # 檢查 userRole 是否符合規範 (user, admin)
+            if (data['userRole'] != 'user') and (data['userRole'] != 'admin'):
+                return {
+                    "message": "userRole 格式錯誤"
+                }, 400
+                
             # 創建新使用者
             result = auth_service.register(data)
             created_user = user_service.get_user(result)
             
             if created_user:
+                # 初始化使用者回收紀錄、購買商品
+                record_service.init_user_record(result)
+                purchase_service.init_user_purchase(result)
+                
                 created_user.pop('password', None)
                 created_user['_id'] = str(created_user['_id'])
                 
