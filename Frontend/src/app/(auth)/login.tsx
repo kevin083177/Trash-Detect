@@ -1,9 +1,9 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
-import { asyncPost } from '@/utils/fetch';
-import { auth_api } from '@/api/api';
+import { asyncPost } from '@/src/utils/fetch';
+import { auth_api } from '@/src/api/api';
 
-const login = async(email: string, password: string) => {
+const handleLogin = async(email: string, password: string) => {
   try {
     const response = await asyncPost(auth_api.login, {
       body: {

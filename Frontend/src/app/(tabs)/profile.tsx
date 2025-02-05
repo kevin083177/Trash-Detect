@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import RecyclingBar from '@/components/profile/RecyclingBar';
+import RecyclingBar from '@/src/components/profile/RecyclingBar';
 import { useState, useCallback } from 'react';
-import { asyncGet } from '@/utils/fetch';
-import { user_api } from '@/api/api';
+import { asyncGet } from '@/src/utils/fetch';
+import { user_api } from '@/src/api/api';
 import { useFocusEffect } from '@react-navigation/native';
 interface RecyclingItem {
   label: string;
@@ -32,7 +32,6 @@ export default function Profile() {
         const response = await asyncGet(user_api.get_record, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
             },
         });
 
