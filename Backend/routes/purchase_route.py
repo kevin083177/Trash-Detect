@@ -10,3 +10,9 @@ purchase_blueprint = Blueprint('purchase', __name__)
 @token_required
 def purchase_product(user):
     return PurchaseController.purchase_product(user)
+
+@purchase_blueprint.route('/', methods=['GET'])
+@log_request
+@token_required
+def get_purchase_by_user(user):
+    return PurchaseController.get_purchase_by_user(user['_id'])

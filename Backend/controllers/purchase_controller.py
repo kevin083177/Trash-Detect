@@ -45,3 +45,25 @@ class PurchaseController:
             return {
                 "message": f"伺服器錯誤(purchase_product) {str(e)}",
             }, 500
+            
+    @staticmethod
+    def get_purchase_by_user(user):
+        try:
+            purchase = purchase_service.get_purchase_by_user(user)
+            
+            if purchase:
+                purchase.pop('user_id', None)
+                purchase['_id'] = str(purchase['_id'])
+                return {
+                    "message": "成功找到使用者購買紀錄",
+                    "body": purchase
+                }, 200
+                
+            return {
+                "message": "無法找到購買紀錄"
+            }, 404
+
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_purchase_by_user) {str(e)}"
+            }, 500

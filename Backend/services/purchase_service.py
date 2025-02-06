@@ -81,3 +81,32 @@ class PurchaseService(DatabaseService):
         except Exception as e:
             print(f"Purchase Product Error: {str(e)}")
             raise
+        
+    def get_purchase_by_user(self, user_id: str | ObjectId):
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            purchase = self.purchase.find_one({"user_id": user_id})
+            
+            if not purchase:
+                return False
+                
+            # 獲取所有商品
+            product_ids = purchase.get('product', [])
+            products = []
+            
+            for product_id in product_ids:
+                product = self.product.find_one({"_id": product_id})
+                if product:
+                    product['_id'] = str(product['_id'])
+                    products.append(product)
+            
+            # 更新購買記錄中的商品信息
+            purchase['product'] = products
+            purchase['_id'] = str(purchase['_id'])
+            purchase['user_id'] = str(purchase['user_id'])
+            
+            return purchase
+        
+        except Exception as e:
+            print(f"Error get user purchase: {str(e)}")
+            raise
