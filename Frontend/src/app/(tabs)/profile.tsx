@@ -7,6 +7,7 @@ import { auth_api, user_api } from '@/api/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { tokenStorage } from '@/utils/storage';
 import { useAuth } from '@/hooks/auth';
+import LoadingModal from '@/components/LoadingModal';
 
 interface RecyclingItem {
   label: string;
@@ -18,6 +19,7 @@ export default function Profile() {
   const [recyclingData, setRecyclingData] = useState<RecyclingItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('');
   const { setUser } = useAuth();
   // get token
   useEffect(() => {
@@ -64,7 +66,24 @@ export default function Profile() {
         setIsLoading(false);
     }
   };
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
 
+      const response = await asyncGet(user_api.get_user, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      if (response)
+        setUsername(response.body.username);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      Alert.alert('錯誤', '無法取得資料，請檢查網路連線');
+    } finally {
+      setIsLoading(false);
+    }
+  }
   const handleLogout = async () => {
     try {
       await asyncPost(auth_api.logout, {
@@ -85,18 +104,21 @@ export default function Profile() {
   // 當畫面取得焦點時 取得record資料
   useFocusEffect(
     useCallback(() => {
-      if (token)
+      if (token) {
         fetchRecyclingData();
+        fetchUserProfile();
+      }
     }, [token])
   );
   return (
     <View style={styles.container}>
+      <LoadingModal visible={isLoading} text='正在讀取資料中...' />
       <View style={styles.userContainer}>
         <View style={styles.userIconContainer}>
           <Ionicons name="person-outline" size={60} color="#666" />
         </View>
         <View style={styles.userName}>
-          <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>英文16中文10</Text>
+          <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>{username}</Text>
           <Text style={{fontSize: 14}}>垃圾回收小達人</Text>
         </View>
         <TouchableOpacity>
