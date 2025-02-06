@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { TabBarIcon } from '@/src/components/navigation/TabBarIcon'
-import { TAB_SCREEN_OPTIONS, TAB_SCREENS } from '@/src/constants/tabScreen';
+import { TabBarIcon } from '@/components/navigation/TabBarIcon'
+import { TAB_SCREEN_OPTIONS, TAB_SCREENS } from '@/constants/tabScreen';
 
 export default function TabsLayout() {
   return (
