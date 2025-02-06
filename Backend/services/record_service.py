@@ -38,7 +38,7 @@ class RecordService(DatabaseService):
     
     # user_controller
     # use user_id to get user record
-    def get_record_by_user_id(self, user_id):
+    def get_record_by_user(self, user_id):
         try:
             user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
             user = self.record.find_one({"user_id": user_id})
@@ -70,7 +70,7 @@ class RecordService(DatabaseService):
                 return False
             
             # get record id by user_id instead to input record_id
-            record = self.get_record_by_user_id(user_id)
+            record = self.get_record_by_user(user_id)
             
             if not record:
                 return False

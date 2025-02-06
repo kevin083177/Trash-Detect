@@ -88,9 +88,9 @@ class UserController:
             return {"message": f"伺服器錯誤(subtract_money) {str(e)}"}, 500
             
     @staticmethod
-    def get_record_by_user_id(user_id):
+    def get_record_by_user(user_id):
         try:
-            user = record_service.get_record_by_user_id(user_id)
+            user = record_service.get_record_by_user(user_id)
             
             if user:
                 user.pop("user_id", None)
@@ -101,10 +101,10 @@ class UserController:
                 }, 200
             
             return {
-                "message": "無法找到使用者",
+                "message": "無法找到回收紀錄",
             }, 404
         
         except Exception as e:
             return {
-                "message": f"伺服器錯誤(get_record_by_user_id) {str(e)}"
+                "message": f"伺服器錯誤(get_record_by_user) {str(e)}"
             }, 500
