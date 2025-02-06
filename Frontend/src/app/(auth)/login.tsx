@@ -96,7 +96,9 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
-      <Text>{errorMessage}</Text>
+      { errorMessage && 
+        <Text style={styles.errorMessage}>{errorMessage}</Text>
+      }
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>登入</Text>
       </TouchableOpacity>
@@ -125,6 +127,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     padding: 15,
     borderRadius: 8,
+    marginBottom: 15,
+  },
+  errorMessage: {
+    color: '#DC3545',
+    textAlign: 'center',
     marginBottom: 15,
   },
   button: {
