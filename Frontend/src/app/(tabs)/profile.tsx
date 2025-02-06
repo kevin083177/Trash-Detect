@@ -1,10 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import RecyclingBar from '@/src/components/profile/RecyclingBar';
-import { useState, useCallback } from 'react';
-import { asyncGet } from '@/src/utils/fetch';
-import { user_api } from '@/src/api/api';
+import RecyclingBar from '@/components/profile/RecyclingBar';
+import { useState, useCallback, useEffect } from 'react';
+import { asyncGet, asyncPost } from '@/utils/fetch';
+import { auth_api, user_api } from '@/api/api';
 import { useFocusEffect } from '@react-navigation/native';
+import { tokenStorage } from '@/utils/storage';
+import { useAuth } from '@/hooks/auth';
+
 interface RecyclingItem {
   label: string;
   value: number;
@@ -14,20 +17,24 @@ interface RecyclingItem {
 export default function Profile() {
   const [recyclingData, setRecyclingData] = useState<RecyclingItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchRecyclingData();
-    }, [])
-  );
+  const [token, setToken] = useState<string | null>(null);
+  const { setUser } = useAuth();
+  // get token
+  useEffect(() => {
+    const getToken = async () => {
+      const storedToken = await tokenStorage.getToken();
+      setToken(storedToken);
+    };
+    getToken();
+  }, []);
 
   const fetchRecyclingData = async () => {
     try {
         setIsLoading(true);
         
-        const token = 'token';
-        
-        console.log('Fetching from URL:', user_api.get_record);
+        // const storage = await tokenStorage.getUserInfo();
+        // console.log(storage);
+        // console.log('Fetching from URL:', user_api.get_record);
         
         const response = await asyncGet(user_api.get_record, {
             headers: {
@@ -35,7 +42,7 @@ export default function Profile() {
             },
         });
 
-        console.log('API Response:', response);
+        // console.log('API Response:', response);
 
         if (response) {
             const transformedData: RecyclingItem[] = [
@@ -56,8 +63,32 @@ export default function Profile() {
     } finally {
         setIsLoading(false);
     }
-};
+  };
 
+  const handleLogout = async () => {
+    try {
+      await asyncPost(auth_api.logout, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      await tokenStorage.clearAll();
+      setUser(null); // 會自動執行畫面跳轉
+
+    } catch (error) {
+      console.error('Logout failed:', error);
+      Alert.alert('錯誤', '登出失敗，請稍後再試');
+    }
+  }
+
+  // 當畫面取得焦點時 取得record資料
+  useFocusEffect(
+    useCallback(() => {
+      if (token)
+        fetchRecyclingData();
+    }, [token])
+  );
   return (
     <View style={styles.container}>
       <View style={styles.userContainer}>
@@ -84,6 +115,10 @@ export default function Profile() {
           />
         ))}
       </View>
+        <TouchableOpacity style={styles.logoutContainer} onPress={() => handleLogout()}>
+          <Ionicons name="log-out-outline" size={24} color="red" />
+          <Text style={styles.logoutText}>登出</Text>
+        </TouchableOpacity>
     </View>
   );
 }
@@ -127,5 +162,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
-  }
+  },
+  logoutContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+  },
+  logoutText: {
+      marginLeft: 8,
+      fontSize: 14,
+      color: 'red',
+  },
 });
