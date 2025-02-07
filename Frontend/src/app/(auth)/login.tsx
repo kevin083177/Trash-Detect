@@ -1,15 +1,18 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, purchase_api, user_api } from '@/api/api';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { tokenStorage } from '@/utils/storage';
+import PasswordInput from '@/components/auth/PasswordInput';
 
 export default function Login() {
-  const [email, setEmail] = useState<string>('');
+  const { email: initialEmail } = useLocalSearchParams<{ email: string }>();
+  const [email, setEmail] = useState<string>(initialEmail || '');
   const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { setUser } = useAuth();
   
   const handleLogin = async () => {
@@ -19,6 +22,7 @@ export default function Login() {
     }
 
     try {
+      setIsLoading(true);
       const response = await asyncPost(auth_api.login, {
         body: { email, password }
       });
@@ -34,24 +38,27 @@ export default function Login() {
     } catch (error) {
       setErrorMessage("伺服器錯誤");
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   const fetchUserProfile = async (token: string) => {
     try {
       // fetch user_id
       const user = await asyncGet(user_api.get_user, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-      })
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
 
       const user_id: string = String(user.body['_id']);
 
       // fetch user's record_id
       const record = await asyncGet(user_api.get_record, {
-          headers: {
-              'Authorization': `Bearer ${token}`
-          },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
       });
 
       const record_id: string = String(record.body['_id']); 
@@ -61,7 +68,7 @@ export default function Login() {
         headers: {
           'Authorization': `Bearer ${token}`
         }
-      })
+      });
       const purchase_id: string = String(purchase.body['_id']);
 
       // storage
@@ -69,13 +76,13 @@ export default function Login() {
         user_id: user_id,
         record_id: record_id,
         purchase_id: purchase_id
-      })
-      console.log(user_id, record_id, purchase_id);9
+      });
     } catch (error) {
       console.error('Error fetching user profile:', error);
       Alert.alert('錯誤', '獲取用戶資料失敗');
     }
-  }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>登入</Text>
@@ -87,20 +94,28 @@ export default function Login() {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        editable={!isLoading}
       />
       
-      <TextInput 
-        style={styles.input}
+      <PasswordInput
         placeholder="密碼"
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        editable={!isLoading}
       />
+
       { errorMessage && 
         <Text style={styles.errorMessage}>{errorMessage}</Text>
       }
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>登入</Text>
+
+      <TouchableOpacity 
+        style={[styles.button, isLoading && styles.buttonDisabled]}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? '登入中...' : '登入'}
+        </Text>
       </TouchableOpacity>
       
       <Link href="/register" style={styles.link}>
@@ -139,6 +154,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#999',
   },
   buttonText: {
     color: 'white',
