@@ -84,24 +84,40 @@ export default function Profile() {
       setIsLoading(false);
     }
   }
-  const handleLogout = async () => {
-    try {
-      await asyncPost(auth_api.logout, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+  const handleLogout = () => {
+    Alert.alert(
+      '登出確認',
+      '確定要登出嗎？',
+      [
+        {
+          text: '取消',
+          style: 'cancel'
+        },
+        {
+          text: '確定',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await asyncPost(auth_api.logout, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+
+              await tokenStorage.clearAll();
+              setUser(null); // 會自動執行畫面跳轉
+            } catch (error) {
+              console.error('Logout failed:', error);
+              Alert.alert('錯誤', '登出失敗，請稍後再試');
+            }
+          }
         }
-      })
-
-      await tokenStorage.clearAll();
-      setUser(null); // 會自動執行畫面跳轉
-
-    } catch (error) {
-      console.error('Logout failed:', error);
-      Alert.alert('錯誤', '登出失敗，請稍後再試');
-    }
+      ],
+      { cancelable: true }
+    );
   }
 
-  // 當畫面取得焦點時 取得record資料
+  // 當畫面取得焦點時 取得record, user 資料
   useFocusEffect(
     useCallback(() => {
       if (token) {
