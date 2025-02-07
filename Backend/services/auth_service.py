@@ -40,7 +40,6 @@ class AuthService(DatabaseService):
             username=user_data['username'],
             email=user_data['email'],
             password=hashed_password,
-            money = 0
         )
         result = self.users.insert_one(user.to_dict())
         
