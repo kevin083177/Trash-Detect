@@ -15,5 +15,7 @@ class User:
             "userRole": self.userRole,
             "username": self.username,
             "email": self.email,
+            "password": self.password,
+            "money": self.money,
             "created_at": self.created_at
         }
