@@ -1,5 +1,6 @@
 from bson import ObjectId
 from services import DatabaseService
+from datetime import datetime
 
 class UserService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -54,3 +55,37 @@ class UserService(DatabaseService):
 
     def subtract_money(self, user_id, money):
         return self._update_money(user_id, money, self._update_money_subtract)
+    
+    def daliy_check_in(self, user_id):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            now = datetime.utcnow()
+            last_check_in = user.get('last_check_in')
+            
+            # 如果有簽到時間 檢查是否是同一天
+            if last_check_in is not None:
+                # 如果 last_check_in 是字串，轉換為 datetime 對象
+                if isinstance(last_check_in, str):
+                    last_check_in = datetime.utcnow()
+                
+                if last_check_in.date() == now.date():
+                    raise ValueError("今日已簽到")
+            
+            # 簽到 +50塊
+            self.add_money(user_id, 50)
+            
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {
+                    "$set": {"last_check_in": now},
+                }
+            )
+            
+            return self.get_user(user_id) if result.modified_count > 0 else None
+        
+        except Exception as e:
+            print(f"Daily check-in Error: {str(e)}")
+            raise

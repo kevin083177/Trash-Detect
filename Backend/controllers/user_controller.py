@@ -108,3 +108,36 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(get_record_by_user) {str(e)}"
             }, 500
+            
+    @staticmethod
+    def daliy_check_in(user_id):
+        try:
+            result = user_service.daliy_check_in(user_id)
+            
+            if result:
+                result.pop('password', None)
+                result['_id'] = str(result['_id'])
+                
+                last_check_in = result.get('last_check_in')
+                if last_check_in:
+                    result['last_check_in'] = last_check_in
+                    
+                return {
+                    "message": "簽到成功",
+                    "body": result
+                }, 200
+                
+            return {
+                "message": "無法找到使用者"
+            }, 404
+            
+        # 已簽到
+        except ValueError as e:
+            return {
+                "message": str(e),
+            }, 400
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(daily_check_in) {str(e)}"
+            }, 500

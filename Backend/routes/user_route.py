@@ -27,3 +27,9 @@ def subtract_money(user):
 @token_required
 def get_record_by_user(user):
     return UserController.get_record_by_user(user['_id'])
+
+@user_blueprint.route('/checkIn', methods=['POST'])
+@log_request
+@token_required
+def daliy_check_in(user):
+    return UserController.daliy_check_in(user['_id'])
