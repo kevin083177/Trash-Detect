@@ -24,6 +24,8 @@ export const user_api = {
     get_record: `${user_url}/record`,
     add_money: `${user_url}/money/add`,
     subtract_money: `${user_url}/money/subtract`,
+    daily_check_in: `${user_url}/checkIn`,
+    daily_check_in_status: `${user_url}/checkIn/status`
 } as const;
 
 export const record_api = {
