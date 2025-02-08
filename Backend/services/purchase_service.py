@@ -70,7 +70,6 @@ class PurchaseService(DatabaseService):
             
             if result.modified_count > 0:
                 return True, {
-                    "message": "購買成功",
                     "product": {
                         **product,
                         "_id": str(product['_id'])

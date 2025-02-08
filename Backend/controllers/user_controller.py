@@ -149,7 +149,7 @@ class UserController:
             
             if status is None:
                 return {
-                    "message": "用戶不存在"
+                    "message": "無法找到使用者"
                 }, 404
                 
             return {
@@ -159,7 +159,6 @@ class UserController:
             }, 200
             
         except Exception as e:
-            print(f"Controller - Daily check-in status Error: {str(e)}")
             return {
-                "message": "伺服器錯誤"
+                "message": f"伺服器錯誤(daily_check_in_status) {str(e)}"
             }, 500

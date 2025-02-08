@@ -61,7 +61,7 @@ class RecordController:
             
             result = record_service.add_category_count(user_id, category, count)
             if result:
-                record = record_service.get_record_by_user_id(user_id)
+                record = record_service.get_record_by_user(user_id)
                 record["_id"] = str(record["_id"])
                 record.pop("user_id", None)
                 

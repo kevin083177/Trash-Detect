@@ -14,17 +14,16 @@ class AdminService(DatabaseService):
             
             # 儲存刪除操作結果
             deletion_results = {
-                'user': False,
-                'record': False,
-                'purchase': False
+                'users': False,
+                'records': False,
+                'purchases': False
             }
             
             user = self.users.find_one_and_delete({"_id": user_id})
-            if not user:
-                return False, "無法找到使用者"
-            deletion_results['user'] = bool(user)
+
+            deletion_results['users'] = bool(user)
             
-            # 刪除 record, purchase_record
+            # 刪除 record, user_purchase
             record = self.record.find_one_and_delete({"user_id": user_id})
             deletion_results['record'] = bool(record)
             
@@ -43,7 +42,7 @@ class AdminService(DatabaseService):
             if deletion_results['user'] and failed_deletions:
                 return True, f"使用者已刪除，但以下資料刪除失敗: {', '.join(failed_deletions)}"
                 
-            return False, "刪除失敗"
+            return False, "無法找到使用者"
             
         except Exception as e:
             print(f"Delete User Error: {str(e)}")
