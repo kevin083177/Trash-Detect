@@ -477,7 +477,7 @@
 
 ## Record
 + **For all Record endpoints with [token_required](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#token_required) middleware.**
-### Get Record by id
+### Get Users' Record by record id
 + **URL**
     + `GET record/<record_id>`
 + #### Request
@@ -516,7 +516,7 @@
     }
     ```
 
-### Get Record category count
+### Get Users' Record category count
 + **URL**
     + `GET record/<record_id>/<recycle_category>`
 + #### Request
@@ -548,7 +548,7 @@
     }
     ```
 
-### Add Record category count
+### Add Users' Record category count
 + **URL**
     + `POST record/add`
 + #### Request
@@ -709,9 +709,9 @@
     }
     ```
 
-## Prodcut
+## Product
 ### Get Product by product_id
-#### with [`token_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#token_required)
++ **With [`token_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#token_required)**
 + **URL**
     + `GET product/<product_id>`
 + #### Request
@@ -752,8 +752,8 @@
     }
     ```
 
-### Add Prodcut
-#### with [`admin_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#admin_required)
+### Add Product
++ **With [`admin_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#admin_required)**
 + **URL**
     + `POST product/add_product`
 + #### Request
@@ -818,8 +818,8 @@
     }
     ```
 
-### Delete Prodcut
-#### with [`admin_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#admin_required)
+### Delete Product
++ **With [`admin_required`](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md#admin_required)**
 + **URL**
     + `DELETE product/delete_product`
 + #### Request
