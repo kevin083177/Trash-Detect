@@ -47,33 +47,7 @@
         "message": "權限不足"
     }
     ```
-
-### self_required
-+ #### Request
-    Headers:
-    ```json
-    {
-        "Authorization": "Bearer token"
-    }
-    ```
-+ #### Response
-    - 200
-    ```json
-    ```
     
-    - 401
-    ```json
-    {
-        "message": "Token 格式錯誤 / 缺少 Token / Token 無效或已過期 / 使用者不存在"
-    }
-    ```
-    
-    - 403
-    ```json
-    {
-        "message": "權限不足"
-    }
-    ```
 ## Log
 ### log_request
 記錄 API 請求與響應的中間件裝飾器
