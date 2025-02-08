@@ -89,3 +89,29 @@ class UserService(DatabaseService):
         except Exception as e:
             print(f"Daily check-in Error: {str(e)}")
             raise
+    
+    def daily_check_in_status(self, user_id):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            now = datetime.now()
+            last_check_in = user.get('last_check_in')
+            
+            # 如果有簽到紀錄
+            if last_check_in is not None:
+                # 如果 last_check_in 是字串，轉換為 datetime 對象
+                if isinstance(last_check_in, str):
+                    last_check_in = datetime.strptime(last_check_in, "%Y-%m-%d %H:%M:%S")
+                
+                # 檢查是否為今天
+                return last_check_in.date() == now.date()
+            
+            # 從未簽到過
+            return False
+
+        except Exception as e:
+            print(f"Daily check-in status Error: {str(e)}")
+            raise
+                

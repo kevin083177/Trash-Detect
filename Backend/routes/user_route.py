@@ -33,3 +33,9 @@ def get_record_by_user(user):
 @token_required
 def daliy_check_in(user):
     return UserController.daliy_check_in(user['_id'])
+
+@user_blueprint.route('/checkIn/status', methods=['GET'])
+@log_request
+@token_required
+def daily_check_in_status(user):
+    return UserController.daily_check_in_status(user['_id'])

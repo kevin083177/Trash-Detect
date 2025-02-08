@@ -141,3 +141,25 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(daily_check_in) {str(e)}"
             }, 500
+
+    @staticmethod
+    def daily_check_in_status(user_id):
+        try:
+            status = user_service.daily_check_in_status(user_id)
+            
+            if status is None:
+                return {
+                    "message": "用戶不存在"
+                }, 404
+                
+            return {
+                "body": {
+                    "hasCheckedIn": status
+                }
+            }, 200
+            
+        except Exception as e:
+            print(f"Controller - Daily check-in status Error: {str(e)}")
+            return {
+                "message": "伺服器錯誤"
+            }, 500
