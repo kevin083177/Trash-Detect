@@ -62,14 +62,14 @@ class UserService(DatabaseService):
             if not user:
                 return None
             
-            now = datetime.utcnow()
+            now = datetime.now()
             last_check_in = user.get('last_check_in')
             
             # 如果有簽到時間 檢查是否是同一天
             if last_check_in is not None:
                 # 如果 last_check_in 是字串，轉換為 datetime 對象
                 if isinstance(last_check_in, str):
-                    last_check_in = datetime.utcnow()
+                    last_check_in = datetime.now()
                 
                 if last_check_in.date() == now.date():
                     raise ValueError("今日已簽到")
