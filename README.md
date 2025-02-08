@@ -1,52 +1,83 @@
-# Trash-Detect
+# Trash Detect App
 
-## Backend Architecture
+垃圾檢測應用程式，用於自動識別和分類垃圾類型。
 
-+ ### Application
-    - #### `app.py`: 應用程式入口
-    - #### `config.py`: 應用程式設定
-    
-+ ### Controllers(控制器)
-    - 負責使用者互動，在收到使用者指令後，將結果回覆給使用者，回應內容為 `code`、`message`、`body`
-        * #### `auth_controller`: 登入與註冊系統控制器
-        * #### `user_controller`: 使用者控制器
+## 後端 (Backend)
 
-+ ### Routes(路由層)
-    - 負責管理 API 端點與 URL 路徑配置
-        * #### `auth_route`: 處理認證相關路由
-        * #### `user_route`: 處理使用者相關路由
+### 技術架構
 
-+ ### Services(服務層)
-    - 應用程式的業務邏輯、處理數據處理與業務規則
-        * #### `auth_service`: 認證相關的業務邏輯
-        * #### `user_service`: 使用者相關的業務邏輯
-        * #### `record_service`: 使用者回收記錄相關的業務邏輯
-        * #### `db_service`: 數據庫操作服務
+- Web Framework: Flask
+- 資料庫: MongoDB
+- 認證機制: JWT (JSON Web Token)
+- 日誌系統: Python logging
 
-+ ### Logs(紀錄)
-    - 伺服器的運行記錄、API的Response與Request
-    - 按日期組織的日誌文件（例如：2025-01-22-18.log）
-    - 用於追蹤系統行為與調適問題
+### API 文件
 
-+ ### Middlewares(中介層)
-    - 處理請求在到達路由處理器之前的中間處理邏輯
-        * #### `auth_middleware`: 認證驗證中介
-        * #### `log_middleware`: 日誌記錄中介
+詳細的 API 端點說明請參考: [API Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/API.md)
 
-+ ### Models(模型)
-    - 定義數據結構和數據庫模式
-        * #### `user_model`: 使用者數據結構
-        * #### `record_model`: 回收記錄數據結構
+主要功能包括:
+- 使用者認證與授權
+- 歷史記錄查詢
+- 系統管理功能
 
-+ ### Utils(工具)
-    - 各種通用功能和輔助工具
-        * #### `token`: 生成、驗證 JWT token
-        * #### `reloader`: 伺服器重新加載設定工具
-        * #### `logger_config`: 日誌配置工具
+### 中介軟體文件
 
-+ ### Configuration Files
-    - #### `.env.example`: 環境變數範例文件
-    - #### `.gitignore`: Git 忽略文件配置
-    - #### `requirement.txt`: Python 套件依賴清單
+中介軟體相關說明請參考: [Middleware Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md)
 
-+ ### [API呼叫範例](https://github.com/kevin083177/Trash-Detect/blob/main/API.md)
+實作功能包括:
+- 請求日誌記錄
+- JWT 驗證
+- 錯誤處理
+
+### 安裝與使用說明
+
+1. 安裝相依套件
+```bash
+pip install -r requirements.txt
+```
+
+2. 環境設定
+建立 `.env` 檔案並設定以下參數:
+
+```bash
+# MongoDB 設定
+MONGO_USERNAME="使用者名稱"     # MongoDB 連線用戶名
+MONGO_PASSWORD="密碼"          # MongoDB 連線密碼
+MONGO_HOST="主機位址"          # MongoDB 主機位址 (例如: localhost 或雲端服務位址)
+DB_NAME="資料庫名稱"           # MongoDB 資料庫名稱
+MONGO_OPTIONS="連線選項"       # MongoDB 連線選項 (例如: retryWrites=true&w=majority)
+
+# 日誌設定
+LogPath="logs"                # 日誌檔案儲存路徑
+
+# JWT 設定
+SECRET_KEY="密鑰"             # JWT 加密用密鑰，建議使用強密碼
+
+# Flask 設定
+PORT="埠號"                   # 伺服器監聽埠號 (例如: 8000)
+FLASK_ENV="production"        # 執行環境 (development/production)
+```
+
+3. 切換至後端目錄
+```bash
+cd ./Backend/
+```
+
+4. 啟動伺服器
+```bash
+python app.py
+```
+
+### 錯誤處理
+
+系統錯誤代碼說明:
+- 200: 請求成功
+- 400: 請求參數錯誤
+- 401: 未授權訪問
+- 403: 禁止訪問(權限)
+- 404: 資源不存在
+- 500: 伺服器內部錯誤
+
+
+## 前端 (Frontend)
+
