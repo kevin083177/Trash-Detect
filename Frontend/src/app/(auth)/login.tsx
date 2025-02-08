@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, purchase_api, user_api } from '@/api/api';
@@ -6,6 +6,12 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { tokenStorage } from '@/utils/storage';
 import PasswordInput from '@/components/auth/PasswordInput';
+import ClearableInput from '@/components/auth/ClearableInput';
+
+type ErrorFields = {
+  email?: boolean;
+  password?: boolean;
+};
 
 export default function Login() {
   const { email: initialEmail } = useLocalSearchParams<{ email: string }>();
@@ -13,13 +19,33 @@ export default function Login() {
   const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorFields, setErrorFields] = useState<ErrorFields>({});
   const { setUser } = useAuth();
-  
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMessage('請填寫所有欄位');
-      return;
+
+  const validateForm = () => {
+    const newErrorFields: ErrorFields = {};
+    
+    if (!email) {
+      setErrorMessage('請輸入電子郵件');
+      newErrorFields.email = true;
+      setErrorFields(newErrorFields);
+      return false;
     }
+
+    if (!password) {
+      setErrorMessage('請輸入密碼');
+      newErrorFields.password = true;
+      setErrorFields(newErrorFields);
+      return false;
+    }
+
+    setErrorFields({});
+    setErrorMessage('');
+    return true;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
@@ -34,9 +60,11 @@ export default function Login() {
         setUser(user);
       } else {
         setErrorMessage(response.message);
+        setErrorFields({ email: true, password: true });
       }
     } catch (error) {
       setErrorMessage("伺服器錯誤");
+      setErrorFields({ email: true, password: true });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -70,7 +98,7 @@ export default function Login() {
         }
       });
       const purchase_id: string = String(purchase.body['_id']);
-
+       
       // storage
       tokenStorage.setUserInfo({
         user_id: user_id,
@@ -87,24 +115,33 @@ export default function Login() {
     <View style={styles.container}>
       <Text style={styles.title}>登入</Text>
       
-      <TextInput 
-        style={styles.input}
+      <ClearableInput
         placeholder="電子郵件"
         autoCapitalize="none"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         keyboardType="email-address"
         editable={!isLoading}
+        hasError={errorFields.email}
       />
       
       <PasswordInput
         placeholder="密碼"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         editable={!isLoading}
+        hasError={errorFields.password}
       />
 
-      { errorMessage && 
+      {errorMessage && 
         <Text style={styles.errorMessage}>{errorMessage}</Text>
       }
 
@@ -117,10 +154,11 @@ export default function Login() {
           {isLoading ? '登入中...' : '登入'}
         </Text>
       </TouchableOpacity>
-      
-      <Link href="/register" style={styles.link}>
-        還沒有帳號？
-      </Link>
+      { !isLoading &&
+        <Link href="/register" style={styles.link}>
+          還沒有帳號？
+        </Link>
+      }
     </View>
   );
 }
@@ -136,13 +174,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
   },
   errorMessage: {
     color: '#DC3545',

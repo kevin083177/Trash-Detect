@@ -1,9 +1,17 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { asyncPost } from '@/utils/fetch';
 import { auth_api } from '@/api/api';
 import PasswordInput from '@/components/auth/PasswordInput';
+import ClearableInput from '@/components/auth/ClearableInput';
+
+type ErrorFields = {
+  username?: boolean;
+  email?: boolean;
+  password?: boolean;
+  confirmPassword?: boolean;
+};
 
 export default function Register() {
   const [username, setUsername] = useState<string>('');
@@ -12,38 +20,49 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errorFields, setErrorFields] = useState<ErrorFields>({});
 
   const validateForm = () => {
-    if (!username || !email || !password || !confirmPassword) {
-      setErrorMessage('請填寫所有欄位');
+    const newErrorFields: ErrorFields = {};
+    
+    if (!username || username.length < 6 || username.length > 12) {
+      setErrorMessage('使用者名稱必須介於6至12字元');
+      newErrorFields.username = true;
+      setErrorFields(newErrorFields);
       return false;
     }
 
-    if (username.length < 6 || username.length > 12) {
-      setErrorMessage('使用者名稱必須介於6至12字元');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setErrorMessage('請輸入有效的電子郵件地址');
+      newErrorFields.email = true;
+      setErrorFields(newErrorFields);
+      return false;
+    }
+
+    if (!password || password.length < 6) {
+      setErrorMessage('密碼長度至少需要6個字元');
+      newErrorFields.password = true;
+      newErrorFields.confirmPassword = true;
+      setErrorFields(newErrorFields);
       return false;
     }
 
     if (password !== confirmPassword) {
       setErrorMessage('密碼不一致');
+      newErrorFields.password = true;
+      newErrorFields.confirmPassword = true;
+      setErrorFields(newErrorFields);
       return false;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMessage('請輸入有效的電子郵件地址');
-      return false;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage('密碼長度至少需要6個字元');
-      return false;
-    }
-
+    setErrorFields({});
+    setErrorMessage('');
     return true;
   };
 
   const handleRegister = async () => {
+    const newErrorFields: ErrorFields = {};
     if (!validateForm()) return;
 
     try {
@@ -56,9 +75,21 @@ export default function Register() {
           "userRole": 'user'
         }
       });
-
-      // console.log(response);
-
+      if (response.status === 409) {
+        if (response.message === "使用者名稱已存在") {
+          newErrorFields.username = true;
+          setErrorFields(newErrorFields);
+          setErrorMessage('使用者名稱已存在');
+          return;
+        }
+        else if (response.message === "電子郵件已被註冊") {
+          newErrorFields.email = true;
+          setErrorFields(newErrorFields);
+          setErrorMessage('電子郵件已被註冊');
+          return;
+        }
+        
+      }
       Alert.alert('成功', '註冊成功！', [
         {
           text: '確定',
@@ -79,39 +110,57 @@ export default function Register() {
     <View style={styles.container}>
       <Text style={styles.title}>註冊</Text>
       
-      <TextInput 
-        style={styles.input}
+      <ClearableInput 
         placeholder="使用者名稱"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => {
+          setUsername(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         editable={!isLoading}
+        hasError={errorFields.username}
       />
       
-      <TextInput 
-        style={styles.input}
+      <ClearableInput 
         placeholder="電子郵件"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         autoCapitalize="none"
         keyboardType="email-address"
         editable={!isLoading}
+        hasError={errorFields.email}
       />
       
       <PasswordInput
         placeholder="密碼"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         editable={!isLoading}
+        hasError={errorFields.password}
       />
       
       <PasswordInput
         placeholder="確認密碼"
         value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        onChangeText={(text) => {
+          setConfirmPassword(text);
+          setErrorFields({});
+          setErrorMessage('');
+        }}
         editable={!isLoading}
+        hasError={errorFields.confirmPassword}
       />
       
-      { errorMessage && 
+      {errorMessage && 
         <Text style={styles.errorMessage}>{errorMessage}</Text>
       }
 
@@ -125,9 +174,11 @@ export default function Register() {
         </Text>
       </TouchableOpacity>
       
-      <Link href="/login" style={styles.link}>
-        已有帳號？
-      </Link>
+      { !isLoading &&
+        <Link href="/login" style={styles.link}>
+          已有帳號？
+        </Link>
+      }
     </View>
   );
 }
@@ -143,13 +194,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
   },
   errorMessage: {
     color: '#DC3545',
