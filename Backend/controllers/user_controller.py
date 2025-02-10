@@ -51,14 +51,14 @@ class UserController:
             if data['username'] != current_user['username']:
                 if auth_service.check_username_exists(data['username']):
                     return {
-                        "message": "使用者名稱已存在",
+                        "message": "使用者名稱已被使用",
                     }, 409
 
             # 只在 email 有變更時才檢查重複
             if data['email'] != current_user['email']:
                 if auth_service.check_email_exists(data['email']):
                     return {
-                        "message": "電子郵件已被註冊",
+                        "message": "電子郵件已被使用",
                     }, 409
             
             user = user_service.update_user(user_id, data['username'], data['email'], data['password'])
