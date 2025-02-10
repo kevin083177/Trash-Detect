@@ -169,6 +169,59 @@
     }
     ```
 
+### Update User
++ **URL**
+    + `PUT users/update`
++ #### Request
+    Headers:
+    ```json
+    {
+        "Authorization": "Bearer token" 
+    }
+    ```
+    Body:
+    ```json
+    {
+        "username": "test1234",
+        "email": "test1234@gmail.com",
+        "password": "123456"
+    }
++ #### Response
+    - 200
+    ```json
+    {
+        "message": "使用者資料更新成功",
+        "body": {
+            "_id": "67a6f1e103e184aefa53767f",
+            "created_at": "Sat, 08 Feb 2025 13:55:45 GMT",
+            "email": "test1234@gmail.com",
+            "last_check_in": "Sun, 09 Feb 2025 16:29:43 GMT",
+            "money": 200,
+            "userRole": "user",
+            "username": "test1234"
+        }
+    }
+    ```
+    - 401
+    - 404
+    ```json
+    {
+        "message": "無法找到使用者"
+    }
+    ```
+    - 409
+    ```json
+    {
+        "message": "電子郵件已被使用 / 使用者名稱已被使用"
+    }
+    ```
+    - 500
+    ```json
+    {
+        "message": "伺服器錯誤(update_user) {error}"
+    }
+    ```
+
 ### Get User Record
 + **URL**
     + `GET users/record/<user_id>`
