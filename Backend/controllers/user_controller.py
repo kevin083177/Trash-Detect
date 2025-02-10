@@ -1,8 +1,9 @@
-from services import UserService, RecordService
+from services import UserService, RecordService, AuthService
 from config import Config
 from bson import ObjectId
 from flask import request
 
+auth_service = AuthService(Config.MONGO_URI)
 user_service = UserService(Config.MONGO_URI)
 record_service = RecordService(Config.MONGO_URI)
 
@@ -25,6 +26,58 @@ class UserController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(get_user) {str(e)}"
+            }, 500
+
+    @staticmethod
+    def update_user(user_id):
+        try:
+            data = request.get_json()
+            required_fields = ['username', 'password', 'email']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                return {
+                    "message": f"缺少: {', '.join(missing_fields)}",
+                }, 400
+            
+            # 先獲取當前使用者資料
+            current_user = user_service.get_user(user_id)
+            if not current_user:
+                return {
+                    "message": "無法找到使用者"
+                }, 404
+
+            # 只在 username 有變更時才檢查重複
+            if data['username'] != current_user['username']:
+                if auth_service.check_username_exists(data['username']):
+                    return {
+                        "message": "使用者名稱已存在",
+                    }, 409
+
+            # 只在 email 有變更時才檢查重複
+            if data['email'] != current_user['email']:
+                if auth_service.check_email_exists(data['email']):
+                    return {
+                        "message": "電子郵件已被註冊",
+                    }, 409
+            
+            user = user_service.update_user(user_id, data['username'], data['email'], data['password'])
+            
+            if user:
+                user['_id'] = str(user['_id'])
+                user.pop("password", None)
+                return {
+                    "message": "使用者資料更新成功",
+                    "body": user
+                }, 200
+            
+            return {
+                "message": "無法找到使用者"
+            }, 404
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(update_user) {str(e)}"
             }, 500
 
     @staticmethod

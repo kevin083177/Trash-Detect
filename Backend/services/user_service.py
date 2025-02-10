@@ -1,6 +1,7 @@
 from bson import ObjectId
 from services import DatabaseService
 from datetime import datetime
+import bcrypt
 
 class UserService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -13,6 +14,27 @@ class UserService(DatabaseService):
 
     def get_all_users(self):
         return list(self.users.find())
+    
+    def update_user(self, user_id, username, email, password):
+        hashed_password = bcrypt.hashpw(
+            password.encode('utf-8'), 
+            bcrypt.gensalt()
+        ).decode('utf-8')
+        
+        update_data = {
+            "$set": {
+                "username": username,
+                "email": email,
+                "password": hashed_password
+            }
+        }
+        user = self.users.find_one_and_update(
+            {"_id": user_id},
+            update_data,
+            return_document=True
+        )
+        
+        return user
     
     def _update_money_add(self, user_id, money):
         return self.users.update_one(
