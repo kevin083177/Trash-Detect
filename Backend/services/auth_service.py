@@ -1,4 +1,3 @@
-
 import bcrypt
 from models import User
 from utils import generate_token, logger
