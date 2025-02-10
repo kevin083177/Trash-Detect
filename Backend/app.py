@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from config import Config, init_db
 from routes import register_blueprints
-from utils.logger_config import logger
+from utils import logger
 # from utils.reloader import start_file_watcher
 from gevent import pywsgi
 import sys, signal
@@ -32,7 +32,8 @@ def create_app():
         logger.info(f"success: connect to mongoDB @{Config.MONGO_HOST}")
         
         # Blueprint
-        register_blueprints(app)
+        with app.app_context():
+            register_blueprints(app)
         
         # Log server startup
         logger.info(f"listening on *:{Config.PORT}")
@@ -58,7 +59,7 @@ if __name__ == "__main__":
             host='0.0.0.0',
             port=Config.PORT,
             debug=True,
-            use_reloader=False
+            use_reloader=True
         )
         # finally:
         #     observer.stop()
