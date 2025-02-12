@@ -1,3 +1,9 @@
+// 關閉 Tab Bar 的路由
+export const HIDE_TAB_BAR_PATHS = [
+  'setting',
+]
+
+// Tab Bar styles
 export const TAB_SCREEN_OPTIONS = {
   headerShown: false,
   tabBarStyle: {
@@ -12,7 +18,8 @@ export const TAB_SCREEN_OPTIONS = {
   },
 } as const;
 
-export const TAB_SCREENS = [
+// Tab bar icon with navigation/TabBarIcon
+export const USER_TAB_SCREENS = [
   {
     name: 'index',
     title: '首頁',
@@ -53,4 +60,31 @@ export const TAB_SCREENS = [
       outline: 'person-outline',
     },
   },
+] as const;
+
+export const ADMIN_TAB_SCREENS = [
+  {
+    name: 'index',
+    title: '總覽',
+    icon: {
+      focused: 'pie-chart',
+      outline: 'pie-chart-outline',
+    },
+  },
+  {
+    name: 'users',
+    title: '用戶管理',
+    icon: {
+      focused: 'people',
+      outline: 'people-outline',
+    },
+  },
+  {
+    name: 'products',
+    title: '商品管理',
+    icon: {
+      focused: 'bag-check',
+      outline: 'bag-check-outline'
+    }
+  }
 ] as const;
