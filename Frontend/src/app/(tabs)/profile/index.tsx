@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { tokenStorage } from '@/utils/storage';
 import { useAuth } from '@/hooks/auth';
 import LoadingModal from '@/components/LoadingModal';
+import { router } from 'expo-router';
 
 interface RecyclingItem {
   label: string;
@@ -20,7 +21,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string>('');
-  const { setUser } = useAuth();
+  const { user, isAdminMode, toggleAdminMode, setUser } = useAuth();
   // get token
   useEffect(() => {
     const getToken = async () => {
@@ -117,6 +118,10 @@ export default function Profile() {
     );
   }
 
+  const handleSettingsPress = () => {
+    router.push('/(tabs)/profile/settings');
+  };
+
   // 當畫面取得焦點時 取得record, user 資料
   useFocusEffect(
     useCallback(() => {
@@ -137,7 +142,7 @@ export default function Profile() {
           <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>{username}</Text>
           <Text style={{fontSize: 14}}>垃圾回收小達人</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleSettingsPress}>
           <Ionicons name="settings-outline" size={30} color="#666" style={styles.settings} />
         </TouchableOpacity>
       </View>
@@ -153,6 +158,26 @@ export default function Profile() {
           />
         ))}
       </View>
+      {user?.role === 'admin' && (
+        <TouchableOpacity 
+          style={[
+            styles.adminModeButton, 
+            { 
+              backgroundColor: isAdminMode ? '#4CAF50' : '#2196F3' 
+            }
+          ]}
+          onPress={toggleAdminMode}
+        >
+          <Ionicons 
+            name={isAdminMode ? "shield" : "shield-outline"} 
+            size={24} 
+            color="white" 
+          />
+          <Text style={styles.adminModeButtonText}>
+            {isAdminMode ? '管理員模式已開啟' : '切換到管理員模式'}
+          </Text>
+        </TouchableOpacity>
+      )}
         <TouchableOpacity style={styles.logoutContainer} onPress={() => handleLogout()}>
           <Ionicons name="log-out-outline" size={24} color="red" />
           <Text style={styles.logoutText}>登出</Text>
@@ -212,5 +237,18 @@ const styles = StyleSheet.create({
       marginLeft: 8,
       fontSize: 14,
       color: 'red',
+  },
+  adminModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
+    gap: 10,
+  },
+  adminModeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
