@@ -20,18 +20,34 @@ class Config:
     ENV = os.getenv("FLASK_ENV")
     PORT = int(os.getenv("PORT"))
 
-    # 組合 MongoDB 連接 URI
+    # Cloudinary 設定
+    CLOUD_NAME = os.getenv('CLOUD_NAME')
+    CLOUD_KEY = os.getenv('CLOUD_KEY')
+    CLOUD_SECRET = os.getenv('CLOUD_SECRET')
+
+    # MongoDB 連接 URI
     MONGO_URI = (
         f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}"
         f"@{MONGO_HOST}/?{MONGO_OPTIONS}"
     )
     
-# 資料庫連接函數
-def init_db():
-    try:
-        client = MongoClient(Config.MONGO_URI)
-        db = client[Config.DB_NAME]
-    except Exception as e:
-        logger.error(f"MongoDB connection failed: {str(e)}")
-        raise e
-    return db
+    @staticmethod
+    def get_cloudinary_config() -> dict:
+        """取得 Cloudinary 設定"""
+        return {
+            'cloud_name': Config.CLOUD_NAME,
+            'api_key': Config.CLOUD_KEY,
+            'api_secret': Config.CLOUD_SECRET,
+            'secure': True
+        }
+
+    @staticmethod
+    def init_db() -> MongoClient:
+        """初始化 MongoDB 連接"""
+        try:
+            client = MongoClient(Config.MONGO_URI)
+            db = client[Config.DB_NAME]
+            return db
+        except Exception as e:
+            logger.error(f"MongoDB 連接失敗: {str(e)}")
+            raise e
