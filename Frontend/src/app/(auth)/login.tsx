@@ -52,12 +52,17 @@ export default function Login() {
       const response = await asyncPost(auth_api.login, {
         body: { email, password }
       });
-
+  
       if (response.status === 200) {
-        const user = response.body;
-        await tokenStorage.setToken(user.token);
-        fetchUserProfile(user.token);
-        setUser(user);
+        const userData = {
+          ...response.body.user,  // 所有用戶資料
+          role: response.body.user.userRole,  // 映射 userRole 到 role
+          token: response.body.token  // 保留 token
+        };
+        
+        await tokenStorage.setToken(userData.token);
+        fetchUserProfile(userData.token);
+        setUser(userData);
       } else {
         setErrorMessage(response.message);
         setErrorFields({ email: true, password: true });
