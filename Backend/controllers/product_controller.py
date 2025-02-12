@@ -1,10 +1,15 @@
-from services import ProductService
+from services import ProductService, ImageService
 from config import Config
 from flask import request
+import json
 
-product_service = ProductService(Config.MONGO_URI)
+image_service = ImageService(Config.get_cloudinary_config())
+product_service = ProductService(Config.MONGO_URI, image_service)
 
 class ProductController:
+    # 圖片設定
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    MAX_FILE_SIZE = 5 * 1024 * 1024 # 5 MB
     @staticmethod
     def get_product_by_id(user, product_id):
         try:
@@ -28,10 +33,49 @@ class ProductController:
     @staticmethod
     def add_product():
         try:
-            data = request.get_json()
+            # 檢查是否有文件上傳
+            if 'image' not in request.files:
+                return {
+                    "message": "缺少商品圖片"
+                }, 400
+                
+            image = request.files['image']
             
-            required_fields = ['name', 'description', 'price', 'recycle_requirement']
-            missing_fields = [field for field in required_fields if field not in data]
+            # 檢查文件名是否為空
+            if image.filename == '':
+                return {
+                    "message": "未選擇圖片"
+                }, 400
+                
+            # 檢查文件類型
+            if not ProductController._allowed_file(image.filename):
+                return {
+                    "message": f"不支援的圖片格式，允許的格式：{', '.join(ProductController.ALLOWED_EXTENSIONS)}"
+                }, 400
+                
+            # 檢查文件大小
+            if request.content_length > ProductController.MAX_FILE_SIZE:
+                return {
+                    "message": f"圖片大小超過限制（最大 {ProductController.MAX_FILE_SIZE // 1024 // 1024}MB）"
+                }, 400
+
+            # 從表單獲取商品數據
+            try:
+                data = {
+                    'name': request.form.get('name'),
+                    'description': request.form.get('description'),
+                    'price': int(request.form.get('price', 0)),
+                    'category': request.form.get('category'),
+                    'recycle_requirement': json.loads(request.form.get('recycle_requirement', '{}'))
+                }
+            except (ValueError, json.JSONDecodeError) as e:
+                return {
+                    "message": "表單數據格式錯誤"
+                }, 400
+            
+            # 檢查必要欄位
+            required_fields = ['name', 'description', 'price', 'recycle_requirement', 'category']
+            missing_fields = [field for field in required_fields if not data.get(field)]
             
             if missing_fields:
                 return {
@@ -44,7 +88,8 @@ class ProductController:
                     "message": "商品已存在"
                 }, 409
             
-            result = product_service.add_product(data)
+            # 新增商品（包含圖片上傳）
+            result = product_service.add_product(data, image)
             return {
                 "message": "新增商品成功",
                 "body": result
@@ -60,6 +105,7 @@ class ProductController:
                 "message": f"伺服器錯誤(add_product) {str(e)}",
             }, 500
     
+    @staticmethod
     def delete_product_by_id():
         try:
             data = request.get_json()
@@ -86,3 +132,9 @@ class ProductController:
             return {
                 "message": f"伺服器錯誤(delete_product) {str(e)}",
             }, 500
+            
+    @staticmethod
+    def _allowed_file(filename):
+        """檢查文件副檔名是否允許"""
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in ProductController.ALLOWED_EXTENSIONS

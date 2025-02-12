@@ -1,27 +1,72 @@
 from models import Product
 from services import DatabaseService
+from .image_service import ImageService
 from bson import ObjectId
+from typing import Optional
 
 class ProductService(DatabaseService):
     VALID_CATEGORIES = {'paper', 'plastic', 'cans', 'containers', 'bottles'}
     
-    def __init__(self, mongo_uri):
+    def __init__(self, mongo_uri: str, image_service = None):
+        """初始化 ProductService
+        
+        Args:
+            mongo_uri: MongoDB 連接字串
+            image_service: 用於處理圖片上傳的 ImageService 實例，預設為 None
+        """
         super().__init__(mongo_uri)
         self.products = self.collections['products']
         self.purchase = self.collections['purchases']
         
-    def add_product(self, product_data):
+        if image_service is not None and not isinstance(image_service, ImageService):
+            raise TypeError("image_service 必須是 ImageService")
+        self.image_service = image_service
+        
+    def add_product(self, product_data: dict, image_file = None) -> dict:
         """新增商品"""
         try:
+            # 先檢查是否有 image_service
+            if not self.image_service:
+                raise ValueError("Image service not initialized")
+                
             self._validate_recycle_requirement(product_data['recycle_requirement'])
             product = Product(**product_data)
             
             if not isinstance(product.price, int):
                 raise ValueError("price 必須為整數")
             
+            if not image_file:
+                raise ValueError("必須上傳商品圖片")
+            
+            # public_id 暫時用 product name 代替 Todo: 改自動生成
+            public_id = product_data['name']
+            folder = product_data.get('category', 'others')
+            
+            image_result = self.image_service.upload_image(
+                image_file=image_file, 
+                public_id=public_id,
+                folder=folder
+            )
+            
+            product_data['image'] = {
+                'public_id': image_result['public_id'],
+                'url': image_result['url'],
+                'thumbnail_url': image_result['thumbnail_url'],
+                'folder': folder
+            }
+            
+            product = Product(**product_data)
             result = self.products.insert_one(product.to_dict())
+            
             return self.get_product(result.inserted_id)
+            
         except Exception as e:
+            # 如果在新增商品過程中發生錯誤，且圖片已上傳，則刪除已上傳的圖片
+            if hasattr(self, 'image_service') and self.image_service and 'image_result' in locals():
+                try:
+                    self.image_service.delete_image(image_result['public_id'])
+                except:
+                    pass
             raise e
     
     def delete_product_by_id(self, product_id):
@@ -31,7 +76,14 @@ class ProductService(DatabaseService):
             product = self.get_product(product_id)
             
             if not product:
-                return False
+                return False, 0
+            
+            # 刪除 Cloudinary 的圖片
+            if 'image' in product and 'public_id' in product['image']:
+                try:
+                    self.image_service.delete_image(product['image']['public_id'])
+                except Exception as e:
+                    print(f"Delete image failed: {str(e)}")
             
             # 從所有用戶的購買紀錄中移除此商品
             updated_user = self.purchase.update_many(
