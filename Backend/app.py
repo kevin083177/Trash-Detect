@@ -1,12 +1,11 @@
 from flask import Flask
 from flask_cors import CORS
-from config import Config, init_db
+from config import Config
 from routes import register_blueprints
 from utils import logger
 # from utils.reloader import start_file_watcher
 from gevent import pywsgi
 import sys, signal
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -21,11 +20,11 @@ def signal_handler(sig, frame):
 
 def create_app():
     try:
-        # Load Flask settings
+        # Load Config
         app.config.from_object(Config)
         
         # Initial MongoDB connection store in app.config
-        mongodb = init_db()
+        mongodb = Config.init_db()
         app.config["MongoDB"] = mongodb
         
         # Log successful MongoDB connection
