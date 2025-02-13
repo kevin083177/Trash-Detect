@@ -74,8 +74,10 @@ class ProductController:
                 }, 400
             
             # 檢查必要欄位
-            required_fields = ['name', 'description', 'price', 'recycle_requirement', 'category']
+            required_fields = ['name', 'description', 'category']
             missing_fields = [field for field in required_fields if not data.get(field)]
+            if 'price' not in data:
+                missing_fields.append('price')
             
             if missing_fields:
                 return {
@@ -138,3 +140,31 @@ class ProductController:
         """檢查文件副檔名是否允許"""
         return '.' in filename and \
                filename.rsplit('.', 1)[1].lower() in ProductController.ALLOWED_EXTENSIONS
+               
+    @staticmethod
+    def get_products_by_folder(folder):
+        try:
+            # 暫時設定主題
+            valid_folders = {'主題1', '主題2', '主題3', '主題4', '主題5'}
+            
+            if folder not in valid_folders:
+                return {
+                    "message": f"不存在的主題分類，有效的主題：{', '.join(valid_folders)}"
+                }, 400
+                
+            products = product_service.get_products_by_folder(folder)
+            
+            if products:
+                return {
+                    "message": "成功找到商品列表",
+                    "body": products
+                }, 200
+            
+            return {
+                "message": "此分類尚無商品"
+            }, 404
+                
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_products_by_folder) {str(e)}"
+            }, 500

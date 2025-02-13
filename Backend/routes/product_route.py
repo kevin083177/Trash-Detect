@@ -22,3 +22,9 @@ def add_product():
 @log_request
 def delete_product_by_id():
     return ProductController.delete_product_by_id()
+
+@product_blueprint.route('/folder/<folder>', methods=['GET'])
+@log_request
+@token_required
+def get_products_by_folder(user, folder):
+    return ProductController.get_products_by_folder(folder)

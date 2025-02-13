@@ -123,9 +123,9 @@ class ProductService(DatabaseService):
             }
         """
         if not requirement:  # 允許空的回收需求
-           return
-           
-       # 檢查是否只包含有效類別
+            return
+            
+        # 檢查是否只包含有效類別
         invalid_categories = set(requirement.keys()) - self.VALID_CATEGORIES
         if invalid_categories:
             raise TypeError(f"不存在的分類: { invalid_categories }")
@@ -152,3 +152,17 @@ class ProductService(DatabaseService):
         except Exception as e:
             print(f"Get Product Name Error: {str(e)}")
             raise
+    
+    def get_products_by_folder(self, folder):
+        """取得特定資料夾(分類)的所有商品"""
+        try:
+            results = list(self.products.find({"image.folder": folder}))
+            
+            # 轉換 ObjectId 為字串 (因為不是單個 在controller層轉換會較麻煩)
+            for result in results:
+                result['_id'] = str(result['_id'])
+                
+            return results
+        except Exception as e:
+            print(f"Get Products By Folder Error: {str(e)}")
+            return None
