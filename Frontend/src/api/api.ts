@@ -22,6 +22,7 @@ export const admin_api = {
 export const user_api = {
     get_user: `${user_url}/`,
     get_record: `${user_url}/record`,
+    update_user: `${user_url}/update`,
     add_money: `${user_url}/money/add`,
     subtract_money: `${user_url}/money/subtract`,
     daily_check_in: `${user_url}/checkIn`,
@@ -41,6 +42,7 @@ export const purchase_api = {
 
 export const product_api = {
     get_product: `${product_url}/`,
+    get_product_by_folder: `${product_url}/folder`,
     add_product: `${product_url}/add_product`,
     delete_product: `${product_url}/delete_product`,
 } as const;
