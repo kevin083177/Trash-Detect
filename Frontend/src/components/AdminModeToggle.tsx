@@ -24,8 +24,7 @@ export function AdminModeToggle() {
 const styles = StyleSheet.create({
   button: {
     position: 'absolute',
-    top: 50,
-    right: 20,
+    bottom: 60,
     zIndex: 1000,
     padding: 10,
     borderRadius: 8,
