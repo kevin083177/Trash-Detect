@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useAuth } from '@/hooks/auth';
 
 export function AdminModeToggle() {

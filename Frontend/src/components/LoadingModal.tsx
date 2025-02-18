@@ -1,4 +1,4 @@
-import { View, Modal, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { View, Modal, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function LoadingModal({ visible, text }: { visible: boolean, text: string }) {
   return (

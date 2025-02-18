@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, purchase_api, user_api } from '@/api/api';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { tokenStorage } from '@/utils/storage';
 import PasswordInput from '@/components/auth/PasswordInput';

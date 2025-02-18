@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import React, { View } from 'react-native';
 import { Tabs, usePathname } from 'expo-router';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { 

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import RecyclingBar from '@/components/profile/RecyclingBar';
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, user_api } from '@/api/api';
 import { useFocusEffect } from '@react-navigation/native';

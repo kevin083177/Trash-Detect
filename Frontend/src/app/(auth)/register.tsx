@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { asyncPost } from '@/utils/fetch';
 import { auth_api } from '@/api/api';
 import PasswordInput from '@/components/auth/PasswordInput';
