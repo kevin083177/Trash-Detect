@@ -23,6 +23,12 @@ def add_product():
 def delete_product_by_id():
     return ProductController.delete_product_by_id()
 
+@product_blueprint.route('/folders', methods=['GET'])
+@log_request
+@token_required
+def get_all_theme_folders(user):
+    return ProductController.get_all_theme_folders(user)
+
 @product_blueprint.route('/folder/<folder>', methods=['GET'])
 @log_request
 @token_required

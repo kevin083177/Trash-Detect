@@ -142,10 +142,29 @@ class ProductController:
                filename.rsplit('.', 1)[1].lower() in ProductController.ALLOWED_EXTENSIONS
                
     @staticmethod
+    def get_all_theme_folders(user):
+        try:
+            folders = product_service.get_all_theme_folder()
+            
+            if folders:
+                return {
+                    "message": "成功找到所有商品的資料夾",
+                    'body': folders
+                }, 200
+
+            return {
+                "message": "無法找到任何資料夾"
+            }, 404
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_all_theme_folders) {str(e)}"
+            }, 500
+            
+    @staticmethod
     def get_products_by_folder(folder):
         try:
-            # 暫時設定主題
-            valid_folders = {'主題1', '主題2', '主題3', '主題4', '主題5'}
+            valid_folders = product_service.get_all_theme_folder()
             
             if folder not in valid_folders:
                 return {

@@ -45,4 +45,5 @@ export const product_api = {
     get_product_by_folder: `${product_url}/folder`,
     add_product: `${product_url}/add_product`,
     delete_product: `${product_url}/delete_product`,
+    get_all_theme: `${product_url}/folders`
 } as const;
