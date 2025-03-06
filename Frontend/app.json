@@ -56,6 +56,12 @@
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
+      ],
+      [
+        "react-native-fast-tflite",
+        {
+          "enableAndroidGpuLibraries": true
+        }
       ]
     ],
     "experiments": {

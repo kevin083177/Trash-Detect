@@ -8,11 +8,12 @@ import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native
 import Toast from '@/components/Toast';
 import dailyTips from '@/assets/data/daily_tips.json';
 import { router } from 'expo-router';
+import Headers from '@/components/Headers';
 
 export default function Index() {
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string>('');
-  const [money, setMoney] = useState<number>();
+  const [money, setMoney] = useState<number>(0);
   const [showToast, setShowToast] = useState(false);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [notification, setNotification] = useState<{
@@ -209,21 +210,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.userSection} onPress={() => router.push('/profile')}>
-          <Ionicons name="person-outline" size={24} color="black" />
-          <Text style={styles.userName}>{username}</Text>
-        </TouchableOpacity>
-        <View style={styles.coinContainer}>
-          <Ionicons name="logo-usd" size={20} color="#FFD700" />
-          <Text style={styles.coinText}>{money}</Text>
-        </View>
-        <View style={styles.shopIcon}>
-          <Ionicons name="storefront-outline" size={24} color="black" />
-          <Text style={styles.smallText}>SHOP</Text>
-        </View>
-      </View>
+      <Headers router={router} username={username} money={money} />
 
       {/* Product Building Area */}
       <TouchableOpacity 
@@ -333,13 +320,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#B7791F', // 金幣數字顏色
-  },
-  shopIcon: {
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
   },
   smallText: {
     fontSize: 12,
