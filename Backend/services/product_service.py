@@ -152,7 +152,23 @@ class ProductService(DatabaseService):
         except Exception as e:
             print(f"Get Product Name Error: {str(e)}")
             raise
-    
+    def get_all_theme_folder(self):
+        try:
+            pipeline = [
+                {"$match": {"image.folder": {"$exists": True}}},  # 確保image.folder欄位存在
+                {"$group": {"_id": "$image.folder"}},  # 以folder欄位進行分組
+                {"$sort": {"_id": 1}}  # 按照資料夾名稱進行排序
+            ]
+            results = list(self.products.aggregate(pipeline))
+            
+            folders = [result["_id"] for result in results]
+            
+            return folders
+
+        except Exception as e:
+            print(f"Get All Theme Folder Error: {str(e)}")
+            raise 
+             
     def get_products_by_folder(self, folder):
         """取得特定資料夾(分類)的所有商品"""
         try:
