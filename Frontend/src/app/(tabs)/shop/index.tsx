@@ -1,10 +1,10 @@
-import { product_api, purchase_api, user_api } from '@/api/api';
+import { purchase_api, theme_api, user_api } from '@/api/api';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { tokenStorage } from '@/utils/storage';
-import React, { ReactNode, useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, SafeAreaView, Alert } from 'react-native';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import Headers from '@/components/Headers';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import LoadingModal from '@/components/LoadingModal';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/interface/Product';
@@ -34,19 +34,27 @@ export default function Shop(): ReactNode {
   // 儲存已購買產品的 ID
   const [purchasedProductIds, setPurchasedProductIds] = useState<string[]>([]);
   
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchUserProfile = async () => {
-    const response = await asyncGet(user_api.get_user, {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
-    });
+    if (!token) return;
     
-    if (response) {
-      setUsername(response.body.username);
-      setMoney(response.body.money);
-    }
-    else {
-      Alert.alert("錯誤", "無法連接至伺服器");
+    try {
+      const response = await asyncGet(user_api.get_user, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+      });
+      
+      if (response) {
+        setUsername(response.body.username);
+        setMoney(response.body.money);
+      }
+      else {
+        Alert.alert("錯誤", "無法連接至伺服器");
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
     }
   };
   
@@ -62,7 +70,6 @@ export default function Shop(): ReactNode {
       });
       
       if (response && response.body) {
-        // 假設 response.body 是包含產品 ID 的陣列
         const purchasedIds = response.body.product.map((item: any) => item._id);
         // console.log(purchasedIds);
         setPurchasedProductIds(purchasedIds);
@@ -77,7 +84,7 @@ export default function Shop(): ReactNode {
     
     try {
       setLoading(true);
-      const response = await asyncGet(product_api.get_all_theme, {
+      const response = await asyncGet(theme_api.get_all_themes, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -111,8 +118,7 @@ export default function Shop(): ReactNode {
     if (!token) return;
     
     try {
-      // 直接使用 API 呼叫來獲取產品
-      const response = await asyncGet(`${product_api.get_product_by_folder}/${encodeURIComponent(theme)}`, {
+      const response = await asyncGet(`${theme_api.get_theme_products}/${encodeURIComponent(theme)}/products`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -140,7 +146,6 @@ export default function Shop(): ReactNode {
     router.push(`/shop/theme?theme=${encodeURIComponent(theme)}`);
   };
   
-  // Handler for product press
   const handleProductPress = (product: Product) => {
     setSelectedProduct(product);
     setDetailModalVisible(true);
@@ -202,8 +207,27 @@ export default function Shop(): ReactNode {
     return money >= productPrice;
   };
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    
+    try {
+      // 刷新所有數據
+      await Promise.all([
+        fetchUserProfile(),
+        fetchThemes(),
+        fetchPurchasedProducts()
+      ]);
+    } catch (error) {
+      console.error('Refresh error:', error);
+      Alert.alert('刷新失敗', '請檢查網絡連接後重試');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [token]);
+
+  // 獲取 token
   useEffect(() => {
-    const getTokenAndFetchThemes = async () => {
+    const getToken = async () => {
       try {
         const storedToken = await tokenStorage.getToken();
         setToken(storedToken as string);
@@ -213,16 +237,23 @@ export default function Shop(): ReactNode {
       }
     };
     
-    getTokenAndFetchThemes();
+    getToken();
   }, []);
   
   useEffect(() => {
     if (token) {
       fetchThemes();
-      fetchUserProfile();
       fetchPurchasedProducts();
     }
   }, [token]);
+  
+  useFocusEffect(
+    useCallback(() => {
+      if (token) {
+        fetchUserProfile();
+      }
+    }, [token])
+  );
 
   const renderProductItem = ({ item, index }: { item: Product, index: number }) => {
     const purchased = isProductPurchased(item._id);
@@ -320,13 +351,19 @@ export default function Shop(): ReactNode {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Headers username={username} money={money} router={router} showShop={false} />
+      <Headers username={username} money={money} router={router} showShop={false} showBackpack={false} />
       
       <FlatList
         data={themes}
         renderItem={renderThemeSection}
         keyExtractor={(item, index) => `theme-${index}`}
         contentContainerStyle={styles.mainContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          /> 
+        }
       />
       
       {selectedProduct && (
@@ -391,7 +428,6 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#FFCCBC',
     borderRadius: 8,
     marginBottom: 6,
   },
@@ -418,7 +454,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#B7791F',
   },
-  // 已購買產品的標示
   purchasedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
