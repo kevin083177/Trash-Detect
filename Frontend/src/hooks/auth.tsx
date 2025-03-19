@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAdminMode(prev => {
         const newMode = !prev;
         if (newMode) {
-          router.replace('/admin/users');
+          router.replace('/admin' as any);
         } else {
           router.replace('/');
         }
