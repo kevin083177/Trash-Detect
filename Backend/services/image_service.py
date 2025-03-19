@@ -5,6 +5,9 @@ from typing import Optional, Dict, Any
 import os
 
 class ImageService:
+    # 圖片設定
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    MAX_FILE_SIZE = 5 * 1024 * 1024 # 5 MB
     def __init__(self, config: dict):
         """初始化 Cloudinary 設定
         
@@ -29,6 +32,7 @@ class ImageService:
             Dict 包含上傳結果，包括原始 URL 和縮圖 URL
         """
         try:
+            
             # 準備上傳參數
             upload_options = {
                 "public_id": public_id,
@@ -94,3 +98,9 @@ class ImageService:
             return url
         except Exception as e:
             raise Exception(f"獲取優化 URL 失敗: {str(e)}")
+
+    @staticmethod
+    def _allowed_file(filename):
+        """檢查文件副檔名是否允許"""
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in ImageService.ALLOWED_EXTENSIONS

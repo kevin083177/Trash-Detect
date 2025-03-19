@@ -28,8 +28,9 @@ class ProductService(DatabaseService):
             # 先檢查是否有 image_service
             if not self.image_service:
                 raise ValueError("Image service not initialized")
-                
-            self._validate_recycle_requirement(product_data['recycle_requirement'])
+            
+            # 停用 recylce_requirement  
+            # self._validate_recycle_requirement(product_data['recycle_requirement'])
             product = Product(**product_data)
             
             if not isinstance(product.price, int):
@@ -38,9 +39,8 @@ class ProductService(DatabaseService):
             if not image_file:
                 raise ValueError("必須上傳商品圖片")
             
-            # public_id 暫時用 product name 代替 Todo: 改自動生成
             public_id = product_data['name']
-            folder = product_data.get('category', 'others')
+            folder = product_data.get('theme', 'others')
             
             image_result = self.image_service.upload_image(
                 image_file=image_file, 
@@ -52,7 +52,6 @@ class ProductService(DatabaseService):
                 'public_id': image_result['public_id'],
                 'url': image_result['url'],
                 'thumbnail_url': image_result['thumbnail_url'],
-                'folder': folder
             }
             
             product = Product(**product_data)
@@ -152,33 +151,4 @@ class ProductService(DatabaseService):
         except Exception as e:
             print(f"Get Product Name Error: {str(e)}")
             raise
-    def get_all_theme_folder(self):
-        try:
-            pipeline = [
-                {"$match": {"image.folder": {"$exists": True}}},  # 確保image.folder欄位存在
-                {"$group": {"_id": "$image.folder"}},  # 以folder欄位進行分組
-                {"$sort": {"_id": 1}}  # 按照資料夾名稱進行排序
-            ]
-            results = list(self.products.aggregate(pipeline))
-            
-            folders = [result["_id"] for result in results]
-            
-            return folders
-
-        except Exception as e:
-            print(f"Get All Theme Folder Error: {str(e)}")
-            raise 
              
-    def get_products_by_folder(self, folder):
-        """取得特定資料夾(分類)的所有商品"""
-        try:
-            results = list(self.products.find({"image.folder": folder}))
-            
-            # 轉換 ObjectId 為字串 (因為不是單個 在controller層轉換會較麻煩)
-            for result in results:
-                result['_id'] = str(result['_id'])
-                
-            return results
-        except Exception as e:
-            print(f"Get Products By Folder Error: {str(e)}")
-            return None
