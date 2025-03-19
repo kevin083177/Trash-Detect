@@ -1,6 +1,5 @@
 export type RecycleType = 'paper' | 'plastic' | 'containers' | 'bottles' | 'cans';
 export type RecycleRequirement = Partial<Record<RecycleType, number>>;
-export type Category = '主題1' | '主題2' | '主題3' | '主題4' | '主題5';
 
 export interface RecycleValues {
     paper: number;

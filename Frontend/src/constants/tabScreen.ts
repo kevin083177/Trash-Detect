@@ -1,6 +1,7 @@
 // 關閉 Tab Bar 的路由
 export const HIDE_TAB_BAR_PATHS = [
   'setting',
+  '/backpack',
   '/shop/theme',
 ]
 
@@ -46,11 +47,11 @@ export const USER_TAB_SCREENS = [
     },
   },
   {
-    name: 'quest',
-    title: '任務',
+    name: 'game',
+    title: '冒險',
     icon: {
-      focused: 'list',
-      outline: 'list-outline',
+      focused: 'map',
+      outline: 'map-outline',
     },
   },
   {
@@ -86,6 +87,14 @@ export const ADMIN_TAB_SCREENS = [
     icon: {
       focused: 'bag-check',
       outline: 'bag-check-outline'
+    }
+  },
+  {
+    name: 'themes',
+    title: '主題管理',
+    icon: {
+      focused: 'color-palette',
+      outline: 'color-palette-outline'
     }
   }
 ] as const;
