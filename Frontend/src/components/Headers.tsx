@@ -3,23 +3,29 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Router } from "expo-router";
 
-export default function Headers({ router, username, money, showShop=true }: { router: Router, username: string, money: number, showShop?: boolean }): ReactNode {
+export default function Headers({ router, username, money, showBackpack=true ,showShop=true }: { router: Router, username: string, money: number, showBackpack?: boolean, showShop?: boolean }): ReactNode {
     return (
         <View style={styles.header}>
             <TouchableOpacity style={styles.userSection} onPress={() => router.push('/profile')}>
                 <Ionicons name="person-outline" size={24} color="black" />
                 <Text style={styles.userName}>{username}</Text>
+                <View style={styles.coinContainer}>
+                  <Ionicons name="logo-usd" size={20} color="#FFD700" />
+                  <Text style={styles.coinText}>{money}</Text>
+              </View>
             </TouchableOpacity>
-            <View style={styles.coinContainer}>
-                <Ionicons name="logo-usd" size={20} color="#FFD700" />
-                <Text style={styles.coinText}>{money}</Text>
+            <View style={{ flexDirection: 'row'}}>
+              { showBackpack &&
+                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/backpack' as any)}>
+                  <Ionicons name="bed-outline" size={24} color="black" />
+                </TouchableOpacity>
+              }
+              { showShop &&
+                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/(tabs)/shop')}>
+                    <Ionicons name="storefront-outline" size={24} color="black" />
+                </TouchableOpacity>
+              }
             </View>
-            { showShop &&
-              <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/(tabs)/shop')}>
-                  <Ionicons name="storefront-outline" size={24} color="black" />
-                  <Text style={styles.smallText}>SHOP</Text>
-              </TouchableOpacity>
-            }
       </View>
     )
 }
@@ -45,7 +51,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F8F9FA',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -71,8 +76,7 @@ const styles = StyleSheet.create({
   },
   shopIcon: {
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 16,
   },

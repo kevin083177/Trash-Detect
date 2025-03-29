@@ -8,6 +8,7 @@ const user_url = `${url_path}/users`;
 const record_url = `${url_path}/record`;
 const purchase_url = `${url_path}/purchase`;
 const product_url = `${url_path}/product`;
+const theme_url = `${url_path}/theme`;
 
 export const auth_api = {
     login: `${auth_url}/login`,
@@ -42,8 +43,13 @@ export const purchase_api = {
 
 export const product_api = {
     get_product: `${product_url}/`,
-    get_product_by_folder: `${product_url}/folder`,
     add_product: `${product_url}/add_product`,
     delete_product: `${product_url}/delete_product`,
-    get_all_theme: `${product_url}/folders`
 } as const;
+
+export const theme_api = {
+    get_theme: `${theme_url}/`,
+    add_theme: `${theme_url}/add_theme`,
+    get_all_themes: `${theme_url}/get_all_themes`,
+    get_theme_products: `${theme_url}/`, // + theme_name/products
+}

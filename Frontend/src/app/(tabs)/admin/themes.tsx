@@ -1,32 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, Dimensions, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { asyncGet, asyncPost } from '@/utils/fetch';
-import { product_api, theme_api } from '@/api/api';
-import { tokenStorage } from '@/utils/storage';
 import LoadingModal from '@/components/LoadingModal';
 import Toast from '@/components/Toast';
+import { asyncPost } from '@/utils/fetch';
+import { theme_api } from '@/api/api';
+import { tokenStorage } from '@/utils/storage';
 
-interface FormData {
+interface ThemeFormData {
     name: string;
     description: string;
-    price: string;
-    theme: string;
     image: string;
 }
 
-export default function AdminProducts() {
-    const [themes, setThemes] = useState<string[]>([]);
-    const [token, setToken] = useState<string>();
-    const [formData, setFormData] = useState<FormData>({
+export default function AdminThemes() {
+    const [token, setToken] = useState<String>()
+    const [formData, setFormData] = useState<ThemeFormData>({
         name: '',
         description: '',
-        price: '',
-        theme: '',
         image: '',
     });
-
+    
+    // 獲取屏幕寬度以便計算圖片高度
+    const screenWidth = Dimensions.get('window').width;
+    // 考慮容器的padding (16px * 2)
+    const containerWidth = screenWidth - 32;
+    // 圖片寬度設為容器寬度的95%
+    const imageWidth = containerWidth * 0.95;
+    // 根據55:81的比例計算高度
+    const imageHeight = (imageWidth * 81) / 55;
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [toast, setToast] = useState({
@@ -55,7 +57,7 @@ export default function AdminProducts() {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
-            aspect: [1, 1],
+            aspect: [55, 81], // 保持55:81的比例
             quality: 1,
         });
 
@@ -66,146 +68,124 @@ export default function AdminProducts() {
 
     const handleSubmit = async () => {
         // 檢查必要欄位
-        if (!formData.name || !formData.description || !formData.price || !formData.image) {
+        if (!formData.name || !formData.description || !formData.image) {
             showToast('請填寫必要欄位！', 'error');
             return;
         }
-    
+        
         try {
             setIsLoading(true);
-            // 準備 FormData 對象
             const formDataToSend = new FormData();
-            
+
             // 添加基本資訊
             formDataToSend.append('name', formData.name);
             formDataToSend.append('description', formData.description);
-            formDataToSend.append('price', formData.price);
-            formDataToSend.append('theme', formData.theme);
-            
+
             // 處理圖片
-            // 從 file:/// URI 創建檔案
             const imageUri = formData.image;
-            const imageName = imageUri.split('/').pop();
+            const imageName = imageUri.split('/').pop() || 'image.jpg';
             
             formDataToSend.append('image', {
-                uri: imageUri,
-                type: 'image/jpeg', // 或根據實際圖片類型設置
+                uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
+                type: 'image/jpeg',
                 name: imageName,
             } as any);
-    
-            // 發送請求
-            const response = await asyncPost(product_api.add_product, {
+
+            // console.log('準備上傳數據:', JSON.stringify({
+            //     name: formData.name,
+            //     description: formData.description,
+            //     imageUri: imageUri
+            // }));
+
+            const response = await asyncPost(theme_api.add_theme, {
                 headers: {
                     "Authorization": `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data",
+                    "Content-Type": "multipart/form-data"
                 },
                 body: formDataToSend
             });
-            console.log(response);
+            
+            console.log('上傳響應:', response);
+            
             if (response.status === 200) {
-                showToast('商品上傳成功！', 'success');
+                showToast('主題創建成功！', 'success');
+                
                 setFormData({
                     name: '',
                     description: '',
-                    price: '',
-                    theme: themes[0],
                     image: '',
                 });
+            } else {
+                showToast(`上傳失敗: ${response.status}`, 'error');
+                console.log(response);
             }
         } catch (error) {
-            console.error('上傳失敗:', error);
-            showToast('商品上傳失敗！', 'error');
+            showToast('上傳過程中發生錯誤', 'error');
+            console.error('上傳錯誤詳情:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        const getUserToken = async () => {
-            const token =  await tokenStorage.getToken();
-            setToken(token as string);
-        }
-        getUserToken();
-    }, [token])
-
-    useEffect(() => {
-        const fetchThemes = async () => {
-            const response = await asyncGet(theme_api.get_all_themes, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response) {
-                setThemes(response.body);
+        const fetchUserProfile = async () => {
+            const storedToken = await tokenStorage.getToken();
+            if (storedToken) {
+                setToken(storedToken);
             }
         }
-        fetchThemes();
+        fetchUserProfile();
     }, [token])
 
     return (
         <ScrollView style={styles.container}>
-            <LoadingModal visible={isLoading} text='商品上傳中...' />
+            <LoadingModal visible={isLoading} text='主題創建中...' />
             <Toast 
                 visible={toast.visible}
                 message={toast.message}
                 type={toast.type}
                 onHide={() => setToast(prev => ({ ...prev, visible: false }))}
             />
-            <Text style={styles.label}>商品名稱</Text>
+            
+            <Text style={styles.label}>主題名稱</Text>
             <TextInput
                 style={styles.input}
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
-                placeholder="輸入商品名稱"
+                placeholder="輸入主題名稱"
             />
 
-            <Text style={styles.label}>商品介紹</Text>
+            <Text style={styles.label}>主題介紹</Text>
             <TextInput
                 style={[styles.input, styles.textArea]}
                 value={formData.description}
                 onChangeText={(text) => setFormData({ ...formData, description: text })}
-                placeholder="輸入商品介紹"
+                placeholder="輸入主題介紹"
                 multiline
                 numberOfLines={4}
             />
 
-            <Text style={styles.label}>價格</Text>
-            <TextInput
-                style={styles.input}
-                value={formData.price}
-                defaultValue='0'
-                onChangeText={(text) => setFormData({ ...formData, price: text })}
-                placeholder="輸入商品價格"
-                keyboardType="numeric"
-            />
-
-            <Text style={styles.label}>主題</Text>
-            <View style={styles.pickerContainer}>
-                <Picker
-                    selectedValue={formData.theme}
-                    onValueChange={(itemValue: string) =>
-                        setFormData({ ...formData, theme: itemValue })
-                    }
-                    style={styles.picker}
-                >
-                    {themes && themes.map((theme) => (
-                        <Picker.Item key={theme} label={theme} value={theme} />
-                    ))}
-                </Picker>
-            </View>
-
-            <Text style={styles.label}>商品照片</Text>
+            <Text style={styles.label}>主題預覽圖</Text>
             <TouchableOpacity style={styles.imageButton} onPress={handleImagePick}>
                 <Text style={styles.imageButtonText}>
                     {formData.image ? '變更圖片' : '選擇圖片'}
                 </Text>
             </TouchableOpacity>
             {formData.image && (
-                <Image source={{ uri: formData.image }} style={styles.previewImage} />
+                <View style={styles.imageContainer}>
+                    <Image 
+                        source={{ uri: formData.image }} 
+                        style={[
+                            styles.previewImage,
+                            { width: imageWidth, height: imageHeight }
+                        ]} 
+                        resizeMode="contain"
+                    />
+                </View>
             )}
 
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>商品上架</Text>
+                <Text style={styles.submitButtonText}>創建主題</Text>
             </TouchableOpacity>
         </ScrollView>
     );
@@ -232,35 +212,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     textArea: {
-        height: 100,
+        height: 120,
         textAlignVertical: 'top',
-    },
-    pickerContainer: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        marginBottom: 16,
-    },
-    picker: {
-        height: 55,
-    },
-    recycleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    recycleLabel: {
-        flex: 1,
-        fontSize: 16,
-    },
-    recycleInput: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        padding: 12,
-        width: 100,
-        marginLeft: 16,
-        textAlign: 'center',
     },
     imageButton: {
         backgroundColor: '#e1e1e1',
@@ -273,11 +226,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    previewImage: {
-        width: '100%',
-        height: 400,
-        borderRadius: 8,
+    imageContainer: {
+        alignItems: 'center',
         marginBottom: 16,
+    },
+    previewImage: {
+        borderRadius: 8,
     },
     submitButton: {
         backgroundColor: '#007AFF',

@@ -6,6 +6,7 @@ from .purchase_service import PurchaseService
 from .record_service import RecordService
 from .user_service import UserService
 from .image_service import ImageService
+from .theme_service import ThemeService
 
 __all__ = [
     'DatabaseService',
@@ -15,5 +16,6 @@ __all__ = [
     'UserService',
     'AdminService',
     'ProductService',
-    'ImageService'
+    'ImageService',
+    'ThemeService'
 ]

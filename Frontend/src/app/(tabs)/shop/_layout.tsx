@@ -7,7 +7,7 @@ export default function ShopLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
+      <Stack.Screen name="index"/>
       <Stack.Screen 
         name="theme" 
         options={{

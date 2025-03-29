@@ -1,5 +1,5 @@
-class ProductImage:
-    """商品圖片類"""
+class ThemeImage:
+    """主題圖片類"""
     def __init__(self, public_id: str, url: str, thumbnail_url: str):
         self.public_id = public_id
         self.url = url
@@ -20,35 +20,34 @@ class ProductImage:
             thumbnail_url=data["thumbnail_url"]
         )
 
-class Product:
-    def __init__(self, name, description, price, theme, image=None):
+class Theme:
+    def __init__(self, name, description, products, created_at, image=None):
         self.name = name
         self.description = description
-        self.price = price
-        self.theme = theme
-        # self.recycle_requirement = recycle_requirement
-        self.image = image
+        self.products = [] if products is None else products
+        self.created_at = created_at
+        self.image = image  # 新增圖片欄位
         
     def to_dict(self):
-        product_dict = {
-            "name": self.name,
-            "description": self.description,
-            "price": self.price,
-            # "recycle_requirement": self.recycle_requirement
+        theme_dict = {
+            'name': self.name,
+            'description': self.description,
+            'products': self.products,
+            'created_at': self.created_at,
         }
         
         if self.image:
-            product_dict["image"] = self.image
+            theme_dict["image"] = self.image
             
-        return product_dict
+        return theme_dict
     
     @classmethod
     def from_dict(cls, data):
-        """從字典創建 Product 實例"""
+        """從字典創建 Theme 實例"""
         return cls(
             name=data["name"],
             description=data["description"],
-            price=data["price"],
-            # ecycle_requirement=data["recycle_requirement"],
-            image=data["image"]
+            products=data.get("products", []),
+            created_at=data["created_at"],
+            image=data.get("image")
         )

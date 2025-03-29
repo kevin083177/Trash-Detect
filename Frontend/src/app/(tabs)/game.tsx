@@ -1,9 +1,9 @@
 import React, { View, Text, StyleSheet } from 'react-native';
 
-export default function quest() {
+export default function game() {
   return (
     <View style={styles.container}>
-      <Text>quest Page!</Text>
+      <Text>game Page!</Text>
     </View>
   );
 }
