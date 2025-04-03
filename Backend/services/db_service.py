@@ -12,7 +12,9 @@ class DatabaseService:
             'purchases': self.db.user_purchases,
             'products': self.db.products,
             'themes': self.db.themes,
-            
+            "levels": self.db.levels,
+            'questions': self.db.questions,
+            'question_categories': self.db.question_categories,
         }
     
     def get_collection(self, collection_name):
