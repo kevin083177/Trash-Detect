@@ -54,9 +54,10 @@ class VideoCapture:
 
 class ObjectDetection():
     def __init__(self):
-        self.model_path = 'model.tflite'
-        self.labels_path = 'labels.txt'
-        self.camera_ip = 'http://192.168.0.84:8081'
+        self.model_version = 'v2'
+        self.model_path = self.model_version + '/model.tflite'
+        self.labels_path = self.model_version + '/labels.txt'
+        self.camera_ip = 'http://192.168.67.55:8081'
         
         # 設定相機原始解析度
         self.camera_width = 1920
@@ -80,9 +81,11 @@ class ObjectDetection():
         self.confidence_threshold = 50  # 用於trackbar的整數值(0-100)
         
         self.color_map = {
-            "plastic": (255, 0, 0),
-            "bottles": (0, 255, 0),
-            "cans": (0, 0, 255)
+            "Plastic" :(255, 0, 0),
+            "Bottle" : (0, 255, 0),
+            "Paper": (0, 0, 255),
+            "Container": (25, 225, 220),
+            "Can": (255, 192, 0)
         }
         
     def create_camera_capture(self):
