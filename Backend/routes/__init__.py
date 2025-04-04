@@ -7,6 +7,7 @@ from .purchase_route import purchase_blueprint
 from .record_route import record_blueprint
 from .product_route import product_blueprint
 from .theme_route import theme_blueprint
+from .level_route import level_blueprint
 from .question_route import question_blueprint
 from .question_category_route import question_category_blueprint
 
@@ -20,5 +21,6 @@ def register_blueprints(app: Flask):
     app.register_blueprint(record_blueprint, url_prefix=f"{api_prefix}record")
     app.register_blueprint(product_blueprint, url_prefix=f"{api_prefix}product")
     app.register_blueprint(theme_blueprint, url_prefix=f"{api_prefix}theme")
+    app.register_blueprint(level_blueprint, url_prefix=f"{api_prefix}level")
     app.register_blueprint(question_blueprint, url_prefix=f"{api_prefix}question")
     app.register_blueprint(question_category_blueprint, url_prefix=f"{api_prefix}question/category")
