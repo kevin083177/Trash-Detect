@@ -77,14 +77,32 @@ class QuestionCategoryService(DatabaseService):
         """獲取所有題目分類"""
         try:
             categories = list(self.question_categories.find())
+            
             for category in categories:
+                # 將 _id 轉換為字符串
                 category['_id'] = str(category['_id'])
+                
+                # 移除 questions 欄位，避免 ObjectId 序列化問題
+                if 'questions' in category:
+                    category.pop('questions', None)
+                
             return categories
             
         except Exception as e:
             print(f"get all question's category error: {str(e)}")
             raise
     
+    def get_category_names(self) -> list:
+        """獲取所有題目分類名稱列表"""
+        try:
+            categories = self.question_categories.find()
+            # 只提取每個類別的名稱
+            category_names = [category["name"] for category in categories]
+            return category_names
+            
+        except Exception as e:
+            print(f"get category names error: {str(e)}")
+            raise
     
     def _check_category_exists(self, category_name: str) -> bool:
         """檢查題目類別是否存在"""
@@ -96,7 +114,11 @@ class QuestionCategoryService(DatabaseService):
             raise
         
     def _find_all_labels(self) -> list:
-        """獲取所有題目分類標籤"""
+        """獲取所有題目分類標籤
+        
+        Returns:
+            list: 題目分類標籤列表 [塑膠, 紙類, 紙容器, 寶特瓶, 鐵鋁罐]
+        """
         try:
             categories = self.question_categories.find()
             labels = [category["name"] for category in categories]
