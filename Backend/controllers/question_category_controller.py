@@ -1,6 +1,7 @@
 from flask import request
 from services import QuestionCategoryService
 from config import Config
+from bson import ObjectId
 
 question_category_service = QuestionCategoryService(Config.MONGO_URI)
 
@@ -101,18 +102,19 @@ class QuestionCategoryController:
                 
             category_id = data["_id"]
             
-            # 獲取原始類別資訊
-            original_category = None
+            # 直接從資料庫獲取原始類別資訊
             try:
-                for category in question_category_service.get_all_categories():
-                    if category["_id"] == category_id:
-                        original_category = category
-                        break
-                        
+                # 直接從數據庫獲取類別
+                original_category = question_category_service.question_categories.find_one({"_id": ObjectId(category_id)})
+
                 if not original_category:
                     return {
                         "message": "題目類別不存在",
                     }, 404
+                
+                # 將 _id 轉換為字符串
+                original_category["_id"] = str(original_category["_id"])
+                
             except Exception as e:
                 return {
                     "message": f"獲取題目類別失敗: {str(e)}",
@@ -143,7 +145,7 @@ class QuestionCategoryController:
                     }, 409
                 
             result = question_category_service.update_category(category_id, update_data)
-            if result:
+            if result or result == 0:  # 0 表示沒有題目需要更新類別名稱
                 return {
                     "message": f"成功更新題目類別 已修改 {result} 筆題目資料",
                     "body": {
