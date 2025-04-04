@@ -106,6 +106,7 @@ class QuestionCategoryController:
             try:
                 # 直接從數據庫獲取類別
                 original_category = question_category_service.question_categories.find_one({"_id": ObjectId(category_id)})
+
                 if not original_category:
                     return {
                         "message": "題目類別不存在",
