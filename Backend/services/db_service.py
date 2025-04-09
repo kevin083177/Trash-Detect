@@ -8,10 +8,11 @@ class DatabaseService:
         
         self.collections = {
             'users': self.db.users,
-            'records': self.db.user_records,
+            'user_levels': self.db.user_levels,
             'purchases': self.db.user_purchases,
             'products': self.db.products,
             'themes': self.db.themes,
+            "chapters": self.db.chapters,
             "levels": self.db.levels,
             'questions': self.db.questions,
             'question_categories': self.db.question_categories,
