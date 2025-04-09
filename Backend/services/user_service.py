@@ -36,6 +36,13 @@ class UserService(DatabaseService):
         
         return user
     
+    def _get_user_money(self, user_id):
+        user = self.get_user(user_id)
+        if not user:
+            return None
+        
+        return user.get('money', 0)
+    
     def _update_money_add(self, user_id, money):
         return self.users.update_one(
             {"_id": ObjectId(user_id)},
@@ -136,4 +143,37 @@ class UserService(DatabaseService):
         except Exception as e:
             print(f"Daily check-in status Error: {str(e)}")
             raise
-                
+    
+    def get_user_trash_stats(self, user_id: str):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            return user.get('trash_stats', {})
+        
+        except Exception as e:
+            print(f"Get user trash stats Error: {str(e)}")
+            raise
+    
+    def add_user_trash_stats(self, user_id: str, trash_type: str, count: int):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            # 更新垃圾統計資料
+            trash = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$inc": {f"trash_stats.{trash_type}": count}}
+            )
+            
+            if trash.modified_count > 0:
+                return self.get_user_trash_stats(user_id)
+            
+            return None
+        
+        except Exception as e:
+            print(f"Add user trash stats Error: {str(e)}")
+            raise
+        

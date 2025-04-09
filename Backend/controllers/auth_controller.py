@@ -1,10 +1,10 @@
 from flask import request
-from services import AuthService, PurchaseService, RecordService, UserService
+from services import AuthService, PurchaseService, UserService, UserLevelService
 from config import Config
 
 auth_service = AuthService(Config.MONGO_URI)
 user_service = UserService(Config.MONGO_URI)
-record_service = RecordService(Config.MONGO_URI)
+user_level_service = UserLevelService(Config.MONGO_URI)
 purchase_service = PurchaseService(Config.MONGO_URI)
 
 class AuthController:
@@ -45,9 +45,14 @@ class AuthController:
             created_user = user_service.get_user(result)
             
             if created_user:
-                # 初始化使用者回收紀錄、購買商品
-                record_service.init_user_record(result)
-                purchase_service.init_user_purchase(result)
+                # 初始化使用者購買商品、關卡資訊
+                purchase_success = purchase_service.init_user_purchase(result)
+                user_level_success = user_level_service.init_user_level(result)
+                
+                if not purchase_success or not user_level_success:
+                    return {
+                        "message": "初始化使用者資料失敗",
+                    }, 500
                 
                 created_user.pop('password', None)
                 created_user['_id'] = str(created_user['_id'])

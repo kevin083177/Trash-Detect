@@ -1,11 +1,10 @@
-from services import UserService, RecordService, AuthService
+from services import UserService, AuthService
 from config import Config
 from bson import ObjectId
 from flask import request
 
 auth_service = AuthService(Config.MONGO_URI)
 user_service = UserService(Config.MONGO_URI)
-record_service = RecordService(Config.MONGO_URI)
 
 class UserController:
     @staticmethod
@@ -141,28 +140,6 @@ class UserController:
             return {"message": f"伺服器錯誤(subtract_money) {str(e)}"}, 500
             
     @staticmethod
-    def get_record_by_user(user_id):
-        try:
-            user = record_service.get_record_by_user(user_id)
-            
-            if user:
-                user.pop("user_id", None)
-                user["_id"] = str(user["_id"])
-                return {
-                    "message": "成功找到使用者回收紀錄",
-                    "body": user
-                }, 200
-            
-            return {
-                "message": "無法找到回收紀錄",
-            }, 404
-        
-        except Exception as e:
-            return {
-                "message": f"伺服器錯誤(get_record_by_user) {str(e)}"
-            }, 500
-            
-    @staticmethod
     def daliy_check_in(user_id):
         try:
             result = user_service.daliy_check_in(user_id)
@@ -214,4 +191,69 @@ class UserController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(daily_check_in_status) {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def get_user_trash_stats(user_id):
+        try:
+            user = user_service.get_user_trash_stats(user_id)
+            
+            if user:
+                return {
+                    "message": "成功找到使用者",
+                    "body": user
+                }, 200
+            
+            return {
+                "message": "無法找到使用者"
+            }, 404
+        
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_user_trash_stats): {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def add_user_trash_stats(user_id: str):
+        try:
+            valid_trash_types = ['plastic', 'paper', 'cans', 'bottles', 'containers']
+            
+            data = request.get_json()
+            
+            required_fields = ['trash_type', 'count']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                return {
+                    "message": f"缺少: {', '.join(missing_fields)}",
+                }, 400
+                
+            if data['trash_type'] not in valid_trash_types:
+                return {
+                    "message": "垃圾類型不正確"
+                }, 400
+            
+            if not isinstance(data['count'], int) or data['count'] <= 0:
+                return {
+                    "message": "count 必須為正整數"
+                }, 400
+            
+            trash_type = data['trash_type']
+            count = data['count']
+            
+            result = user_service.add_user_trash_stats(user_id, trash_type, count)
+            
+            if result:
+                return {
+                    "message": "成功增加垃圾數量",
+                    "body": result
+                }, 200
+            
+            return {
+                "message": "無法找到使用者"
+            }, 404
+        
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(add_user_trash_stats): {str(e)}"
             }, 500

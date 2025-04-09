@@ -5,8 +5,8 @@ class AdminService(DatabaseService):
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
         self.users = self.collections['users']
-        self.record = self.collections['records']
         self.purchase = self.collections['purchases']
+        self.user_levels = self.collections['user_levels']
         
     def delete_user(self, user_id):
         try:
@@ -15,20 +15,20 @@ class AdminService(DatabaseService):
             # 儲存刪除操作結果
             deletion_results = {
                 'users': False,
-                'records': False,
-                'purchases': False
+                'purchases': False,
+                'user_levels': False
             }
             
             user = self.users.find_one_and_delete({"_id": user_id})
 
             deletion_results['users'] = bool(user)
             
-            # 刪除 record, user_purchase
-            record = self.record.find_one_and_delete({"user_id": user_id})
-            deletion_results['record'] = bool(record)
-            
+            # 刪除 user_purchase
             purchase = self.purchase.find_one_and_delete({"user_id": user_id})
-            deletion_results['purchase'] = bool(purchase)
+            deletion_results['purchases'] = bool(purchase)
+            
+            user_level = self.user_levels.find_one_and_delete({"user_id": user_id})
+            deletion_results['user_levels'] = bool(user_level)
             
             # 檢查刪除結果
             if all(deletion_results.values()):
@@ -39,7 +39,7 @@ class AdminService(DatabaseService):
                 if not value
             ]
             
-            if deletion_results['user'] and failed_deletions:
+            if deletion_results['users'] and failed_deletions:
                 return True, f"使用者已刪除，但以下資料刪除失敗: {', '.join(failed_deletions)}"
                 
             return False, "無法找到使用者"

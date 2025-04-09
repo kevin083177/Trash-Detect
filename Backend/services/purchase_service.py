@@ -2,7 +2,6 @@ from bson import ObjectId
 from typing import Optional
 from services import DatabaseService
 from models import Purchase
-from .payment_strategy import PaymentStrategy, MoneyPayment, RecyclePayment
 
 class PurchaseService(DatabaseService):
     def __init__(self, mongo_uri):
@@ -16,7 +15,7 @@ class PurchaseService(DatabaseService):
             
             purchase = Purchase(
                 user_id = user_id,
-                product = None
+                product = []
             )
             result = self.purchase.insert_one(purchase.to_dict())
             return result.inserted_id
@@ -25,7 +24,7 @@ class PurchaseService(DatabaseService):
             print(f"Error initializing user_purchases: {str(e)}")
             raise
     
-    def check_product_purchased(self, user_id, product_id):
+    def _check_product_purchased(self, user_id, product_id):
         try:
             result = self.purchase.find_one({
                 "user_id": ObjectId(user_id),
@@ -36,32 +35,18 @@ class PurchaseService(DatabaseService):
             print(f"Check Product Purchased Error: {str(e)}")
             raise
     
-    def purchase_product(self, user_id, product_id, payment_type):
+    def purchase_product(self, user_id, product_id):
         try:
-            if payment_type not in ["money", "recycle"]:
-                return False, "付款方式必須為 money 或是 recycle"
-            
             # 取得商品資訊
             product = self.product.find_one({"_id": ObjectId(product_id)})
             if not product:
                 return False, "商品不存在"
             
-            # 選擇支付策略
-            payment_strategies = {
-                "money": MoneyPayment,
-                "recycle": RecyclePayment
-            }
-            payment_strategy: PaymentStrategy = payment_strategies[payment_type](self)
-                
-            # 執行支付
-            if payment_type == "money":
-                success, message = payment_strategy.pay(user_id, product['price'])
-            else:  # recycle
-                success, message = payment_strategy.pay(user_id, product_id)
-                
-            if not success:
-                return False, message
-                
+            # 檢查用戶購買記錄是否存在，不存在則初始化
+            purchase_record = self.purchase.find_one({"user_id": ObjectId(user_id)})
+            if not purchase_record:
+                self.init_user_purchase(user_id)
+            
             # 更新購買紀錄
             result = self.purchase.update_one(
                 {"user_id": ObjectId(user_id)},

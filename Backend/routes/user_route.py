@@ -28,11 +28,17 @@ def add_money(user):
 def subtract_money(user):
     return UserController.subtract_money(user['_id'])
 
-@user_blueprint.route('/record', methods=['GET'])
+@user_blueprint.route('/trash', methods=['GET'])
 @log_request
 @token_required
-def get_record_by_user(user):
-    return UserController.get_record_by_user(user['_id'])
+def get_user_trash_stats(user):
+    return UserController.get_user_trash_stats(user['_id'])
+
+@user_blueprint.route('/trash/add_trash', methods=['POST'])
+@log_request
+@token_required
+def add_trash(user):
+    return UserController.add_user_trash_stats(user['_id'])
 
 @user_blueprint.route('/checkIn', methods=['POST'])
 @log_request

@@ -1,10 +1,9 @@
 from services import DatabaseService
-from config import Config
 from models import Level
 
 class LevelService(DatabaseService):
-    def __init__(self, mongo_uri, db_name=Config.DB_NAME):
-        super().__init__(mongo_uri, db_name)
+    def __init__(self, mongo_uri):
+        super().__init__(mongo_uri)
         self.levels = self.collections['levels']
 
     def add_level(self, level_data: Level):
@@ -19,23 +18,38 @@ class LevelService(DatabaseService):
         if existing_sequence:
             raise ValueError(f"關卡序號 {level['sequence']} 已存在")
         
+        # 檢查解鎖條件關卡是否存在
+        # 注意：如果序號為1，解鎖條件可以為0（代表無需解鎖條件）
         unlock_requirement = level["unlock_requirement"]
-        if not self.levels.find_one({"sequence": unlock_requirement}):
+        if unlock_requirement > 0 and not self.levels.find_one({"sequence": unlock_requirement}):
             raise ValueError(f"解鎖條件關卡 {unlock_requirement} 不存在")
         
         if level["sequence"] == level["unlock_requirement"]:
             raise ValueError(f"關卡序號不能等於解鎖條件")
         
+        # 插入關卡
         result = self.levels.insert_one(level)
-        return str(result.inserted_id)
+        level_id = str(result.inserted_id)
+        
+        return level_id
     
     def delete_level(self, level_sequence: str):
         """刪除關卡"""
+        # 先查找關卡獲取章節名稱和 ID
+        level = self.levels.find_one({"sequence": int(level_sequence)})
+        if not level:
+            return None
+        
+        # 刪除關卡
         result = self.levels.delete_one({"sequence": int(level_sequence)})
         if result.deleted_count == 0:
             return None
         
-        return True
+        # 返回被刪除的關卡信息，包括章節名稱和關卡ID，以便控制器更新章節
+        return {
+            "level_id": str(level["_id"]),
+            "chapter": level.get("chapter")
+        }
     
     def get_level(self, level_id: str):
         level = self.levels.find_one({"_id": level_id})
