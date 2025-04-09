@@ -112,29 +112,128 @@ class ProductService(DatabaseService):
             print(f"Get Product Error: {str(e)}")
             return None
     
-    def _validate_recycle_requirement(self, requirement):
-        """檢查recycle_requirment是否符合要求
-
-        Example:
-            requirement: {
-                "Valid_Category": amount,
-                ...
-            }
+    def update_product(self, product_id, update_data, new_image_file=None):
+        """更新商品資訊
+        
+        Args:
+            product_id: 商品ID
+            update_data: 要更新的商品資料
+            new_image_file: 新的商品圖片，預設為None表示不更新圖片
+            
+        Returns:
+            更新後的商品資料，如果更新失敗則返回None
         """
-        if not requirement:  # 允許空的回收需求
-            return
+        try:
+            # 檢查商品是否存在
+            product = self.get_product(product_id)
+            if not product:
+                raise ValueError(f"找不到ID為 {product_id} 的商品")
             
-        # 檢查是否只包含有效類別
-        invalid_categories = set(requirement.keys()) - self.VALID_CATEGORIES
-        if invalid_categories:
-            raise TypeError(f"不存在的分類: { invalid_categories }")
+            # 準備更新數據
+            updates = {}
             
-        # 檢查數量是否為正整數
-        for amount in requirement.values():
-            if not isinstance(amount, int) or amount <= 0:
-                raise ValueError(f"分類所需該數量必須為整數")
-           
-    def check_product_exists(self, name):
+            # 處理名稱更新（確保名稱不重複）
+            if 'name' in update_data and update_data['name'] != product['name']:
+                # 檢查新名稱是否已被其他商品使用
+                if self._check_product_exists(update_data['name']):
+                    raise ValueError(f"商品名稱 '{update_data['name']}' 已存在")
+                updates['name'] = update_data['name']
+            
+            # 處理描述更新
+            if 'description' in update_data:
+                updates['description'] = update_data['description']
+            
+            # 處理價格更新
+            if 'price' in update_data:
+                if not isinstance(update_data['price'], int):
+                    raise ValueError("price 必須為整數")
+                updates['price'] = update_data['price']
+            
+            # 處理主題更新
+            old_theme = product.get('theme')
+            new_theme = update_data.get('theme')
+            
+            if new_theme and new_theme != old_theme:
+                updates['theme'] = new_theme
+            
+            # 處理圖片更新
+            if new_image_file:
+                # 確保已初始化圖片服務
+                if not self.image_service:
+                    raise ValueError("Image service not initialized")
+                
+                # 確定存儲圖片的文件夾 (使用新主題或保留原有主題)
+                folder = new_theme if new_theme else old_theme
+                # 使用商品的新名稱或原有名稱作為圖片的public_id
+                public_id = updates.get('name', product['name'])
+                
+                # 上傳新圖片
+                new_image_result = self.image_service.upload_image(
+                    image_file=new_image_file, 
+                    public_id=public_id,
+                    folder=folder
+                )
+                
+                # 更新圖片資訊
+                updates['image'] = {
+                    'public_id': new_image_result['public_id'],
+                    'url': new_image_result['url'],
+                    'thumbnail_url': new_image_result['thumbnail_url'],
+                }
+                
+                # 刪除舊圖片
+                try:
+                    if 'image' in product and 'public_id' in product['image']:
+                        self.image_service.delete_image(product['image']['public_id'])
+                except Exception as e:
+                    print(f"刪除舊圖片時出錯: {str(e)}")
+            
+            # 如果沒有任何更新數據，直接返回原商品
+            if not updates:
+                return product
+            
+            # 進行更新
+            result = self.products.update_one(
+                {"_id": ObjectId(product_id)},
+                {"$set": updates}
+            )
+            
+            if result.modified_count > 0 or result.matched_count > 0:
+                # 獲取更新後的商品
+                updated_product = self.get_product(product_id)
+                
+                # 處理主題變更
+                if new_theme and new_theme != old_theme:
+                    # 從舊主題中移除商品
+                    from_theme_result = self.collections['themes'].update_one(
+                        {"name": old_theme},
+                        {"$pull": {"products": ObjectId(product_id)}}
+                    )
+                    
+                    # 添加到新主題
+                    to_theme_result = self.collections['themes'].update_one(
+                        {"name": new_theme},
+                        {"$addToSet": {"products": ObjectId(product_id)}}
+                    )
+                    
+                    # 檢查主題更新結果
+                    if not from_theme_result.matched_count or not to_theme_result.matched_count:
+                        print(f"警告: 商品主題更新可能不完整。舊主題: {old_theme}, 新主題: {new_theme}")
+                
+                return updated_product
+            
+            return None
+            
+        except Exception as e:
+            # 如果在更新過程中上傳了新圖片但後續處理失敗，需要清理已上傳的圖片
+            if 'new_image_result' in locals():
+                try:
+                    self.image_service.delete_image(new_image_result['public_id'])
+                except:
+                    pass
+            raise e
+          
+    def _check_product_exists(self, name):
         """檢查商品名稱是否已存在"""
         try:
             result = self.products.find_one({"name": name})
@@ -142,6 +241,17 @@ class ProductService(DatabaseService):
         except Exception as e:
             print(f"Check Product Exists Error: {str(e)}")
             return False
+    
+    def _get_product_price(self, product_id):
+        """取得商品價格"""
+        try:
+            result = self.products.find_one({"_id": ObjectId(product_id)})
+            if not result:
+                raise ValueError(f"找不到 ID 為 {product_id} 的商品")
+            return result["price"]
+        except Exception as e:
+            print(f"Get Product Price Error: {str(e)}")
+            raise
     
     def get_product_name(self, product_id):
         """使用product_id尋找商品名稱"""
@@ -151,4 +261,3 @@ class ProductService(DatabaseService):
         except Exception as e:
             print(f"Get Product Name Error: {str(e)}")
             raise
-
