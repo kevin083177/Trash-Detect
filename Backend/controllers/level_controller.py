@@ -48,14 +48,12 @@ class LevelController:
                 return {
                     "message": f"章節 {level_data['chapter']} 不存在",
                 }, 400
-            
-            # 創建新的 Level 對象
+              
             level = Level(**level_data)
             
             # 添加關卡
             try:
                 result = level_service.add_level(level)
-                
                 # 成功添加關卡後，更新對應章節的 levels 陣列
                 chapter_service._add_level_to_chapter(level_data['chapter'], result)
                 

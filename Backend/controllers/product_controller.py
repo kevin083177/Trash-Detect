@@ -154,7 +154,7 @@ class ProductController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(delete_product) {str(e)}",
-                }, 500
+            }, 500
             
     @staticmethod
     def update_product(product_id):
