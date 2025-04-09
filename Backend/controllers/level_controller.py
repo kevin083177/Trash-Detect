@@ -1,16 +1,17 @@
 from flask import request
-from services import LevelService
+from services import LevelService, ChapterService
 from config import Config
 from models import Level
 
 level_service = LevelService(Config.MONGO_URI)
+chapter_service = ChapterService(Config.MONGO_URI)
 
 class LevelController:
     def add_level():
         try:
             data = request.get_json()
             
-            required_fields = ['sequence', 'name', 'description', 'unlock_requirement']
+            required_fields = ['sequence', 'chapter', 'name', 'description', 'unlock_requirement']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -20,6 +21,7 @@ class LevelController:
             
             level_data = {
                 'sequence': int(data['sequence']),
+                'chapter': data['chapter'],
                 'name': data['name'],
                 'description': data['description'],
                 'unlock_requirement': int(data['unlock_requirement'])
@@ -42,12 +44,21 @@ class LevelController:
                     "message": f"關卡序號 {level_data['sequence']} 已存在",
                 }, 400
             
+            if not chapter_service._check_chapter_exists(level_data['chapter']):
+                return {
+                    "message": f"章節 {level_data['chapter']} 不存在",
+                }, 400
+            
             # 創建新的 Level 對象
             level = Level(**level_data)
             
             # 添加關卡
             try:
                 result = level_service.add_level(level)
+                
+                # 成功添加關卡後，更新對應章節的 levels 陣列
+                chapter_service._add_level_to_chapter(level_data['chapter'], result)
+                
                 return {
                     "message": "關卡創建成功",
                     "body": {
@@ -92,11 +103,18 @@ class LevelController:
                     "message": "請提供關卡序號"
                 }, 400
             
+            # 刪除關卡，同時獲取被刪除關卡的信息
             result = level_service.delete_level(level_sequence)
             if not result:
                 return {
                     "message": f"關卡 {level_sequence} 不存在"
                 }, 404
+            
+            # 從對應章節的 levels 陣列中移除關卡 ID
+            chapter_name = result.get("chapter")
+            level_id = result.get("level_id")
+            if chapter_name and level_id:
+                chapter_service._remove_level_from_chapter(chapter_name, level_id)
             
             return {
                 "message": "刪除關卡成功"
