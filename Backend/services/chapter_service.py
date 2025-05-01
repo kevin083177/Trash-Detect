@@ -428,7 +428,7 @@ class ChapterService(DatabaseService):
             print(f"failed to remove level from chapter: {str(e)}")
             return False
         
-    def _get_chapter_name_by_sequence(self, sequence):
+    def _get_chapter_name_by_sequence(self, sequence: int):
         """
         根據 sequence 獲取章節名稱
         
@@ -440,3 +440,16 @@ class ChapterService(DatabaseService):
         """
         chapter = self.chapters.find_one({"sequence": sequence})
         return chapter["name"] if chapter else None
+    
+    def _get_sequence_by_chapter_name(self, name):
+        """
+        根據 chapter_name 獲取 sequence
+        
+        Args:
+            chapter_name: 章節名稱
+            
+        Returns:
+            int: 章節序列 ，若不存在則返回 None
+        """
+        chapter = self.chapters.find_one({"name": name})
+        return int(chapter["sequence"]) if chapter else None
