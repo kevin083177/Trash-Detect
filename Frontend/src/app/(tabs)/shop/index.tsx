@@ -171,7 +171,6 @@ export default function Shop(): ReactNode {
         }, 
         body: {
           'product_id': selectedProduct._id,
-          'payment_type': "money"
         }
       });
       

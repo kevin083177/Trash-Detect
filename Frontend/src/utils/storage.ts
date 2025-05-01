@@ -8,7 +8,6 @@ const STORAGE_KEYS = {
 
 interface UserInfo {
     user_id: string,
-    record_id: string,
     purchase_id: string,
 }
 

@@ -39,7 +39,7 @@ export default function Profile() {
         // console.log(storage);
         // console.log('Fetching from URL:', user_api.get_record);
         
-        const response = await asyncGet(user_api.get_record, {
+        const response = await asyncGet(user_api.get_user_trash_stats, {
             headers: {
                 'Authorization': `Bearer ${token}`,
             },

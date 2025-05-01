@@ -1,0 +1,24 @@
+# 排除 node_modules（EAS Build 會自己安裝）
+node_modules/
+
+# 排除 build 輸出
+dist/
+build/
+
+# 排除本機原生碼（如果你用的是預建模式）
+android/
+ios/
+
+# 排除快取和環境變數檔案
+*.log
+*.env
+.cache/
+.expo/
+.expo-shared/
+npm-debug.log
+yarn-error.log
+.DS_Store
+
+# 排除 IDE 設定檔
+.vscode/
+.idea/
