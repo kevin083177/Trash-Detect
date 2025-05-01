@@ -8,7 +8,11 @@ class UserService(DatabaseService):
         super().__init__(mongo_uri)
         self.users = self.collections['users']
                 
-    def get_user(self, user_id):
+    def get_user(self, user_id: str):
+        """取得使用者資料 (find_one)
+        Args:
+            user_id(str): 使用者 ID
+        """
         user = self.users.find_one({"_id": ObjectId(user_id)})
         return user
 
@@ -177,3 +181,16 @@ class UserService(DatabaseService):
             print(f"Add user trash stats Error: {str(e)}")
             raise
         
+    def _get_user_total_trash(self, user_id: str):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            trash_stats: list = user['trash_stats']
+            total_count = sum(trash_stats.values())
+            
+            return total_count
+        except Exception as e:
+            print(f"Get total trash count Error: {str(e)}")
+            return 0
