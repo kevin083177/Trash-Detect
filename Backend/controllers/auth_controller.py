@@ -1,5 +1,5 @@
 from flask import request
-from services import AuthService, PurchaseService, UserService, UserLevelService
+from services import AuthService, PurchaseService, UserService, UserLevelService, ChapterService
 from config import Config
 
 auth_service = AuthService(Config.MONGO_URI)
@@ -57,6 +57,8 @@ class AuthController:
                 created_user.pop('password', None)
                 created_user['_id'] = str(created_user['_id'])
                 
+                user_level_service._add_new_chapter(str(created_user['_id']), 1)
+                user_level_service._add_new_level(str(created_user['_id']), 1)
             return {
                 "message": "註冊成功",
                 "body": created_user
