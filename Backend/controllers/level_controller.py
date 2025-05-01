@@ -208,3 +208,22 @@ class LevelController:
             return {
                 "message": f"伺服器錯誤(update_level): {str(e)}"
             }, 500
+            
+    def get_chapters_level(chapter_name: str):
+        try:
+            chapter = chapter_service.get_chapter_by_name(chapter_name)
+            if chapter:
+                result: list = level_service.get_chapters_level(chapter_name)
+                
+                return {
+                    "message": f"成功找到 {chapter_name} 關卡資訊",
+                    "body": result
+                }, 200
+            else:
+                return {
+                    "message": "無法找到該章節"
+                }, 404
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_chapters_level): {str(e)}"
+            }, 500

@@ -133,3 +133,25 @@ class LevelService(DatabaseService):
         
         # 返回更新後的關卡
         return self.get_level_by_sequence(level_sequence)
+    
+    def get_chapters_level(self, chapter_name: str):
+        """根據章節名稱找出所有關卡(Level)
+        Args: 
+            chapter_name(章節名稱): string
+        
+        Returns:
+            Array: 關卡資訊
+        """
+        # 查詢指定章節的所有關卡
+        levels = list(self.levels.find({"chapter": chapter_name}))
+        
+        # 處理結果：轉換 ObjectId 並按照序號排序
+        for level in levels:
+            if '_id' in level:
+                level['_id'] = str(level['_id'])
+                
+        return levels
+    
+    def _is_level_exists(self, level_sequence: int) -> bool:
+        """檢查關卡是否存在"""
+        return self.levels.find_one({"sequence": level_sequence}) is not None

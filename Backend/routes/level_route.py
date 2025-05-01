@@ -28,3 +28,9 @@ def delete_level():
 @admin_required
 def update_level():
     return LevelController.update_level()
+
+@level_blueprint.route('/<chapter_name>', methods=['GET'])
+@log_request
+@token_required
+def get_chapters_level(user, chapter_name):
+    return LevelController.get_chapters_level(chapter_name)
