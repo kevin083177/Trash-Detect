@@ -3,6 +3,8 @@ export const HIDE_TAB_BAR_PATHS = [
   'setting',
   '/backpack',
   '/shop/theme',
+  '/game/gameplay',
+  '/game/result',
 ]
 
 // Tab Bar styles
