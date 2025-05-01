@@ -87,15 +87,6 @@ export default function Login() {
 
       const user_id: string = String(user.body['_id']);
 
-      // fetch user's record_id
-      const record = await asyncGet(user_api.get_record, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-      });
-
-      const record_id: string = String(record.body['_id']); 
-
       // fetch user's purchase_id
       const purchase = await asyncGet(purchase_api.get_purchase, {
         headers: {
@@ -107,7 +98,6 @@ export default function Login() {
       // storage
       tokenStorage.setUserInfo({
         user_id: user_id,
-        record_id: record_id,
         purchase_id: purchase_id
       });
     } catch (error) {
