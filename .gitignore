@@ -146,16 +146,15 @@ wandb/
 .DS_Store
 
 # Neural Network weights -----------------------------------------------------------------------------------------------
-weights/
 *.weights
-*.pt
+#*.pt
 *.pb
-*.onnx
+#*.onnx
 *.engine
 *.mlmodel
 *.mlpackage
 *.torchscript
-*.tflite
+#*.tflite
 *.h5
 *.mnn
 *_saved_model/
