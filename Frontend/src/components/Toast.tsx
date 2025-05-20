@@ -7,6 +7,7 @@ export interface ToastProps {
   type?: 'success' | 'error' | 'info';
   duration?: number;
   onHide: () => void;
+  style?: object; // 添加自定義樣式屬性
 }
 
 const Toast: React.FC<ToastProps> = ({ 
@@ -14,7 +15,8 @@ const Toast: React.FC<ToastProps> = ({
   message, 
   type = 'info',
   duration = 2000,
-  onHide 
+  onHide,
+  style  // 接收自定義樣式
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(100)).current;
@@ -95,6 +97,7 @@ const Toast: React.FC<ToastProps> = ({
           transform: [{ translateY }],
           backgroundColor: getBackgroundColor(),
         },
+        style // 應用自定義樣式
       ]}
     >
       <Text style={styles.text}>{message}</Text>
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    zIndex: 9999,
+    zIndex: 1000, // 設置高層級zIndex確保Toast顯示在最上層
   },
   text: {
     color: '#FFFFFF',
