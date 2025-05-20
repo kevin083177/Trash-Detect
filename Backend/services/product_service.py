@@ -6,7 +6,7 @@ from typing import Optional
 
 class ProductService(DatabaseService):
     VALID_CATEGORIES = {'paper', 'plastic', 'cans', 'containers', 'bottles'}
-    
+    VALID_PRODUCT_TYPE = {'wallpaper', 'box', 'table', 'carpet', 'bookshelf', 'lamp', 'pendant', 'calendar'}
     def __init__(self, mongo_uri: str, image_service = None):
         """初始化 ProductService
         

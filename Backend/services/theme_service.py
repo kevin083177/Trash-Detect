@@ -9,7 +9,7 @@ class ThemeService(DatabaseService):
     def __init__(self, mongo_uri, image_service = None):
         super().__init__(mongo_uri)
         self.themes = self.collections['themes']
-
+        
         if image_service is not None and not isinstance(image_service, ImageService):
             raise TypeError("image_service 必須是 ImageService")
         self.image_service = image_service
@@ -183,6 +183,7 @@ class ThemeService(DatabaseService):
         except Exception as e:
             print(f"Error delete theme {theme['name']} preview image: {str(e)}")
             raise
+        
     def delete_theme(self, theme_name, product_service=None):
         """
         刪除指定主題及其所有相關商品
@@ -250,3 +251,28 @@ class ThemeService(DatabaseService):
             error_msg = f"刪除主題 {theme_name} 時出錯: {str(e)}"
             print(error_msg)
             return {'success': False, 'error': error_msg}
+        
+    def _delete_theme_product(self, product_id):
+        """
+        從主題中移除指定的商品ID
+        
+        Args:
+            product_id (str or ObjectId): 要移除的商品ID
+                
+        Returns:
+            bool: 是否成功從任何主題中移除
+        """
+        try:
+            if isinstance(product_id, str):
+                product_id = ObjectId(product_id)
+                
+            result = self.themes.update_one(
+                {"products": product_id},
+                {"$pull": {"products": product_id}}
+            )
+            
+            return result.modified_count > 0
+            
+        except Exception as e:
+            print(f"Error removing product {product_id} from themes: {str(e)}")
+            raise
