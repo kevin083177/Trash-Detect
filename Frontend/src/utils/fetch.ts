@@ -8,7 +8,6 @@ export async function asyncGet(api: string, { headers = {} }: { headers?: Header
       const res: Response = await fetch(api, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           ...headers,
         },
       });
