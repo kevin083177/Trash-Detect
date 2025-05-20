@@ -144,7 +144,7 @@ export default function GameChapterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Headers router={router} username={username} money={money} showBackpack={false} showShop={false} />
+      <Headers router={router} username={username} money={money} showBackpack={false} showShop={false} showBackButton={true}/>
       
       {loading ? (
         <View style={styles.loadingContainer}>

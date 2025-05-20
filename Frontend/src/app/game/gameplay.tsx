@@ -416,7 +416,7 @@ export default function Gameplay() {
     scoreAnimRef.stopAnimation();
     
     // 返回上一頁
-    router.replace('/(tabs)/game');
+    router.replace('/game');
   };
 
   const getOptionStyle = (i: number) => {
@@ -588,6 +588,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 1)',
     padding: 16, 
     borderRadius: 12, 
+    borderColor: '#',
     marginBottom: 12, 
     flexDirection: 'row',
     alignItems: 'center', 

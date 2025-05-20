@@ -298,18 +298,20 @@ export default function Shop(): ReactNode {
     const isThemeLoading = themeLoading[item] || false;
     
     // 排序產品，將已購買的產品放到最後
-    const sortedProducts = [...products].sort((a, b) => {
-      const aPurchased = isProductPurchased(a._id);
-      const bPurchased = isProductPurchased(b._id);
-      
-      if (aPurchased && !bPurchased) {
-        return 1; // a 已購買，b 未購買，a 排在後面
-      } else if (!aPurchased && bPurchased) {
-        return -1; // a 未購買，b 已購買，a 排在前面
-      } else {
-        return 0; // 兩者狀態相同，保持原排序
-      }
-    });
+  const sortedProducts = [...products].sort((a, b) => {
+    const aPurchased = isProductPurchased(a._id);
+    const bPurchased = isProductPurchased(b._id);
+    
+    // 首先按購買狀態排序（未購買的排前面）
+    if (aPurchased && !bPurchased) {
+      return 1; // a 已購買，b 未購買，a 排在後面
+    } else if (!aPurchased && bPurchased) {
+      return -1; // a 未購買，b 已購買，a 排在前面
+    } else {
+      // 狀態相同時，按價格從低到高排序
+      return a.price - b.price;
+    }
+  });
     
     return (
       <View style={styles.themeSection}>
@@ -350,7 +352,7 @@ export default function Shop(): ReactNode {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Headers username={username} money={money} router={router} showShop={false} showBackpack={false} />
+      <Headers username={username} money={money} router={router} showShop={false} showBackpack={false} showBackButton={true}/>
       
       <FlatList
         data={themes}

@@ -29,23 +29,24 @@ export default function TabsLayout() {
       >
         {/* 用戶頁面 */}
         {USER_TAB_SCREENS.map((screen) => (
-          <Tabs.Screen
-            key={screen.name}
-            name={screen.name}
-            options={{
-              title: screen.title,
-              tabBarIcon: ({ color, focused }) => (
-                <TabBarIcon
-                  name={focused ? screen.icon.focused : screen.icon.outline}
-                  color={color}
-                />
-              ),
-              tabBarButton: isAdminMode ? () => null : undefined,
-              // 在管理員模式下完全隱藏
-              tabBarItemStyle: isAdminMode ? { display: 'none', width: 0 } : undefined
-            }}
-          />
-        ))}
+        <Tabs.Screen
+          key={screen.name}
+          name={screen.name}
+          options={{
+            title: screen.title,
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon
+                source={focused ? screen.icon.focused : screen.icon.outline}
+                color={color}
+                focused={focused}
+              />
+            ),
+            tabBarButton: isAdminMode ? () => null : undefined,
+            // 在管理員模式下完全隱藏
+            tabBarItemStyle: isAdminMode ? { display: 'none', width: 0 } : undefined
+          }}
+        />
+      ))}
 
         {/* 管理員頁面 */}
         {ADMIN_TAB_SCREENS.map((screen) => (
@@ -56,7 +57,7 @@ export default function TabsLayout() {
               title: screen.title,
               tabBarIcon: ({ color, focused }) => (
                 <TabBarIcon
-                  name={focused ? screen.icon.focused : screen.icon.outline}
+                  source={focused ? screen.icon.focused : screen.icon.outline}
                   color={color}
                 />
               ),
