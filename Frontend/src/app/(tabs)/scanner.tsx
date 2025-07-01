@@ -1,273 +1,500 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Text, View, StyleSheet, Dimensions, ScrollView } from "react-native";
-import { useTensorflowModel } from 'react-native-fast-tflite';
-import { Camera, useCameraDevice, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
-import { useResizePlugin } from 'vision-camera-resize-plugin';
-import { ActivityIndicator } from "react-native";
-import { Canvas, Rect, Text as SkiaText, Group, useFont } from '@shopify/react-native-skia';
-import { Worklets } from 'react-native-worklets-core';
-import { useIsFocused } from '@react-navigation/native'; // 導入這個 Hook
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert, ActivityIndicator, Dimensions, SafeAreaView} from 'react-native';
+import io, { Socket } from 'socket.io-client';
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { useFocusEffect } from '@react-navigation/native';
+import RNFS from 'react-native-fs';
+import { Detection, DetectionResult } from '@/interface/Detection';
+import { ControlButton, ConnectionStatus } from '@/components/scanner/ControlButton';
+import { BoundingBox } from '@/components/scanner/BoundingBox';
+import { StatusDot } from '@/components/scanner/StatusDot';
+import { ResultDisplay, translateCategory } from '@/components/scanner/ResultDisplay';
+import { Timer } from '@/components/scanner/Timer';
+import Toast from '@/components/Toast';
+import { socket_url, user_api } from '@/api/api';
+import { asyncPost } from '@/utils/fetch';
+import { tokenStorage } from '@/utils/storage';
 
-// 取得螢幕尺寸
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-// 模型輸入尺寸
-const MODEL_IN_W = 640;
-const MODEL_IN_H = 640;
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const detectSpeed = 100; // divide 1 = fps
 
-// 偵測框型別
-interface Detection { 
-  x1: number; 
-  y1: number; 
-  x2: number; 
-  y2: number; 
-  score: number; 
-  classId: number; 
-}
+export default function Scanner() {
+  // Socket state
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [clientId, setClientId] = useState<string>('');
 
-// 定義物體類別名稱映射
-const CLASS_NAMES = [
-  "can", "container", "plastic", "plasticbottle"
-];
-
-export default function ScannerWithSkiaOverlay() {
-  const [detections, setDetections] = useState<Detection[]>([]);
-  const [isResultsVisible, setResultsVisible] = useState(true);
-  const { hasPermission, requestPermission } = useCameraPermission();
+  // Camera setup
   const device = useCameraDevice('back');
-  const isFocused = useIsFocused(); // 使用這個 Hook 來追蹤 screen 是否處於焦點狀態
-
-  // 不修改模型載入部分
-  const model = useTensorflowModel(require('@/assets/model/v2.tflite'), 'android-gpu');
-  const actualModel = model.state === 'loaded' ? model.model : undefined;
-  const { resize } = useResizePlugin();
-
-  // Skia 字型
-  const font = useFont(require('@/assets/fonts/SpaceMono-Regular.ttf'), 14);
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const cameraRef = useRef<Camera>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
   
-  // 追蹤相機和處理器的活躍狀態
-  const [isCameraActive, setCameraActive] = useState(true);
-  
-  // 使用 ref 來追蹤組件掛載狀態
-  const isMounted = useRef(true);
+  // Detection state
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
+  const [autoDetection, setAutoDetection] = useState<boolean>(true);
+  const [torchEnabled, setTorchEnabled] = useState<boolean>(false);
+  const [boundingBoxEnabled, setBoundingBoxEnabled] = useState<boolean>(false);
+  const detectionInterval = useRef<NodeJS.Timeout | null>(null);
+  const [detectionResults, setDetectionResults] = useState<Detection[]>([]);
+  const [imageSize, setImageSize] = useState<{width: number, height: number} | null>(null);
 
-  useEffect(() => { 
-    // 請求相機權限
-    requestPermission(); 
-    
-    // 在組件卸載時設置為 false
-    return () => {
-      isMounted.current = false;
-      
-      // 確保在組件卸載時清空偵測結果
-      setDetections([]);
+  // Countdown timer state
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const [countdownTime, setCountdownTime] = useState(3.0);
+  const [targetItem, setTargetItem] = useState<string>('');
+  const [canStartNewCountdown, setCanStartNewCountdown] = useState(true);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+
+  const [notification, setNotification] = useState<{
+    visible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({
+    visible: false,
+    message: '',
+    type: 'info'
+  });
+
+  // 文字轉換函數
+  const translateCategoryToAPI = (category: string): string => {
+    const translations: { [key: string]: string } = {
+      '鐵鋁罐': 'cans',
+      '寶特瓶': 'bottles', 
+      '紙容器': 'containers',
+      '紙張': 'paper',
+      '塑膠': 'plastic'
     };
-  }, [requestPermission]);
+    return translations[category] || category;
+  };
 
-  // 追蹤頁面焦點和處理相機開關
-  useEffect(() => {
-    // 當頁面失去焦點時，關閉相機
-    setCameraActive(isFocused);
+  const cropImageToSize = async (imagePath: string): Promise<string> => {
+    try {
+      const base64 = await RNFS.readFile(imagePath, 'base64');
+      const dataUri = `data:image/jpeg;base64,${base64}`;
+      return dataUri;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // 開始倒數計時
+  const startCountdown = (itemName: string) => {
+    setIsCountdownActive(true);
+    setTargetItem(itemName);
+    setCountdownTime(3.0);
+    setCanStartNewCountdown(false);
+
+    countdownInterval.current = setInterval(() => {
+      setCountdownTime(prev => {
+        const newTime = prev - 0.1;
+        if (newTime <= 0) {
+          completeCountdown(itemName);
+          return 0;
+        }
+        return newTime;
+      });
+    }, 100);
+  };
+
+  // 重置倒數計時
+  const resetCountdown = () => {
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+      countdownInterval.current = null;
+    }
+    setIsCountdownActive(false);
+    setCountdownTime(3.0);
+    setTargetItem('');
+  };
+
+  const completeCountdown = async (itemName: string) => {
+    resetCountdown();
     
-    // 如果頁面失去焦點，清空偵測結果
-    if (!isFocused) {
-      setDetections([]);
-    }
-  }, [isFocused]);
-
-  // JS callback: 更新 state
-  function onDetect(dets: Detection[]) {
-    // 確保組件還掛載著，避免在組件卸載後更新狀態
-    if (isMounted.current && isCameraActive) {
-      setDetections(dets);
-    }
-  }
-  // 包裝成 worklet 可呼叫的 JS 函數
-  const onDetectJS = Worklets.createRunOnJS(onDetect);
-
-  // Frame Processor
-  const frameProcessor = useFrameProcessor(
-    (frame) => {
-      'worklet';
-      // 只在相機活躍且有模型時處理影格
-      if (!actualModel || !isCameraActive) return;
-
-      const resized = resize(frame, {
-        scale: { width: MODEL_IN_W, height: MODEL_IN_H },
-        pixelFormat: 'rgb',
-        dataType: 'float32',
+    try {
+      const token = await tokenStorage.getToken();
+      const trashType = translateCategoryToAPI(itemName);
+      
+      const response = await asyncPost(user_api.add_trash_stats, {
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+        body: {
+          "trash_type": trashType,
+          "count": 1 
+        }
       });
 
-      const outputs = actualModel.runSync([resized]) as Float32Array[];
-      if (outputs.length === 0) return;
+      if (response.status === 200) {
+        setNotification({
+          visible: true,
+          message: '成功更新回收紀錄',
+          type: 'success'
+        });
+      } else {
+        setNotification({
+          visible: true,
+          message: `更新失敗 ${response.message}`,
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      setNotification({
+        visible: true,
+        message: `更新失敗: ${errorMessage}`,
+        type: 'error'
+      });
+    }
+  };
 
-      const data = outputs[0];
-      const [_, channels, numBoxes] = actualModel.outputs[0].shape;
-      const dets: Detection[] = [];
+  // 檢查倒數計時邏輯
+  useEffect(() => {
+    if (!autoDetection || !isCountdownActive) return;
+
+    const currentDetection = detectionResults.length === 1 ? detectionResults[0] : null;
+    const currentItemName = currentDetection ? translateCategory(currentDetection.category) : null;
+
+    // 如果當前檢測到的物體與目標物體不符，重置倒數計時
+    if (!currentItemName || currentItemName !== targetItem) {
+      resetCountdown();
+    }
+  }, [detectionResults, targetItem, isCountdownActive, autoDetection]);
+
+  // 檢查是否可以開始新的倒數計時
+  useEffect(() => {
+    if (!autoDetection) {
+      setCanStartNewCountdown(true);
+      resetCountdown();
+      return;
+    }
+
+    const currentDetection = detectionResults.length === 1 ? detectionResults[0] : null;
+    
+    if (!currentDetection) {
+      setCanStartNewCountdown(true);
+      return;
+    }
+
+    if (currentDetection && canStartNewCountdown && !isCountdownActive) {
+      const itemName = translateCategory(currentDetection.category);
+      startCountdown(itemName);
+    }
+  }, [detectionResults, canStartNewCountdown, isCountdownActive, autoDetection]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let sock: Socket | null = null;
       
-      for (let i = 0; i < numBoxes; i++) {
-        const score = data[4 * numBoxes + i];
-        // 提高信心閾值到0.5以過濾低質量檢測
-        if (score < 0.5) continue;
+      const initialize = async () => {
+        setStatus('connecting');
+        setAutoDetection(true);
+        sock = io(socket_url, { 
+          transports: ['websocket'], 
+          timeout: 10000,
+          forceNew: true,
+          reconnection: true,
+          reconnectionDelay: 1000,
+          reconnectionAttempts: 5,
+        });
+        setSocket(sock);
+
+        sock.on('connect', () => {
+          setStatus('connected');
+        });
         
-        // 直接從模型獲取座標點 (xyxy 格式)
-        const x1 = data[0 * numBoxes + i];
-        const y1 = data[1 * numBoxes + i];
-        const x2 = data[2 * numBoxes + i];
-        const y2 = data[3 * numBoxes + i];
+        sock.on('connected', (data: { client_id: string }) => {
+          setClientId(data.client_id);
+        });
         
-        // 獲取class ID - 確保是整數
-        const classId = Math.round(data[5 * numBoxes + i]);
+        sock.on('connect_error', err => {
+          setStatus('error');
+          setIsCapturing(false);
+        });
         
-        // 存儲原始座標值，不做任何轉換
-        dets.push({ x1, y1, x2, y2, score, classId });
+        sock.on('disconnect', (reason) => {
+          setStatus('disconnected');
+          setIsCapturing(false);
+        });
+        
+        sock.on('reconnect', (attemptNumber) => {
+          setStatus('connected');
+        });
+        
+        sock.on('reconnect_error', (error) => {
+          setStatus('error');
+        });
+        
+        sock.on('detection_result', (res: DetectionResult) => {
+          setDetectionResults(res.detections);
+          setImageSize(res.image_size);
+          setIsCapturing(false);
+        });
+        
+        sock.on('error', err => {
+          setIsCapturing(false);
+        });
+
+        try {
+          if (!hasPermission) {
+            const permission = await requestPermission();
+            if (!permission) {
+              Alert.alert('權限被拒絕', '需要相機權限才能使用應用');
+              return;
+            }
+          }
+
+          if (hasPermission && device) {
+            setIsCameraActive(true);
+          }
+        } catch (error) {
+          Alert.alert('錯誤', '初始化相機失敗');
+        }
+      };
+
+      initialize();
+
+      return () => {
+        // 清理檢測間隔
+        if (detectionInterval.current) {
+          clearInterval(detectionInterval.current);
+          detectionInterval.current = null;
+        }
+        
+        // 清理倒數計時
+        if (countdownInterval.current) {
+          clearInterval(countdownInterval.current);
+          countdownInterval.current = null;
+        }
+        
+        // 斷開 Socket 連線
+        if (sock) {
+          sock.disconnect();
+        }
+        setSocket(null);
+        
+        // 停用相機
+        setIsCameraActive(false);
+        setStatus('disconnected');
+        setDetectionResults([]);
+        setImageSize(null);
+        setIsCapturing(false);
+        
+        // 重置倒數計時狀態
+        setIsCountdownActive(false);
+        setCountdownTime(3.0);
+        setTargetItem('');
+        setCanStartNewCountdown(true);
+      };
+    }, [hasPermission, device, requestPermission])
+  );
+
+  // 拍照並發送檢測
+  const captureAndDetect = async () => {
+    if (
+        !autoDetection ||
+        !socket ||
+        status !== 'connected' ||
+        !cameraRef.current ||
+        isCapturing
+    ) {
+      if (!autoDetection) {
+        setDetectionResults([]);
+      }
+      return;
+    }
+    try {
+      setIsCapturing(true);
+      
+      const photo = await cameraRef.current.takeSnapshot({
+        quality: 10,
+      });
+      
+      if (!photo.path) {
+        throw new Error('拍照沒有返回路徑');
+      }
+
+      if (!socket.connected) {
+        throw new Error('Socket 連接已斷開');
       }
       
-      // 呼叫 JS 更新
-      onDetectJS(dets);
-    },
-    [actualModel, isCameraActive] // 添加 isCameraActive 作為依賴，當相機狀態變化時重新創建處理器
-  );
+      const processedImage = await cropImageToSize(photo.path);
+      const imageSize = processedImage.length;
+      
+      socket.emit('detect_image', { 
+        image: processedImage, 
+        timestamp: Date.now(),
+        size: imageSize
+      });
+      
+      // 清理臨時文件
+      try {
+        await RNFS.unlink(photo.path);
+      } catch (unlinkError) {
+      }
+      
+    } catch (error) {
+      setIsCapturing(false);
+    }
+  };
+
+  // 自動啟動即時檢測
+  useEffect(() => {
+    if (isCameraActive && socket && status === 'connected') {
+      
+      // 清理之前的間隔
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+      }
+
+      detectionInterval.current = setInterval(() => {
+        captureAndDetect();
+      }, detectSpeed);
+
+    }
+
+    return () => {
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+        detectionInterval.current = null;
+      }
+    };
+  }, [isCameraActive, socket, status, autoDetection]);
+
+  // 手動重連
+  const reconnectSocket = () => {
+    if (socket) {
+      socket.disconnect();
+      socket.connect();
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {hasPermission && device ? (
-        <>
+      {isCameraActive && device && hasPermission ? (
+        <View style={styles.cameraContainer}>
           <Camera
+            ref={cameraRef}
+            style={styles.camera}
             device={device}
-            style={StyleSheet.absoluteFill}
-            isActive={isCameraActive && isFocused} // 根據頁面焦點和活躍狀態決定相機是否活躍
-            frameProcessor={isCameraActive ? frameProcessor : undefined} // 只在相機活躍時使用 frameProcessor
-            pixelFormat="yuv"
+            isActive={true}
+            photo={true}
+            torch={torchEnabled ? 'on' : 'off'}
+            photoQualityBalance={"speed"}
           />
-          {/* Skia Overlay - 只在相機活躍時渲染 */}
-          {isCameraActive && (
-            <Canvas style={StyleSheet.absoluteFill}>
-              {font && detections.map((d, i) => {
-                // 模型輸出的座標是相對於輸入尺寸的，所以需要正確映射到螢幕尺寸
-                const left = d.x1 * SCREEN_W;
-                const top = d.y1 * SCREEN_H;
-                const right = d.x2 * SCREEN_W;
-                const bottom = d.y2 * SCREEN_H;
-                const boxW = right - left;
-                const boxH = bottom - top;
-                
-                // 線條顏色基於類別（示例）
-                const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF"];
-                const color = colors[d.classId % colors.length];
-                
-                // 獲取類別名稱（如果可用）
-                const className = CLASS_NAMES[d.classId] || `Class ${d.classId}`;
-                
-                return (
-                  <Group key={i}>
-                    <Rect
-                      x={left}
-                      y={top}
-                      width={boxW}
-                      height={boxH}
-                      style="stroke"
-                      strokeWidth={2}
-                      color={color}
-                    />
-                    <SkiaText
-                      x={left + 4}
-                      y={top - 4}  // 將標籤放在框的上方
-                      text={`${className} (${(d.score * 100).toFixed(0)}%)`}
-                      font={font}
-                      color={color}
-                    />
-                  </Group>
-                );
-              })}
-            </Canvas>
-          )}
           
-          {/* 辨識結果面板 - 只在相機活躍和結果可見時渲染 */}
-          {isCameraActive && isResultsVisible && (
-            <View style={styles.resultsPanel}>
-              <Text style={styles.resultTitle}>辨識結果</Text>
-              <ScrollView style={styles.resultScroll}>
-                {detections.length === 0 ? (
-                  <Text style={styles.noResultText}>尚未偵測到物體</Text>
-                ) : (
-                  detections.map((d, i) => {
-                    const className = CLASS_NAMES[d.classId] || `Class ${d.classId}`;
-                    return (
-                      <View key={i} style={styles.resultItem}>
-                        <Text style={styles.resultText}>
-                          {className} - 置信度: {(d.score * 100).toFixed(1)}%
-                        </Text>
-                        <Text style={styles.resultDetail}>
-                          位置: ({(d.x1 * SCREEN_W).toFixed(0)}, {(d.y1 * SCREEN_H).toFixed(0)}) 
-                          至 ({(d.x2 * SCREEN_W).toFixed(0)}, {(d.y2 * SCREEN_H).toFixed(0)})
-                        </Text>
-                      </View>
-                    );
-                  })
-                )}
-              </ScrollView>
-            </View>
-          )}
-        </>
-      ) : (
-        <Text>No Camera available.</Text>
-      )}
+          {autoDetection && boundingBoxEnabled && detectionResults.map((detection, index) => (
+            <BoundingBox 
+              key={index} 
+              detection={detection}
+              imageSize={imageSize}
+            />
+          ))}
 
-      {model.state === 'loading' && (
-        <ActivityIndicator size="small" color="white" />
-      )}
-      {model.state === 'error' && (
-        <Text>Failed to load model! {model.error.message}</Text>
+          {/* 倒數計時器 */}
+          <Timer 
+            timeLeft={countdownTime}
+            targetItem={targetItem}
+            isActive={isCountdownActive}
+          />
+
+          {/* 上方控制按鈕容器 */}
+          <SafeAreaView style={styles.topContainer}>
+            <View style={styles.controlContainer}>
+              {/* 連接狀態圓點 */}
+              <StatusDot status={status} onPress={reconnectSocket} />
+              
+              {/* 控制按鈕 */}
+                <ControlButton 
+                  type="auto" 
+                  status={autoDetection} 
+                  onPress={() => setAutoDetection(!autoDetection)} 
+                />
+                <ControlButton 
+                  type="torch" 
+                  status={torchEnabled} 
+                  onPress={() => setTorchEnabled(!torchEnabled)} 
+                />
+                <ControlButton
+                  type='bounding'
+                  status={boundingBoxEnabled}
+                  onPress={() => setBoundingBoxEnabled(!boundingBoxEnabled)}
+                />
+            </View>
+          </SafeAreaView>
+
+          {/* 結果顯示 */}
+          <ResultDisplay detections={detectionResults} />
+
+          <Toast
+            visible={notification.visible}
+            message={notification.message}
+            type={notification.type}
+            onHide={() => setNotification(prev => ({ ...prev, visible: false }))}
+            style={styles.toast}
+          />
+        </View>
+      ) : (
+        <View style={styles.loadingCamera}>
+          <ActivityIndicator size="large" color="#2196F3" />
+          <Text style={styles.loadingText}>
+            {!hasPermission ? '正在請求相機權限...' : '正在啟動相機...'}
+          </Text>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { 
+    flex: 1, 
+    backgroundColor: '#000',
+  },
+  
+  cameraContainer: { 
+    flex: 1,
+    position: 'relative',
+  },
+  camera: { 
+    flex: 1,
+    width: screenWidth,
+    height: screenHeight,
+  },
+  
+  toast: {
+    zIndex: 1000,
+    elevation: 10,
+  },
+  
+  topContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#000',
+  },
+  controlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  loadingCamera: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#000',
   },
-  resultsPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 10,
-    maxHeight: SCREEN_H * 0.3,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  resultTitle: {
-    color: 'white',
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    textAlign: 'center',
+    color: '#fff',
   },
-  resultScroll: {
-    maxHeight: SCREEN_H * 0.25,
-  },
-  resultItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 5,
-    padding: 8,
-    marginVertical: 4,
-  },
-  resultText: {
-    color: 'white',
-    fontSize: 14,
-  },
-  resultDetail: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  noResultText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
-    padding: 10,
-  }
 });
