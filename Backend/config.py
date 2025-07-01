@@ -18,13 +18,16 @@ class Config:
     # Flask 設定
     SECRET_KEY = os.getenv("SECRET_KEY")
     ENV = os.getenv("FLASK_ENV")
-    PORT = int(os.getenv("PORT"))
+    PORT = int(os.getenv("FLASK_PORT"))
 
     # Cloudinary 設定
     CLOUD_NAME = os.getenv('CLOUD_NAME')
     CLOUD_KEY = os.getenv('CLOUD_KEY')
     CLOUD_SECRET = os.getenv('CLOUD_SECRET')
 
+    # Socket 設定
+    SOCKET_PORT = int(os.getenv("SOCKET_PORT"))
+    
     # MongoDB 連接 URI
     MONGO_URI = (
         f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}"
