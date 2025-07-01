@@ -6,8 +6,8 @@ import { Question } from '@/interface/Question';
 import { asyncPut } from '@/utils/fetch';
 import { user_level_api } from '@/api/api';
 import { tokenStorage } from '@/utils/storage';
-import { ScoreBar } from '@/components/game/ScoreBar';
 import { Timer } from '@/components/game/Timer';
+import { WaterScore } from '@/components/game/WaterScore';
 import { BlurView } from 'expo-blur';
 
 // 階段型別
@@ -39,6 +39,7 @@ export default function Gameplay() {
   const questionFade = useRef(new Animated.Value(0)).current;
   const optionsFade = useRef(new Animated.Value(0)).current;
   const scoreAnimRef = useRef(new Animated.Value(0)).current;
+  const waterScoreVisible = useRef(new Animated.Value(0)).current; // 新增水分數顯示動畫
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
@@ -65,6 +66,15 @@ export default function Gameplay() {
     
     // 是否為第一次加載
     isFirstLoad.current = false;
+    
+    // 顯示水分數組件
+    Animated.timing(waterScoreVisible, {
+      toValue: 1,
+      duration: 800,
+      delay: 500,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
     
     // Cleanup function
     return () => {
@@ -101,6 +111,7 @@ export default function Gameplay() {
     questionFade.setValue(0);
     optionsFade.setValue(0);
     scoreAnimRef.setValue(0);
+    waterScoreVisible.setValue(0);
     
     clearTimers();
     clearAllTimeouts();
@@ -397,6 +408,7 @@ export default function Gameplay() {
       questionFade.stopAnimation();
       optionsFade.stopAnimation();
       scoreAnimRef.stopAnimation();
+      waterScoreVisible.stopAnimation();
     };
   }, []);
 
@@ -414,6 +426,7 @@ export default function Gameplay() {
     questionFade.stopAnimation();
     optionsFade.stopAnimation();
     scoreAnimRef.stopAnimation();
+    waterScoreVisible.stopAnimation();
     
     // 返回上一頁
     router.replace('/game');
@@ -443,6 +456,7 @@ export default function Gameplay() {
     );
   }
 
+
   // Don't render anything if game has ended
   if (isGameEnd.current || phase === 'game-ended') {
     return (
@@ -456,13 +470,34 @@ export default function Gameplay() {
 
   return (
     <ImageBackground 
-      source={{ uri: levelBackground }} 
-      style={styles.backgroundImage}
-      resizeMode="cover"
+      // source={require('@/assets/images/Game_Background.png')} 
+      // style={styles.backgroundImage}
+      // resizeMode="cover"
     >
-      <BlurView intensity={70} style={StyleSheet.absoluteFill} tint="dark" />
+      {/* <BlurView intensity={70} style={StyleSheet.absoluteFill} tint="dark" /> */}
       <SafeAreaView style={styles.container}>
-        <ScoreBar score={score} style={styles.scoreBar} />
+        {/* 液體波浪分數顯示組件 */}
+        <Animated.View 
+          style={[
+            styles.waterScoreContainer,
+            {
+              opacity: waterScoreVisible,
+              transform: [{
+                scale: waterScoreVisible.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.5, 1],
+                })
+              }]
+            }
+          ]}
+        >
+          <WaterScore 
+            score={score} 
+            maxScore={2000} 
+            size={100}
+            showAnimation={true}
+          />
+        </Animated.View>
 
         {/* 計時器只在顯示選項階段可見 */}
         {phase === 'show-options' && (
@@ -476,6 +511,7 @@ export default function Gameplay() {
               duration={8}
               currentTime={displayTimer}
               isRunning={isTimerRunning}
+              style={{paddingVertical: 20}}
             />
           </Animated.View>
         )}
@@ -506,13 +542,17 @@ export default function Gameplay() {
                 onPress={() => handleAnswer(idx)}
                 disabled={isAnswered}
               >
-                <Text style={styles.optionText}>{opt.text}</Text>
-                {isAnswered && idx === currentQuestion.correctOptionIndex && (
-                  <Ionicons name="checkmark" size={20} color="green" />
-                )}
-                {isAnswered && idx === selectedOptions[currentIndex] && idx !== currentQuestion.correctOptionIndex && (
-                  <Ionicons name="close" size={20} color="red" />
-                )}
+                <Text
+                  style={[
+                    styles.optionText,
+                    isAnswered &&
+                      (idx === currentQuestion.correctOptionIndex || idx === selectedOptions[currentIndex])
+                      ? styles.whiteText
+                      : null
+                  ]}
+                >
+                {opt.text}
+              </Text>
               </TouchableOpacity>
             ))}
           </Animated.View>
@@ -559,6 +599,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
+  // 新增的水分數容器樣式
+  waterScoreContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+  },
+
   timerWrapper: { 
     position: 'absolute', 
     top: 0, 
@@ -594,7 +642,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'space-between', 
   },
-  correctOption: { borderColor: '#4CAF50', backgroundColor: 'rgba(232, 245, 233, 0.95)' },
-  incorrectOption: { borderColor: '#f44336', backgroundColor: 'rgba(255, 235, 238, 0.95)' },
-  optionText: { fontSize: 20, flex: 1, textAlign: 'center' }
+  correctOption: { borderColor: '#70AA42', backgroundColor: '#70AA42'},
+  incorrectOption: { borderColor: '#E74C3C', backgroundColor: '#E74C3C' },
+  optionText: { fontSize: 20, flex: 1, textAlign: 'center' },
+  whiteText: { color: 'white' },
 });

@@ -1,144 +1,150 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 interface TimerProps {
-  duration: number; // 總持續時間（秒）
-  currentTime: number; // 當前剩餘時間（秒）
-  isRunning: boolean; // 是否正在運行
-  style?: StyleProp<ViewStyle>; // 可選的容器樣式
+  duration: number;
+  currentTime: number;
+  isRunning: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-export const Timer: React.FC<TimerProps> = ({ 
-  duration, 
-  currentTime, 
+const RADIUS = 35;
+const STROKE_WIDTH = 5;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+export const Timer: React.FC<TimerProps> = ({
+  duration,
+  currentTime,
   isRunning,
-  style 
+  style
 }) => {
-  // 使用這個動畫值來控制進度條寬度
-  const timerAnim = useRef(new Animated.Value(1)).current;
-  
-  // 記錄動畫實例，用於必要時停止
+  const progressAnim = useRef(new Animated.Value(1)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
-  
-  // 記錄是否已經啟動了動畫
   const hasStartedAnimation = useRef(false);
-  
-  // 記錄上一次的運行狀態
   const wasRunning = useRef(false);
 
-  const timeRatio = currentTime / duration;
-
-  const animatedColor = timerAnim.interpolate({
+  // 顏色動畫（紅 → 黃 → 綠）
+  const interpolatedColor = progressAnim.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ['#EA1001', '#F4C100', '#01F510']
+    outputRange: ['#FF4D4D', '#FFD700', '#70AA42']
   });
 
-  // 處理動畫啟動和停止
+  // 計時進度動畫
   useEffect(() => {
-    // 如果狀態從非運行變為運行，或者是首次運行
     if (isRunning && (!wasRunning.current || !hasStartedAnimation.current)) {
-      // 設置動畫初始值為1（100%填充）
-      timerAnim.setValue(1);
-      
-      // 清除任何現有動畫
-      if (animationRef.current) {
-        animationRef.current.stop();
-      }
-      
-      // 創建從1到0的連續動畫，持續總時間
-      animationRef.current = Animated.timing(timerAnim, {
+      progressAnim.setValue(1);
+      animationRef.current?.stop();
+
+      animationRef.current = Animated.timing(progressAnim, {
         toValue: 0,
-        duration: duration * 1000, // 總秒數轉換為毫秒
-        useNativeDriver: false
+        duration: duration * 1000,
+        useNativeDriver: false,
       });
-      
-      // 啟動動畫
+
       animationRef.current.start();
-      
-      // 標記已啟動動畫
       hasStartedAnimation.current = true;
-    } 
-    // 如果狀態從運行變為非運行
-    else if (!isRunning && wasRunning.current) {
-      // 暫停動畫
-      if (animationRef.current) {
-        animationRef.current.stop();
-      }
-      
-      // 標記動畫尚未啟動
+    } else if (!isRunning && wasRunning.current) {
+      animationRef.current?.stop();
       hasStartedAnimation.current = false;
     }
-    
-    // 更新上一次的運行狀態
+
     wasRunning.current = isRunning;
-    
-    // 組件卸載時的清理
+
     return () => {
-      if (animationRef.current) {
-        animationRef.current.stop();
-      }
+      animationRef.current?.stop();
     };
-  }, [isRunning, duration, timerAnim]);
-  
-  // 當進入新的問題時（重置計時器）
+  }, [isRunning, duration]);
+
+  // 重置動畫
   useEffect(() => {
-    // 如果計時器重置到初始狀態
-    if (currentTime === duration) {
-      // 重置動畫狀態
+    if (currentTime === duration && isRunning) {
       hasStartedAnimation.current = false;
-      
-      // 如果動畫正在運行，則重啟動畫
-      if (isRunning) {
-        // 清除現有動畫
-        if (animationRef.current) {
-          animationRef.current.stop();
-        }
-        
-        // 設置動畫初始值
-        timerAnim.setValue(1);
-        
-        // 創建新的完整動畫
-        animationRef.current = Animated.timing(timerAnim, {
-          toValue: 0,
-          duration: duration * 1000,
-          useNativeDriver: false
-        });
-        
-        // 啟動動畫
-        animationRef.current.start();
-        
-        // 標記已啟動
-        hasStartedAnimation.current = true;
-      }
+      animationRef.current?.stop();
+      progressAnim.setValue(1);
+
+      animationRef.current = Animated.timing(progressAnim, {
+        toValue: 0,
+        duration: duration * 1000,
+        useNativeDriver: false,
+      });
+
+      animationRef.current.start();
+      hasStartedAnimation.current = true;
     }
-  }, [currentTime, duration, isRunning, timerAnim]);
+  }, [currentTime, duration, isRunning]);
+
+  // 抖動動畫
+  useEffect(() => {
+    if (isRunning && currentTime <= 3) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shakeAnim, {
+            toValue: 5,
+            duration: 50,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shakeAnim, {
+            toValue: -5,
+            duration: 50,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shakeAnim, {
+            toValue: 0,
+            duration: 50,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      shakeAnim.stopAnimation();
+      shakeAnim.setValue(0);
+    }
+  }, [currentTime, isRunning]);
+
+  const strokeDashoffset = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CIRCUMFERENCE, 0],
+  });
 
   return (
-    <View style={[styles.timerContainer, style]}>
-      <Animated.View
-        style={[
-          styles.timerBar,
-          { 
-            width: timerAnim.interpolate({ 
-              inputRange: [0, 1], 
-              outputRange: ['0%', '100%'] 
-            }),
-            backgroundColor: animatedColor // 使用動畫顏色
-          },
-        ]}
-      />
-    </View>
+    <Animated.View
+      style={[
+        styles.container,
+        style,
+        { transform: [{ translateX: shakeAnim }] }
+      ]}
+    >
+      <Svg width={RADIUS * 2 + STROKE_WIDTH} height={RADIUS * 2 + STROKE_WIDTH}>
+        <AnimatedCircle
+          cx={RADIUS + STROKE_WIDTH / 2}
+          cy={RADIUS + STROKE_WIDTH / 2}
+          r={RADIUS}
+          stroke={interpolatedColor as unknown as string}
+          strokeWidth={STROKE_WIDTH}
+          fill="transparent"
+        />
+      </Svg>
+
+      <Animated.Text style={[styles.scoreText, { color: interpolatedColor as unknown as string }]}>
+        {Math.floor(currentTime)}
+      </Animated.Text>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  timerContainer: {
-    width: '100%',
-    height: 10,
-    overflow: 'hidden',
+  container: {
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  timerBar: {
-    height: '100%',
-  }
+  scoreText: {
+    position: 'absolute',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
 });

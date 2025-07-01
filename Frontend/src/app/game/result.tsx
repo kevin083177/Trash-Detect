@@ -22,7 +22,7 @@ export default function Result() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)/game/' as never) }>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('/game/' as never) }>
         <Text style={styles.buttonText}>離開</Text>
       </TouchableOpacity>
     </SafeAreaView>
