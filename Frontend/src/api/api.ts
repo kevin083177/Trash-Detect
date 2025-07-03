@@ -22,6 +22,9 @@ export const auth_api = {
     login: `${auth_url}/login`,
     register: `${auth_url}/register`,
     logout: `${auth_url}/logout`,
+    verify_code: `${auth_url}/verify`,
+    resend_code: `${auth_url}/resend`,
+    code_status: `${auth_url}/status`
 } as const;
 
 export const admin_api = {
