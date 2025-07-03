@@ -8,6 +8,7 @@ from .level_model import Level
 from .question_model import Question
 from .question_category_model import QuestionCategory
 from .detection_model import DetectionResult, DetectionResponse
+from .email_model import EmailVerification
 
 __all__ = [
     'User',
@@ -19,5 +20,6 @@ __all__ = [
     'Level',
     'Question',
     'QuestionCategory',
-    'DetectionResult', 'DetectionResposne'
+    'DetectionResult', 'DetectionResponse',
+    'EmailVerification'
 ]
