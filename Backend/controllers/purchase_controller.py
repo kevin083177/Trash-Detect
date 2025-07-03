@@ -56,7 +56,6 @@ class PurchaseController:
             
             if purchase:
                 purchase.pop('user_id', None)
-                purchase['_id'] = str(purchase['_id'])
                 return {
                     "message": "成功找到使用者購買紀錄",
                     "body": purchase

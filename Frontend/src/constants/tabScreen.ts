@@ -11,14 +11,14 @@ export const HIDE_TAB_BAR_PATHS = [
 export const TAB_SCREEN_OPTIONS = {
   headerShown: false,
   tabBarStyle: {
-    height: 60,
+    height: 62,
     paddingBottom: 8,
     paddingTop: 8,
   },
   tabBarActiveTintColor: '#007AFF',
   tabBarInactiveTintColor: '#8E8E93',
   tabBarLabelStyle: {
-    fontSize: 12,
+    fontSize: 14,
   },
 } as const;
 
@@ -28,40 +28,40 @@ export const USER_TAB_SCREENS = [
     name: 'index',
     title: '首頁',
     icon: {
-      focused: 'home',
-      outline: 'home-outline',
+      focused: require('@/assets/icons/home-on.png'),
+      outline: require('@/assets/icons/home-off.png'),
     },
   },
-  {
-    name: 'shop',
-    title: '商店',
-    icon: {
-      focused: 'storefront',
-      outline: 'storefront-outline',
-    },
-  },
+  // {
+  //   name: 'shop',
+  //   title: '商店',
+  //   icon: {
+  //     focused: require('@/assets/icons/profile-on.png'),
+  //     outline: require('@/assets/icons/profile-off.png'),
+  //   },
+  // },
   {
     name: 'scanner',
     title: '相機',
     icon: {
-      focused: 'camera',
-      outline: 'camera-outline',
+      focused: require('@/assets/icons/scanner-on.png'),
+      outline: require('@/assets/icons/scanner-off.png'),
     },
   },
-  {
-    name: 'game',
-    title: '冒險',
-    icon: {
-      focused: 'map',
-      outline: 'map-outline',
-    },
-  },
+  // {
+  //   name: 'game',
+  //   title: '冒險',
+  //   icon: {
+  //     focused: require('@/assets/icons/profile-on.png'),
+  //     outline: require('@/assets/icons/profile-off.png'),
+  //   },
+  // },
   {
     name: 'profile',
     title: '個人',
     icon: {
-      focused: 'person',
-      outline: 'person-outline',
+      focused: require('@/assets/icons/profile-on.png'),
+      outline: require('@/assets/icons/profile-off.png'),
     },
   },
 ] as const;

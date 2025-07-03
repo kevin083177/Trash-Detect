@@ -1,23 +1,30 @@
+const server_ip = `http://${process.env.EXPO_PUBLIC_API_URL}` as const;
+
 const api_version = '/api/v1'
 
-const url_path = `http://${process.env.EXPO_PUBLIC_API_URL}${api_version}` as const;
+const api_url = `${server_ip}:${process.env.EXPO_PUBLIC_API_PORT}${api_version}` as const;
+export const socket_url = `${server_ip}:${process.env.EXPO_PUBLIC_SOCKET_PORT}` as const;
 
-const auth_url = `${url_path}/auth`;
-const admin_url = `${url_path}/admin`;
-const user_url = `${url_path}/users`;
-const user_level_url = `${url_path}/users/level`
-const purchase_url = `${url_path}/purchase`;
-const product_url = `${url_path}/product`;
-const theme_url = `${url_path}/theme`;
-const chapter_url = `${url_path}/chapter`;
-const level_url = `${url_path}/level`;
-const question_url = `${url_path}/question`;
-const question_category_url = `${url_path}/question/category`;
+const auth_url = `${api_url}/auth`;
+const admin_url = `${api_url}/admin`;
+const user_url = `${api_url}/users`;
+const user_level_url = `${api_url}/users/level`
+const purchase_url = `${api_url}/purchase`;
+const product_url = `${api_url}/product`;
+const theme_url = `${api_url}/theme`;
+const chapter_url = `${api_url}/chapter`;
+const level_url = `${api_url}/level`;
+const question_url = `${api_url}/question`;
+const question_category_url = `${api_url}/question/category`;
+
 
 export const auth_api = {
     login: `${auth_url}/login`,
     register: `${auth_url}/register`,
     logout: `${auth_url}/logout`,
+    verify_code: `${auth_url}/verify`,
+    resend_code: `${auth_url}/resend`,
+    code_status: `${auth_url}/status`
 } as const;
 
 export const admin_api = {

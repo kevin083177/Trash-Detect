@@ -3,12 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Router } from "expo-router";
 
-export default function Headers({ router, username, money, showBackpack=true ,showShop=true }: { router: Router, username: string, money: number, showBackpack?: boolean, showShop?: boolean }): ReactNode {
+export default function Headers({ router, username, money, showBackpack=true ,showShop=true, showBackButton=false }: { router: Router, username: string, money: number, showBackpack?: boolean, showShop?: boolean, showBackButton?: boolean }): ReactNode {
     return (
         <View style={styles.header}>
+            { showBackButton &&
+              <TouchableOpacity onPress={() => router.replace('/')}>
+                <Ionicons name="arrow-back" size={24}></Ionicons>
+              </TouchableOpacity>
+            }
             <TouchableOpacity style={styles.userSection} onPress={() => router.push('/profile')}>
-                <Ionicons name="person-outline" size={24} color="black" />
-                <Text style={styles.userName}>{username}</Text>
                 <View style={styles.coinContainer}>
                   <Ionicons name="logo-usd" size={20} color="#FFD700" />
                   <Text style={styles.coinText}>{money}</Text>
@@ -21,7 +24,7 @@ export default function Headers({ router, username, money, showBackpack=true ,sh
                 </TouchableOpacity>
               }
               { showShop &&
-                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/(tabs)/shop')}>
+                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/shop')}>
                     <Ionicons name="storefront-outline" size={24} color="black" />
                 </TouchableOpacity>
               }
@@ -36,7 +39,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
@@ -46,6 +48,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    height: 45
   },
   userSection: {
     flexDirection: 'row',

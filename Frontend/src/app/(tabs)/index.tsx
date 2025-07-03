@@ -4,7 +4,7 @@ import { tokenStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Image, ImageBackground } from 'react-native';
 import Toast from '@/components/Toast';
 import dailyTips from '@/assets/data/daily_tips.json';
 import { router } from 'expo-router';
@@ -207,20 +207,33 @@ export default function Index() {
       });
     }
   };
-
+  
+  const handleDogPress = () => {
+    router.replace('/game')
+  }
+  
   return (
     <View style={styles.container}>
       <Headers router={router} username={username} money={money} />
-
-      {/* Product Building Area */}
+      
+      {/* Background Building Area - 最底層 (zIndex: 1) */}
       <TouchableOpacity 
         style={styles.buildingArea}
         onPress={showToastMessage}
       >
-        <Text style={styles.buildingText}>商品建造區</Text>
+        <ImageBackground
+          source={{uri: "https://res.cloudinary.com/didzpclp3/image/upload/v1747209514/%E6%A9%98%E7%BA%8C%E5%88%86%E9%A1%9E/preview.png"}}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
       </TouchableOpacity>
 
-      {/* Floating Daily Check-in Section */}
+      {/* Dog Image - 中間層 (zIndex: 10) */}
+      <TouchableOpacity style={styles.dogButton} onPress={handleDogPress}>
+        <Image source={require("@/assets/images/dog.png")} style={styles.dogImage} />
+      </TouchableOpacity>
+
+      {/* Floating Daily Check-in Section - 中間偏上層 (zIndex: 20) */}
       <TouchableOpacity 
         style={styles.floatingDailySection}
         onPress={fetchDailyCheckIn}
@@ -240,7 +253,7 @@ export default function Index() {
         </View>
       </TouchableOpacity>
 
-      {/* Daily Knowledge Section - Fixed at bottom */}
+      {/* Daily Knowledge Section - 次高層 (zIndex: 50) */}
       <Animated.View 
         style={[
           styles.dailyKnowledgeContainer,
@@ -261,12 +274,14 @@ export default function Index() {
           <Text style={styles.dailyText}>{dailyTips.tips[currentTipIndex]}</Text>
         </View>
       </Animated.View>
-
+      
+      {/* Toast - 最高層 (zIndex: 100) */}
       <Toast
         visible={notification.visible}
         message={notification.message}
         type={notification.type}
         onHide={() => setNotification(prev => ({ ...prev, visible: false }))}
+        style={styles.toast}
       />
     </View>
   );
@@ -276,6 +291,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+  },
+  // 新增 toast 樣式，設置最高層級
+  toast: {
+    zIndex: 100,
+    elevation: 10,
+  },
+  // 修改 dog 樣式，設置中間層級
+  dogButton: {
+    position: 'absolute', 
+    zIndex: 10, // 中間層級
+    elevation: 4, // Android需要
+    bottom: 100,
+    right: 100,
+  },
+  dogImage: {
+    width: 150,
+    height: 150,
   },
   header: {
     flexDirection: 'row',
@@ -292,6 +324,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+    zIndex: 30, // 頭部應該在較高層級
   },
   userSection: {
     flexDirection: 'row',
@@ -339,7 +372,12 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 1, // 最低層級
+    zIndex: 1, // 最低層級
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
   },
   buildingText: {
     fontSize: 24,
@@ -359,14 +397,17 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 5,
+    zIndex: 20, // 中間層級，比狗高一點
   },
-  dailyKnowledgeContainer: { //小知識
+  dailyKnowledgeContainer: { // 小知識
     position: 'absolute',
     bottom: 20,
     left: 0,
     right: 0,
     paddingHorizontal: 16,
+    zIndex: 50, // 較高層級，但低於toast
+    elevation: 6, // Android需要
   },
   dailyContent: {
     backgroundColor: '#E5E5E5',
@@ -386,7 +427,6 @@ const styles = StyleSheet.create({
   checkInContainer: {
     flexDirection: 'row',
     gap: 8,
-    
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 50,

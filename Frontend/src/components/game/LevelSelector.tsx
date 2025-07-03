@@ -80,8 +80,6 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
   const [detailModalVisible, setDetailModalVisible] = useState<boolean>(false);
   const [selectedLevel, setSelectedLevel] = useState<LevelData | null>(null);
 
-  const question_category = ['', '紙張', '鐵鋁罐', '紙容器', '塑膠', '寶特瓶'];
-
   // 提取指定範圍的問題
   const extractQuestions = (questions: any[], levelSequence: number): Question[] => {
     const startIndex = (levelSequence - 1) * 20;
@@ -189,7 +187,7 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
     if (selectedLevel) {
       try {
         // 獲取該類別的問題
-        const response = await asyncGet(`${question_api.get_question_by_category}${question_category[chapter_sequence]}`, {
+        const response = await asyncGet(`${question_api.get_question_by_category}${chapter_name.substring(0, 3)}`, {
           headers: {
             "Authorization": `Bearer ${await tokenStorage.getToken()}`
           }

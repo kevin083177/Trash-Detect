@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import { asyncPost } from '@/utils/fetch';
@@ -75,32 +75,39 @@ export default function Register() {
           "userRole": 'user'
         }
       });
-      if (response.status === 409) {
-        if (response.message === "使用者名稱已存在") {
+
+      if (response.status === 200) {
+        router.push({
+          pathname: "/verification",
+          params: {
+            email: email,
+            username: username
+          }
+        });
+      } else {
+        const newErrorFields: ErrorFields = {};
+        if (response.message.includes("使用者名稱已存在")) {
           newErrorFields.username = true;
-          setErrorFields(newErrorFields);
           setErrorMessage('使用者名稱已存在');
-          return;
-        }
-        else if (response.message === "電子郵件已被註冊") {
+        } else if (response.message.includes("電子郵件已被註冊")) {
           newErrorFields.email = true;
-          setErrorFields(newErrorFields);
           setErrorMessage('電子郵件已被註冊');
+        } else if (response.message.includes("5分鐘")) {
+          router.push({
+            pathname: '/verification',
+            params: { 
+              email: email,
+              username: username
+            }
+          });
           return;
+        } else {
+          setErrorMessage('註冊失敗 請稍後重試');
         }
-        
       }
-      Alert.alert('成功', '註冊成功！', [
-        {
-          text: '確定',
-          onPress: () => router.push({
-            pathname: '/login',
-            params: { email }
-          })
-        }
-      ]);
-    } catch (error: any) {
-      setErrorMessage(error?.message || '註冊失敗，請稍後再試');
+    } catch (error) {
+      setErrorMessage('網路錯誤，請稍後重試');
+      console.error('Register error:', error);
     } finally {
       setIsLoading(false);
     }

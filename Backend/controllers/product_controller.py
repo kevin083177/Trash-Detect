@@ -65,6 +65,7 @@ class ProductController:
                     'description': request.form.get('description'),
                     'price': int(request.form.get('price', 0)),
                     'theme': request.form.get('theme'),
+                    'type': request.form.get('type')
                 }
             except (ValueError, json.JSONDecodeError) as e:
                 return {
@@ -72,11 +73,8 @@ class ProductController:
                 }, 400
             
             # 檢查必要欄位
-            required_fields = ['name', 'description', 'theme']
-            missing_fields = [field for field in required_fields if not data.get(field)]
-            if 'price' not in data:
-                missing_fields.append('price')
-            
+            required_fields = ['name', 'description', 'theme', 'type', 'price']
+            missing_fields = [field for field in required_fields if not data.get(field)]            
             if missing_fields:
                 return {
                     "message": f"缺少: {', '.join(missing_fields)}",
@@ -85,6 +83,12 @@ class ProductController:
             name = data['name']
             description = data['description']
             theme = data['theme']
+            type = data["type"]
+            
+            if type not in product_service.VALID_PRODUCT_TYPE:
+                return {
+                    "message": "不支援的 type 類型"
+                }, 404
             
             # 檢查商品是否存在
             if product_service._check_product_exists(name):
@@ -140,16 +144,24 @@ class ProductController:
                 
             product_id = data["product_id"]
             
+            product = product_service.get_product(product_id)
+            if not product:
+                return {
+                    "message": "無法找到商品"
+                }, 404
+            
+            theme_service._delete_theme_product(product_id)
+            
             deleted_count, affected_users = product_service.delete_product_by_id(product_id)
             
-            if deleted_count:
+            if deleted_count > 0:
                 return {
                     "message": f"刪除商品成功 已修改 {affected_users} 位用戶之購買紀錄",
                 }, 200
-            
-            return {
-                "message": "無法找到商品"
-            }, 404
+            else:
+                return {
+                    "message": "商品刪除失敗"
+                }, 500
         
         except Exception as e:
             return {

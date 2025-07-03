@@ -21,11 +21,12 @@ class ProductImage:
         )
 
 class Product:
-    def __init__(self, name, description, price, theme, image=None):
+    def __init__(self, name, description, price, theme, type, image=None):
         self.name = name
         self.description = description
         self.price = price
         self.theme = theme
+        self.type = type
         # self.recycle_requirement = recycle_requirement
         self.image = image
         
@@ -34,6 +35,8 @@ class Product:
             "name": self.name,
             "description": self.description,
             "price": self.price,
+            "theme": self.theme,
+            "type": self.type
             # "recycle_requirement": self.recycle_requirement
         }
         
@@ -41,14 +44,3 @@ class Product:
             product_dict["image"] = self.image
             
         return product_dict
-    
-    @classmethod
-    def from_dict(cls, data):
-        """從字典創建 Product 實例"""
-        return cls(
-            name=data["name"],
-            description=data["description"],
-            price=data["price"],
-            # ecycle_requirement=data["recycle_requirement"],
-            image=data["image"]
-        )

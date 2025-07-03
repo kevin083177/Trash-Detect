@@ -11,6 +11,8 @@ from .theme_service import ThemeService
 from .level_service import LevelService
 from .question_service import QuestionService
 from .question_category_service import QuestionCategoryService
+from .detection_service import DetectionService
+from .email_service import VerificationService
 
 __all__ = [
     'DatabaseService',
@@ -26,4 +28,6 @@ __all__ = [
     'LevelService',
     'QuestionService',
     'QuestionCategoryService',
+    'DetectionService',
+    'VerificationService'
 ]
