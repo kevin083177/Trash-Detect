@@ -1,6 +1,6 @@
 import { user_api } from '@/api/api';
 import { asyncGet, asyncPost } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
