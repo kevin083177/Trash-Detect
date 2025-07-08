@@ -45,6 +45,7 @@ export const user_api = {
 
 export const purchase_api = {
     get_purchase: `${purchase_url}/`,
+    get_purchase_by_type: `${purchase_url}/type`,
     purchase: `${purchase_url}/purchase_product`,
 } as const;
 

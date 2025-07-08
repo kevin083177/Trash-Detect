@@ -48,6 +48,42 @@ class PurchaseController:
             return {
                 "message": f"伺服器錯誤(purchase_product) {str(e)}",
             }, 500
+          
+    @staticmethod
+    def get_purchase_product_by_type(user):
+        try:
+            purchase = purchase_service.get_purchase_by_user(user['_id'])
+            
+            if not purchase:
+                return {
+                    "message": "無法找到購買紀錄"
+                }, 404
+                
+            category_products = {
+                'wallpaper': [],
+                'box': [],
+                'table': [],
+                'carpet': [],
+                'bookshelf': [],
+                'lamp': [],
+                'pendant': [],
+                'calendar': []
+            }
+            
+            for product in purchase.get('product', []):
+                product_type = product['type']
+                if product_type in category_products:
+                    category_products[product_type].append(product)
+            
+            return {
+                "message": "成功獲取已購買商品",
+                "body": category_products
+            }, 200
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_purchased_products_by_type) {str(e)}"
+            }, 500
             
     @staticmethod
     def get_purchase_by_user(user):

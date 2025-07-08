@@ -11,6 +11,12 @@ purchase_blueprint = Blueprint('purchase', __name__)
 def purchase_product(user):
     return PurchaseController.purchase_product(user)
 
+@purchase_blueprint.route('/type', methods=['GET'])
+@log_request
+@token_required
+def get_purchase_product_by_type(user):
+    return PurchaseController.get_purchase_product_by_type(user)
+
 @purchase_blueprint.route('/', methods=['GET'])
 @log_request
 @token_required
