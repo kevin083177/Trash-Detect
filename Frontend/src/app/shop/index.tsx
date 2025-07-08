@@ -1,6 +1,6 @@
 import { purchase_api, theme_api, user_api } from '@/api/api';
 import { asyncGet, asyncPost } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import Headers from '@/components/Headers';
@@ -99,6 +99,7 @@ export default function Shop(): ReactNode {
         fetchedThemes.forEach((theme: string) => {
           loadingState[theme] = true;
         });
+        
         setThemeLoading(loadingState);
         
         // 為每個主題獲取產品
@@ -263,11 +264,12 @@ export default function Shop(): ReactNode {
         onPress={() => handleProductPress(item)}
       >
         <Image 
-          source={{ uri: item.image?.thumbnail_url }}
+          source={{ uri: item.image?.url }}
           style={[
             styles.productImage,
             purchased && styles.purchasedProductImage
           ]}
+          resizeMode="contain"
         />
         <Text 
           style={[
@@ -296,20 +298,25 @@ export default function Shop(): ReactNode {
   const renderThemeSection = ({ item, index }: { item: string; index: number }) => {
     const products = themeProducts[item] || [];
     const isThemeLoading = themeLoading[item] || false;
-    
-    // 排序產品，將已購買的產品放到最後
+    const typeOrder = ['wallpaper', 'box', 'table', 'carpet', 'bookshelf', 'lamp', 'pendant', 'calendar'];
+
   const sortedProducts = [...products].sort((a, b) => {
     const aPurchased = isProductPurchased(a._id);
     const bPurchased = isProductPurchased(b._id);
     
-    // 首先按購買狀態排序（未購買的排前面）
     if (aPurchased && !bPurchased) {
-      return 1; // a 已購買，b 未購買，a 排在後面
+      return 1;
     } else if (!aPurchased && bPurchased) {
-      return -1; // a 未購買，b 已購買，a 排在前面
+      return -1;
     } else {
-      // 狀態相同時，按價格從低到高排序
-      return a.price - b.price;
+      const aTypeIndex = typeOrder.indexOf(a.type);
+      const bTypeIndex = typeOrder.indexOf(b.type);
+      
+      if (aTypeIndex !== -1 && bTypeIndex !== -1) {
+        return aTypeIndex - bTypeIndex;
+      }
+
+      return 0;
     }
   });
     
@@ -406,7 +413,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    padding: 16,
     marginBottom: 8,
   },
   themeTitle: {
@@ -425,12 +432,13 @@ const styles = StyleSheet.create({
   productCard: {
     width: (width - 64) / 3,
     marginBottom: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   productImage: {
-    width: '100%',
+    width: '90%',
     aspectRatio: 1,
-    borderRadius: 8,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   purchasedProductImage: {
     opacity: 0.5,
@@ -439,6 +447,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     color: '#333',
+    width: '90%',
   },
   purchasedProductText: {
     color: '#888',
