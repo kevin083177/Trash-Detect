@@ -101,6 +101,11 @@ class ProductController:
                 return {
                     "message": f"主題 {theme} 不存在, 已存在主題:{theme_service.get_all_themes()}"
                 }, 400
+                
+            if product_service._check_product_type_exists_in_theme(theme, type):
+                return {
+                    "message": f"主題 {theme} 中已存在 {type} 類型的商品"
+                }, 409
             
             # 新增商品（包含圖片上傳）
             result = product_service.add_product(data, image)
@@ -130,6 +135,27 @@ class ProductController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(add_product) {str(e)}",
+            }, 500
+    
+    @staticmethod
+    def delete_all_products():
+        try:
+            delete_count, update_user_total = product_service.delete_all_products()
+            if not delete_count:
+                return {
+                    "message": "沒有任何商品可以刪除"
+                }, 404
+                
+            return {
+                "message": [
+                    f"成功刪除所有商品共 {delete_count} 個",
+                    f"已修改 {update_user_total} 位使用者購買紀錄"
+                ]
+            }, 200
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(delete_all_products) {str(e)}"
             }, 500
     
     @staticmethod

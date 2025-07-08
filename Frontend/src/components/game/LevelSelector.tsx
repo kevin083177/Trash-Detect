@@ -3,7 +3,7 @@ import { View, Image, Modal, TouchableOpacity, StyleSheet, Dimensions, Text, Scr
 import { Ionicons } from '@expo/vector-icons';
 import { asyncGet } from "@/utils/fetch";
 import { level_api, question_api, user_level_api } from "@/api/api";
-import { tokenStorage } from "@/utils/storage";
+import { tokenStorage } from "@/utils/tokenStorage";
 import { LevelButton } from "./LevelButton";
 import { LevelDetail } from "./LevelDetail";
 import { Router } from "expo-router";

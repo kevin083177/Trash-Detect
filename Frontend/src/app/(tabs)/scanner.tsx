@@ -13,7 +13,7 @@ import { Timer } from '@/components/scanner/Timer';
 import Toast from '@/components/Toast';
 import { socket_url, user_api } from '@/api/api';
 import { asyncPost } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const detectSpeed = 100; // divide 1 = fps

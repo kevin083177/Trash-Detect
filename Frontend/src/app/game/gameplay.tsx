@@ -5,7 +5,7 @@ import { useFocusEffect, useLocalSearchParams, router } from 'expo-router';
 import { Question } from '@/interface/Question';
 import { asyncPut } from '@/utils/fetch';
 import { user_level_api } from '@/api/api';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { Timer } from '@/components/game/Timer';
 import { WaterScore } from '@/components/game/WaterScore';
 import { BlurView } from 'expo-blur';

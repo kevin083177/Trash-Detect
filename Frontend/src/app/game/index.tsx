@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Headers from '@/components/Headers';
 import { asyncGet } from '@/utils/fetch';
 import { chapter_api, user_api } from '@/api/api';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { ChapterButton } from '@/components/game/ChapterButton';
 import { Chapter } from '@/interface/Chapter';
 import { router } from 'expo-router';

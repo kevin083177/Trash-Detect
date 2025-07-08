@@ -33,10 +33,10 @@ export default function ProductDetail({ product, visible, purchased, canAfford, 
             </TouchableOpacity>
           </View>
           
-          <ScrollView>
+          <View style={styles.productContainer}>
             {/* Product Image */}
             <Image
-              source={{ uri: product.image?.thumbnail_url }}
+              source={{ uri: product.image?.url }}
               style={styles.productImage}
               resizeMode="contain"
             />
@@ -51,7 +51,7 @@ export default function ProductDetail({ product, visible, purchased, canAfford, 
               </Text>
             </View>
             
-          </ScrollView>
+          </View>
           
           {/* Buy Button */}
           <TouchableOpacity 
@@ -103,15 +103,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
   closeButton: {
     padding: 4,
   },
+  productContainer: {
+    alignItems: 'center'
+  },
   productImage: {
+    width: 200,
     height: 200,
     borderRadius: 16,
     marginBottom: 16,
@@ -154,33 +153,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
   },
-  detailsContainer: {
-    marginBottom: 16,
-  },
-  detailRow: {
-    flexDirection: "row",
-    marginBottom: 4,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: "#666",
-    width: 100,
-  },
-  detailValue: {
-    fontSize: 14,
-    color: "#333",
-    flex: 1,
-  },
   buyButton: {
     padding: 16,
     alignItems: "center",
     justifyContent: "center",
     borderTopWidth: 1,
     borderColor: '#eee',
-  },
-  buyButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

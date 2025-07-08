@@ -31,6 +31,5 @@
         <data android:scheme="exp+trash-detect"/>
       </intent-filter>
     </activity>
-    <uses-native-library android:name="libOpenCL.so" android:required="false"/>
   </application>
 </manifest>

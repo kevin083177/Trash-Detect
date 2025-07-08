@@ -8,7 +8,6 @@ const STORAGE_KEYS = {
 
 interface UserInfo {
     user_id: string,
-    purchase_id: string,
 }
 
 // Token 相關操作

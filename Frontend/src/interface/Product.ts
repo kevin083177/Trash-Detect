@@ -13,3 +13,13 @@ interface ProductImage {
   thumbnail_url: string;
   url: string;
 }
+
+export type ProductCategory = 
+  | 'bookshelf' 
+  | 'box' 
+  | 'calendar' 
+  | 'carpet' 
+  | 'lamp' 
+  | 'pendant' 
+  | 'table' 
+  | 'wallpaper';
