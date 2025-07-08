@@ -23,6 +23,12 @@ def add_product():
 def delete_product_by_id():
     return ProductController.delete_product_by_id()
 
+@product_blueprint.route('/delete_all', methods=['DELETE'])
+@admin_required
+@log_request
+def delete_all_products():
+    return ProductController.delete_all_products()
+
 @product_blueprint.route('/update_product/<product_id>', methods=['PUT'])
 @admin_required
 @log_request

@@ -7,6 +7,8 @@ from typing import Optional
 class ProductService(DatabaseService):
     VALID_CATEGORIES = {'paper', 'plastic', 'cans', 'containers', 'bottles'}
     VALID_PRODUCT_TYPE = {'wallpaper', 'box', 'table', 'carpet', 'bookshelf', 'lamp', 'pendant', 'calendar'}
+    # 背景、訊息框、桌子、地毯、書櫃、檯燈、吊飾、日曆
+    
     def __init__(self, mongo_uri: str, image_service = None):
         """初始化 ProductService
         
@@ -67,8 +69,27 @@ class ProductService(DatabaseService):
                 except:
                     pass
             raise e
+    # only for test
+    def delete_all_products(self):
+        """刪除所有商品"""
+        try:
+            all_products = list(self.products.find({}))
+            deleted_count = 0
+            updated_users_total = 0
+
+            for product in all_products:
+                product_id = str(product['_id'])
+                count, updated_users = self.delete_product_by_id(product_id)
+                deleted_count += count
+                updated_users_total += updated_users
+
+            return deleted_count, updated_users_total
+
+        except Exception as e:
+            print(f"Delete All Products Error: {str(e)}")
+            raise
     
-    def delete_product_by_id(self, product_id):
+    def delete_product_by_id(self, product_id: str):
         """刪除商品"""
         try:
             # 先檢查商品是否存在
@@ -240,6 +261,18 @@ class ProductService(DatabaseService):
             return bool(result)
         except Exception as e:
             print(f"Check Product Exists Error: {str(e)}")
+            return False
+    
+    def _check_product_type_exists_in_theme(self, theme, product_type):
+        """檢查在指定主題中是否已存在相同類型的商品"""
+        try:
+            result = self.products.find_one({
+                "theme": theme,
+                "type": product_type
+            })
+            return bool(result)
+        except Exception as e:
+            print(f"Check Product Type Exists In Theme Error: {str(e)}")
             return False
     
     def _get_product_price(self, product_id):
