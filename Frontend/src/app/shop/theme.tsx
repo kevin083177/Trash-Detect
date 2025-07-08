@@ -1,7 +1,7 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, SafeAreaView } from 'react-native';
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useGlobalSearchParams, router } from 'expo-router';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { theme_api } from '@/api/api';
 import { asyncGet } from '@/utils/fetch';
 import { Ionicons } from '@expo/vector-icons';

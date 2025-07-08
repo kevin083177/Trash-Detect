@@ -5,7 +5,7 @@ import LoadingModal from '@/components/LoadingModal';
 import Toast from '@/components/Toast';
 import { asyncPost } from '@/utils/fetch';
 import { theme_api } from '@/api/api';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 interface ThemeFormData {
     name: string;

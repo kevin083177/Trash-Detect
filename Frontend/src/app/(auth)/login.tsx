@@ -4,7 +4,7 @@ import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, purchase_api, user_api } from '@/api/api';
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import PasswordInput from '@/components/auth/PasswordInput';
 import ClearableInput from '@/components/auth/ClearableInput';
 

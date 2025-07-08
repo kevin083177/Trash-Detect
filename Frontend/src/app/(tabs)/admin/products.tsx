@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { product_api, theme_api } from '@/api/api';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import LoadingModal from '@/components/LoadingModal';
 import Toast from '@/components/Toast';
 

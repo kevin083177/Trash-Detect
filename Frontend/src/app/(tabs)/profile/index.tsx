@@ -5,7 +5,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, user_api } from '@/api/api';
 import { useFocusEffect } from '@react-navigation/native';
-import { tokenStorage } from '@/utils/storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { useAuth } from '@/hooks/auth';
 import LoadingModal from '@/components/LoadingModal';
 import { router } from 'expo-router';
