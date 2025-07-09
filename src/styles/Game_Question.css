@@ -1,0 +1,604 @@
+/* 分页按钮样式 */
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #d1d5db;
+    background: white;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+}
+
+.page-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-color: #3b82f6;
+    color: white;
+}
+
+/* 添加新页面按钮样式 */
+.add-page-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px dashed #10b981;
+    background: white;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #10b981;
+    margin-left: 10px;
+}
+
+.add-page-btn:hover {
+    background: #f0fdf4;
+    border-color: #059669;
+    color: #059669;
+    transform: scale(1.05);
+}
+
+.add-page-btn:active {
+    transform: scale(0.95);
+}
+
+/* 页面控制区域 */
+.page-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    gap: 20px;
+}
+
+.page-info {
+    text-align: left;
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+    flex: 1;
+}
+
+/* 新增題目區域 */
+.add-question-section {
+    display: flex;
+    align-items: center;
+}
+
+.add-question-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.add-question-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+/* 題目標題區域 */
+.question-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.question-number {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3b82f6;
+    background: #eff6ff;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* 題目网格布局 - 4列 */
+.questions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.question-grid-item {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+}
+
+/* 答题卡片样式 */
+.question-card {
+    width: 100%;
+    height: 100%;
+    background: white;
+    border: 2px solid #d1d5db;
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.question-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.question-card.confirmed {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.confirmed-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    z-index: 10;
+}
+
+.delete-question-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 10;
+    opacity: 0.8;
+}
+
+.delete-question-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.question-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.confirm-btn {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.confirm-btn.enabled {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.confirm-btn.enabled:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.confirm-btn.disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.question-input:disabled,
+.option-input:disabled {
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.correct-answer-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.question-input-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 10px;
+}
+
+.question-input {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #1f2937;
+    padding: 8px 4px;
+    border-bottom: 1px solid #e5e7eb;
+    resize: none;
+    min-height: 40px;
+}
+
+.question-input:focus {
+    border-bottom-color: #3b82f6;
+}
+
+.question-input::placeholder {
+    color: #6b7280;
+}
+
+.options-area {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+}
+
+.correct-answer-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #9ca3af;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.correct-answer-btn:hover {
+    border-color: #6b7280;
+}
+
+.correct-answer-btn.selected {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.checkmark {
+    font-size: 11px;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.option-label {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.option-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #1f2937;
+    font-size: 13px;
+    padding: 2px 4px;
+    border-bottom: 1px solid #e5e7eb;
+    min-height: 20px;
+}
+
+.option-input:focus {
+    border-bottom-color: #3b82f6;
+}
+
+.option-input::placeholder {
+    color: #6b7280;
+}
+
+
+.no-questions {
+    text-align: center;
+    color: #6b7280;
+    font-size: 18px;
+    margin-top: 40px;
+    padding: 40px;
+    background: #f9fafb;
+    border-radius: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .questions-grid {
+        max-width: 100%;
+        gap: 15px;
+    }
+    
+    .question-grid-item {
+        min-height: 260px;
+    }
+    
+    .question-card {
+        padding: 12px;
+    }
+    
+    .delete-question-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 14px;
+        top: 6px;
+        right: 6px;
+    }
+    
+    .confirmed-badge {
+        top: 6px;
+        left: 6px;
+        font-size: 9px;
+        padding: 1px 6px;
+    }
+    
+    .confirm-btn {
+        padding: 5px 12px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .page-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .page-info {
+        text-align: center;
+        font-size: 14px;
+    }
+    
+    .add-question-section {
+        justify-content: center;
+    }
+    
+    .add-question-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .delete-question-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 14px;
+        top: 4px;
+        right: 4px;
+    }
+    
+    .confirmed-badge {
+        top: 4px;
+        left: 4px;
+        font-size: 8px;
+        padding: 1px 4px;
+    }
+    
+    .confirm-btn {
+        padding: 4px 10px;
+        font-size: 10px;
+    }
+    
+    .questions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .question-grid-item {
+        min-height: 200px;
+    }
+    
+    .question-card {
+        padding: 8px;
+    }
+    
+    .question-input {
+        font-size: 12px;
+        min-height: 30px;
+    }
+    
+    .option-row {
+        gap: 4px;
+        min-height: 25px;
+    }
+    
+    .correct-answer-btn {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .option-label {
+        font-size: 12px;
+    }
+    
+    .option-input {
+        font-size: 11px;
+    }
+    
+    .search-group {
+        max-width: 100%;
+    }
+    
+    .pagination-section {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .page-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .add-page-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        margin-left: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-controls {
+        margin: 10px 0;
+        gap: 10px;
+    }
+    
+    .page-info {
+        font-size: 12px;
+    }
+    
+    .add-question-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    
+    .questions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .question-grid-item {
+        min-height: 180px;
+    }
+    
+    .question-card {
+        padding: 6px;
+    }
+    
+    .question-input {
+        font-size: 11px;
+        min-height: 25px;
+    }
+    
+    .option-row {
+        gap: 3px;
+        min-height: 20px;
+    }
+    
+    .correct-answer-btn {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .checkmark {
+        font-size: 10px;
+    }
+    
+    .option-label {
+        font-size: 11px;
+    }
+    
+    .option-input {
+        font-size: 10px;
+    }
+    
+    .page-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    
+    .add-page-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+        margin-left: 5px;
+    }
+    
+    .question-number {
+        font-size: 10px;
+        padding: 1px 6px;
+    }
+    
+    .delete-question-btn {
+        width: 18px;
+        height: 18px;
+        font-size: 12px;
+        top: 3px;
+        right: 3px;
+    }
+    
+    .confirmed-badge {
+        top: 3px;
+        left: 3px;
+        font-size: 8px;
+        padding: 1px 4px;
+    }
+    
+    .confirm-btn {
+        padding: 3px 8px;
+        font-size: 9px;
+    }
+}
