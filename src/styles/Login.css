@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.login-wrapper {    
+    height: 100vh;
+    display: flex;
+    margin: auto;    
+    justify-content: center;
+    align-items: center;
+    background-color: #cadab2;
+    background-image: url('/dog.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.login-container {
+    display: flex;
+    border-radius: 30px;
+    width: 80%;
+    height:80%;
+    overflow: hidden;
+    gap: 30px;
+}
+
+.login-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    background-color: #fff;
+    border-radius: 20px;
+}
+
+.login-right h1 {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.login-form label {
+    font-size: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-form input {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #555;
+    font-size: 20px;
+}
+
+.login-form button {
+    color: #3d4f2f;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 20px;
+    background-color: #e2eec3;
+    border: 2px solid #AAC8A9;
+    cursor: pointer;    
+}
+
+.login-left {
+    width: 50%;
+    border-radius: 30px;
+    
+}
+
+.error-text {
+    text-align: center;
+    color: red;
+}
