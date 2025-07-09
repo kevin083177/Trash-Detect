@@ -8,18 +8,15 @@ class LevelService(DatabaseService):
 
     def add_level(self, level_data: Level):
         level = level_data.to_dict()
+        level['sequence'] = self._get_next_sequence()
         
         # 檢查名稱是否重複
         existing_level = self.levels.find_one({"name": level["name"]})
         if existing_level:
             raise ValueError(f"關卡名稱已存在")
         
-        existing_sequence = self.levels.find_one({"sequence": level["sequence"]})
-        if existing_sequence:
-            raise ValueError(f"關卡序號 {level['sequence']} 已存在")
-        
         # 檢查解鎖條件關卡是否存在
-        # 注意：如果序號為1，解鎖條件可以為0（代表無需解鎖條件）
+        # 如果序號為1，解鎖條件可以為0
         unlock_requirement = level["unlock_requirement"]
         if unlock_requirement > 0 and not self.levels.find_one({"sequence": unlock_requirement}):
             raise ValueError(f"解鎖條件關卡 {unlock_requirement} 不存在")
@@ -155,3 +152,12 @@ class LevelService(DatabaseService):
     def _is_level_exists(self, level_sequence: int) -> bool:
         """檢查關卡是否存在"""
         return self.levels.find_one({"sequence": level_sequence}) is not None
+    
+    def _get_next_sequence(self):
+        """獲取下一關可用的 sequence 值"""
+        max_sequence_level = self.levels.find_one(sort=[("sequence", -1)])
+        
+        if not max_sequence_level or "sequence" not in max_sequence_level:
+            return 1
+            
+        return max_sequence_level["sequence"] + 1

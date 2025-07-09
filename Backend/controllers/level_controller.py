@@ -11,7 +11,7 @@ class LevelController:
         try:
             data = request.get_json()
             
-            required_fields = ['sequence', 'chapter', 'name', 'description', 'unlock_requirement']
+            required_fields = ['chapter', 'name', 'description', 'unlock_requirement']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -19,42 +19,47 @@ class LevelController:
                     "message": f"缺少: {', '.join(missing_fields)}",
                 }, 400
             
-            level_data = {
-                'sequence': int(data['sequence']),
-                'chapter': data['chapter'],
-                'name': data['name'],
-                'description': data['description'],
-                'unlock_requirement': int(data['unlock_requirement'])
-            }
+            # 檢查章節是否存在
+            if not chapter_service._check_chapter_exists(data['chapter']):
+                return {
+                    "message": f"章節 {data['chapter']} 不存在",
+                }, 400
             
-            if level_data['sequence'] != 1 and level_data['unlock_requirement'] <= 0:
+            # 驗證 unlock_requirement
+            unlock_requirement = int(data['unlock_requirement'])
+            if unlock_requirement < 0:
                 return {
                     "message": f"解鎖條件不能小於0",
                 }, 400
             
-            if level_data['sequence'] < 0:
+            next_sequence = level_service._get_next_sequence()
+                        
+            if next_sequence != 1 and unlock_requirement == 0:
                 return {
-                    "message": f"關卡順序不能小於0",
-                }, 400
-                
-            # 檢查序號是否重複
-            existing_level = level_service.get_level_by_sequence(data['sequence'])
-            if existing_level:
-                return {
-                    "message": f"關卡序號 {level_data['sequence']} 已存在",
+                    "message": f"非第一關卡必須設置解鎖條件",
                 }, 400
             
-            if not chapter_service._check_chapter_exists(level_data['chapter']):
-                return {
-                    "message": f"章節 {level_data['chapter']} 不存在",
-                }, 400
-              
+            # 檢查解鎖條件關卡是否存在
+            if unlock_requirement > 0:
+                exist_level = level_service.get_level_by_sequence(unlock_requirement)
+                if (not exist_level):
+                    return {
+                        "message": f"解鎖關卡不存在"
+                    }, 404
+            
+            level_data = {
+                'sequence': next_sequence,
+                'chapter': data['chapter'],
+                'name': data['name'],
+                'description': data['description'],
+                'unlock_requirement': unlock_requirement
+            }
+            
             level = Level(**level_data)
             
             # 添加關卡
             try:
                 result = level_service.add_level(level)
-                # 成功添加關卡後，更新對應章節的 levels 陣列
                 chapter_service._add_level_to_chapter(level_data['chapter'], result)
                 
                 return {
