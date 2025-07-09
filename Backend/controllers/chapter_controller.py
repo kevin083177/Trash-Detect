@@ -12,37 +12,20 @@ class ChapterController:
     def add_chapter():
         try:
             # 檢查必要的圖片檔案是否上傳
-            if 'banner_image' not in request.files:
-                return {
-                    "message": "缺少章節橫幅圖片"
-                }, 400
-                
-            if 'background_image' not in request.files:
+            if 'image' not in request.files:
                 return {
                     "message": "缺少章節背景圖片"
                 }, 400
                 
-            banner_image = request.files['banner_image']
-            background_image = request.files['background_image']
+            image = request.files['image']
             
-            # 檢查檔案名稱是否為空
-            if banner_image.filename == '':
-                return {
-                    "message": "未選擇橫幅圖片"
-                }, 400
-                
-            if background_image.filename == '':
+            if image.filename == '':
                 return {
                     "message": "未選擇背景圖片"
                 }, 400
             
             # 檢查檔案類型
-            if not ImageService._allowed_file(banner_image.filename):
-                return {
-                    "message": f"不支援的橫幅圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
-                }, 400
-                
-            if not ImageService._allowed_file(background_image.filename):
+            if not ImageService._allowed_file(image.filename):
                 return {
                     "message": f"不支援的背景圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
                 }, 400
@@ -55,7 +38,7 @@ class ChapterController:
             
             # 從表單獲取章節數據
             data = request.form.to_dict()
-            required_fields = ['name', 'description', 'trash_requirement']
+            required_fields = ['name', 'trash_requirement'] # description
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -64,16 +47,15 @@ class ChapterController:
                 }, 400
             
             name = request.form.get('name')
-            description = request.form.get('description')
+            # description = request.form.get('description')
             trash_requirement = request.form.get('trash_requirement', type=int)
             
             # 創建章節數據字典
             chapter_data = {
                 'name': name,
-                'description': description,
+                # 'description': description,
                 'trash_requirement': trash_requirement,
-                'banner_image': banner_image,
-                'background_image': background_image
+                'image': image
             }
             
             # 新增章節（包含圖片上傳）
@@ -168,33 +150,28 @@ class ChapterController:
             update_data = {}
             
             # 獲取描述更新
-            if 'description' in request.form:
-                description = request.form.get('description')
-                if description:
-                    update_data["description"] = description
+            # if 'description' in request.form:
+            #     description = request.form.get('description')
+            #     if description:
+            #         update_data["description"] = description
             
-            # 處理圖片更新
-            if 'banner_image' in request.files and request.files['banner_image'].filename != '':
-                banner_image = request.files['banner_image']
-                
-                # 檢查檔案類型
-                if not ImageService._allowed_file(banner_image.filename):
-                    return {
-                        "message": f"不支援的橫幅圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
-                    }, 400
+            # 獲取所需回收量
+            if 'trash_requirement' in request.form:
+                trash_requirement = request.form.get('trash_requirement')
+                if trash_requirement:
+                    update_data["trash_requirement"] = trash_requirement
                     
-                update_data["banner_image"] = banner_image
-            
-            if 'background_image' in request.files and request.files['background_image'].filename != '':
-                background_image = request.files['background_image']
+            # 處理圖片更新
+            if 'image' in request.files and request.files['image'].filename != '':
+                image = request.files['image']
                 
                 # 檢查檔案類型
-                if not ImageService._allowed_file(background_image.filename):
+                if not ImageService._allowed_file(image.filename):
                     return {
                         "message": f"不支援的背景圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
                     }, 400
                     
-                update_data["background_image"] = background_image
+                update_data["image"] = image
             
             # 如果沒有更新的數據
             if not update_data:

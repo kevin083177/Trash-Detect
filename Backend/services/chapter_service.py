@@ -31,7 +31,7 @@ class ChapterService(DatabaseService):
             
         return max_sequence_chapter["sequence"] + 1
         
-    def add_chapter(self, chapter_data):
+    def add_chapter(self, chapter_data: Chapter):
         """
         新增章節
         
@@ -45,8 +45,7 @@ class ChapterService(DatabaseService):
             ValueError: 如果章節名稱已存在或 ImageService 未初始化
             Exception: 其他處理過程中的錯誤
         """
-        banner_result = None
-        background_result = None
+        image_result = None
         
         try:
             # 檢查是否有 image_service
@@ -55,7 +54,7 @@ class ChapterService(DatabaseService):
             
             # 獲取章節名稱和描述
             name = chapter_data.name if hasattr(chapter_data, 'name') else chapter_data.get('name')
-            description = chapter_data.description if hasattr(chapter_data, 'description') else chapter_data.get('description')
+            # description = chapter_data.description if hasattr(chapter_data, 'description') else chapter_data.get('description')
             trash_requirement = chapter_data.trash_requirement if hasattr(chapter_data, 'trash_requirement') else chapter_data.get('trash_requirement')
             
             # 檢查章節名稱是否已存在
@@ -64,21 +63,13 @@ class ChapterService(DatabaseService):
                 raise ValueError("章節名稱已存在")
             
             # 獲取圖片檔案
-            banner_image = chapter_data.banner_image if hasattr(chapter_data, 'banner_image') else chapter_data.get('banner_image')
-            background_image = chapter_data.background_image if hasattr(chapter_data, 'background_image') else chapter_data.get('background_image')
-            
-            # 上傳橫幅圖片
-            banner_result = self.image_service.upload_image(
-                image_file=banner_image,
-                public_id=name + '_banner',
-                folder='chapters/banner'
-            )
-            
+            image = chapter_data.image if hasattr(chapter_data, 'image') else chapter_data.get('image')
+                       
             # 上傳背景圖片
-            background_result = self.image_service.upload_image(
-                image_file=background_image,
-                public_id=name + '_background',
-                folder='chapters/background'
+            image_result = self.image_service.upload_image(
+                image_file=image,
+                public_id=name + '_image',
+                folder='chapters/image'
             )
             
             # 獲取下一個可用的 sequence 值
@@ -87,10 +78,9 @@ class ChapterService(DatabaseService):
             # 創建章節字典，確保包含空的 levels 陣列
             chapter_dict = {
                 'name': name,
-                'description': description,
+                # 'description': description,
                 'trash_requirement': trash_requirement,
-                'banner_image': banner_result,
-                'background_image': background_result,
+                'image': image_result,
                 'levels': [],  # 初始化空的關卡陣列
                 'sequence': next_sequence  # 設置 sequence 值
             }
@@ -109,17 +99,11 @@ class ChapterService(DatabaseService):
         except Exception as e:
             # 如果在新增章節過程中發生錯誤，刪除已上傳的圖片
             if hasattr(self, 'image_service') and self.image_service:
-                if banner_result:
+                if image_result:
                     try:
-                        self.image_service.delete_image(banner_result['public_id'])
+                        self.image_service.delete_image(image_result['public_id'])
                     except:
-                        print(f"failed to delete banner image: {str(e)}")
-                
-                if background_result:
-                    try:
-                        self.image_service.delete_image(background_result['public_id'])
-                    except:
-                        print(f"failed to delete background image: {str(e)}")
+                        print(f"failed to delete image: {str(e)}")
             raise e
         
     def get_chapter_by_name(self, name):
@@ -200,15 +184,9 @@ class ChapterService(DatabaseService):
                 
             # 刪除與章節關聯的圖片
             if self.image_service:
-                if "banner_image" in chapter and "public_id" in chapter["banner_image"]:
+                if "image" in chapter and "public_id" in chapter["image"]:
                     try:
-                        self.image_service.delete_image(chapter["banner_image"]["public_id"])
-                    except Exception as e:
-                        print(f"刪除橫幅圖片時出錯: {str(e)}")
-                        
-                if "background_image" in chapter and "public_id" in chapter["background_image"]:
-                    try:
-                        self.image_service.delete_image(chapter["background_image"]["public_id"])
+                        self.image_service.delete_image(chapter["image"]["public_id"])
                     except Exception as e:
                         print(f"刪除背景圖片時出錯: {str(e)}")
             
@@ -242,7 +220,7 @@ class ChapterService(DatabaseService):
         
         Args:
             name: 章節名稱
-            update_data: 要更新的數據，可包含 description, banner_image, background_image
+            update_data: image, trash_requirement
             
         Returns:
             Dict: 更新後的章節資訊
@@ -251,8 +229,7 @@ class ChapterService(DatabaseService):
             ValueError: 如果章節不存在
             Exception: 其他處理過程中的錯誤
         """
-        banner_result = None
-        background_result = None
+        image_result = None
         
         try:
             # 獲取現有章節
@@ -260,57 +237,38 @@ class ChapterService(DatabaseService):
             if not existing_chapter:
                 raise ValueError(f"章節「{name}」不存在")
                 
-            # 準備更新數據
-            updates = {}
+            updates: Chapter = {}
             
             # 處理描述更新
-            if "description" in update_data:
-                description = update_data.description if hasattr(update_data, 'description') else update_data.get('description')
-                if description:
-                    updates["description"] = description
+            # if "description" in update_data:
+            #     description = update_data.description if hasattr(update_data, 'description') else update_data.get('description')
+            #     if description:
+            #         updates["description"] = description
+            
+            if "trash_requirement" in update_data:
+                trash_requirement = int(update_data.get('trash_requirement'))
+                if trash_requirement:
+                    updates["trash_requirement"] = trash_requirement
                     
-            # 處理圖片更新
-            if "banner_image" in update_data and update_data["banner_image"]:
+            if "image" in update_data and update_data["image"]:
                 # 獲取圖片檔案
-                banner_image = update_data.banner_image if hasattr(update_data, 'banner_image') else update_data.get('banner_image')
-                
-                # 上傳新的橫幅圖片
-                public_id = f"{name}_banner_{str(existing_chapter['_id'])[-6:]}"
-                banner_result = self.image_service.upload_image(
-                    image_file=banner_image,
-                    public_id=public_id,
-                    folder='chapters/banner'
-                )
-                
-                # 刪除舊的橫幅圖片
-                if "banner_image" in existing_chapter and "public_id" in existing_chapter["banner_image"]:
-                    try:
-                        self.image_service.delete_image(existing_chapter["banner_image"]["public_id"])
-                    except Exception as e:
-                        print(f"刪除舊橫幅圖片時出錯: {str(e)}")
-                        
-                updates["banner_image"] = banner_result
-                
-            if "background_image" in update_data and update_data["background_image"]:
-                # 獲取圖片檔案
-                background_image = update_data.background_image if hasattr(update_data, 'background_image') else update_data.get('background_image')
+                image = update_data.image if hasattr(update_data, 'image') else update_data.get('image')
                 
                 # 上傳新的背景圖片
-                public_id = f"{name}_background_{str(existing_chapter['_id'])[-6:]}"
-                background_result = self.image_service.upload_image(
-                    image_file=background_image,
+                public_id = f"{name}_image"
+                image_result = self.image_service.upload_image(
+                    image_file=image,
                     public_id=public_id,
-                    folder='chapters/background'
+                    folder='chapters/image'
                 )
                 
                 # 刪除舊的背景圖片
-                if "background_image" in existing_chapter and "public_id" in existing_chapter["background_image"]:
-                    try:
-                        self.image_service.delete_image(existing_chapter["background_image"]["public_id"])
-                    except Exception as e:
-                        print(f"刪除舊背景圖片時出錯: {str(e)}")
+                try:
+                    self.image_service.delete_image(existing_chapter["image"]["public_id"])
+                except Exception as e:
+                    print(f"刪除舊背景圖片時出錯: {str(e)}")
                         
-                updates["background_image"] = background_result
+                updates["image"] = image_result
             
             # 如果沒有需要更新的內容
             if not updates:
@@ -327,6 +285,8 @@ class ChapterService(DatabaseService):
                 # 獲取更新後的章節
                 updated_chapter = self.chapters.find_one({"name": name})
                 updated_chapter["_id"] = str(updated_chapter["_id"])
+                if "levels" in  updated_chapter and  updated_chapter["levels"]:
+                     updated_chapter["levels"] = [str(level_id) for level_id in  updated_chapter["levels"]]
                 return updated_chapter
                 
             return None
@@ -334,15 +294,9 @@ class ChapterService(DatabaseService):
         except Exception as e:
             # 處理錯誤，刪除已上傳的新圖片
             if hasattr(self, 'image_service') and self.image_service:
-                if banner_result and "public_id" in banner_result:
+                if image_result and "public_id" in image_result:
                     try:
-                        self.image_service.delete_image(banner_result['public_id'])
-                    except:
-                        pass
-                
-                if background_result and "public_id" in background_result:
-                    try:
-                        self.image_service.delete_image(background_result['public_id'])
+                        self.image_service.delete_image(image_result['public_id'])
                     except:
                         pass
             raise e

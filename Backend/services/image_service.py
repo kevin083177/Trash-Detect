@@ -3,6 +3,7 @@ from cloudinary import uploader
 from cloudinary.utils import cloudinary_url
 from typing import Optional, Dict, Any
 import os
+from models import Image
 
 class ImageService:
     # 圖片設定
@@ -53,7 +54,7 @@ class ImageService:
             )
             
             # 準備返回結果
-            result = {
+            result:Image = {
                 "public_id": upload_result["public_id"],  # 會包含資料夾路徑
                 "url": upload_result["secure_url"],
                 "thumbnail_url": upload_result["eager"][0]["secure_url"]
