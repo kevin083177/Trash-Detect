@@ -2,8 +2,8 @@ import { createHashRouter } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Home } from "../page/Home";
 import { Users } from "../page/Users";
-import { Feedback } from "../page/Feedback";
-import { Product } from "../page/Product";
+import { FeedbackPage } from "../page/Feedback";
+import { ProductPage } from "../page/Product";
 import { Themes } from "../page/Theme";
 import { Game } from "../page/Game";
 import { Login } from "../page/Login";
@@ -36,7 +36,7 @@ export const router = createHashRouter([
         path: "products/:theme_name",
         element: (
           <ProtectedRoute>
-            <Product />
+            <ProductPage />
           </ProtectedRoute>
         ),
       },
@@ -52,7 +52,7 @@ export const router = createHashRouter([
         path: "feedback",
         element: (
           <ProtectedRoute>
-            <Feedback />
+            <FeedbackPage />
           </ProtectedRoute>
         ),
       },
