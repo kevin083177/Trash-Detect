@@ -1,30 +1,24 @@
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/Product.css";
+import type { Product } from "../interfaces/product";
+import { asyncGet } from "../utils/fetch";
+import { theme_api } from "../api/api";
+import { ProductCard } from "../components/product/ProductCard";
 
-// 商品資料改為陣列格式
-const allProducts = [
-    {
-        name: "橘子訊息框",
-        price: 200,
-        theme_name: "橘續分類",
-        category:"桌子",
-        description: "這是橘子訊息框",
-        image: "https://via.placeholder.com/100"
-    },
-    // 可再加入更多商品
-];
 
-export const Product: React.FC = () => {
-    const { theme_name } = useParams(); // 取得網址上的分類
+export const ProductPage: React.FC = () => {
+    const { theme_name } = useParams();
     const navigate = useNavigate();
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
-    // 依分類與搜尋篩選
-    const filtered = allProducts.filter(
-        product =>
-            product.theme_name === theme_name &&
-            product.name.includes(search)
+    
+    const filtered = products.filter(product =>
+        product.name.toLowerCase().includes(search.toLowerCase())
     );
+    
     const [showAddModal, setShowAddModal] = useState(false);
     const [newItem, setNewItem] = useState({
         name: "",
@@ -34,6 +28,41 @@ export const Product: React.FC = () => {
         description: "",
         image: "",
     });
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (!theme_name) {
+                setError("主題名稱不存在");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const response = await asyncGet(`${theme_api.get_theme_products}/${theme_name}/products`, {
+                    headers: { 
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                // 檢查回傳的資料結構
+                if (response && response.body && Array.isArray(response.body)) {
+                    setProducts(response.body);
+                } else {
+                    setError("無法獲取商品資料");
+                }
+            } catch (err) {
+                console.error("獲取商品資料失敗:", err);
+                setError("獲取商品資料失敗，請稍後再試");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, [theme_name]);
 
     const handleOpenAddModal = () => {
         setNewItem({
@@ -46,16 +75,37 @@ export const Product: React.FC = () => {
         });
         setShowAddModal(true);
     };
-    useEffect(() => {
-            console.log("當前主題:", theme_name);
-        }, [theme_name]);
 
-    
-    
+    useEffect(() => {
+        console.log("當前主題:", theme_name);
+    }, [theme_name]);
+
+    // 載入中的狀態
+    if (loading) {
+        return (
+            <div className="theme-products-container">
+                <button className="theme-products-back-btn" onClick={() => navigate(-1)}>
+                    ← 返回
+                </button>
+                <div className="loading">載入中...</div>
+            </div>
+        );
+    }
+
+    // 錯誤狀態
+    if (error) {
+        return (
+            <div className="theme-products-container">
+                <button className="theme-products-back-btn" onClick={() => navigate(-1)}>
+                    ← 返回
+                </button>
+                <div className="error">{error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="theme-products-container">
-            <h2>主題: {theme_name}</h2>
             <button className="theme-products-back-btn" onClick={() => navigate(-1)}>
                 ← 返回
             </button>
@@ -77,26 +127,23 @@ export const Product: React.FC = () => {
                 {filtered.length === 0 ? (
                     <p>查無商品。</p>
                 ) : (
-                    filtered.map((product, index) => (
-                        <div key={index} className="product-card">
-                            <div className="product-card-left">
-                                <div className="product-card-image-box">
-                                    <img src={product.image} alt={product.name} className="product-card-image" />
-                                </div>
-                                <div className="product-card-name">{product.name}</div>
-                            </div>
-                            <div className="product-card-right">
-                                <div className="product-card-header">
-                                    <span className="product-card-title">訊息框</span>
-                                    <span className="product-card-actions">
-                                        <button className="icon-btn" title="編輯">✏️</button>
-                                        <button className="icon-btn" title="刪除">🗑️</button>
-                                    </span>
-                                </div>
-                                <div className="product-card-desc">{product.description}</div>
-                                <div className="product-card-price">${product.price}</div>
-                            </div>
-                        </div>
+                    filtered.map((product) => (
+                        <ProductCard
+                            key={product._id}
+                            name={product.name}
+                            description={product.description}
+                            price={product.price}
+                            type={product.type}
+                            image={product.image.url}
+                            onEdit={() => {
+                                // 處理編輯邏輯
+                                console.log('編輯商品:', product._id);
+                            }}
+                            onDelete={() => {
+                                // 處理刪除邏輯
+                                console.log('刪除商品:', product._id);
+                            }}
+                        />
                     ))
                 )}
             </div>
@@ -158,8 +205,8 @@ export const Product: React.FC = () => {
                             </div>
                         </div>
                         <div className="modal-actions-centered">
-                            <button className="product-back" onClick={() => navigate(-1)}>取消</button>
-                            <button className="product-submit"onClick={() => setShowAddModal(false)}>新增</button>
+                            <button className="product-back" onClick={() => setShowAddModal(false)}>取消</button>
+                            <button className="product-submit" onClick={() => setShowAddModal(false)}>新增</button>
                         </div>
                     </div>
                 </div>
