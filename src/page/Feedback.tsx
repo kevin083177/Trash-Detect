@@ -1,19 +1,11 @@
 import React, { useState } from "react";
+import type { Feedback } from "../interfaces/feedback";
 import "../styles/Feedback.css";
+import { Header } from "../components/Header";
 
-interface FeedbackItem {
-    id: number;
-    user: string;
-    category: string;
-    subject: string;
-    admin: string;
-    status: string;
-    detail: string;
-}
-
-export const Feedback: React.FC = () => {
+export const FeedbackPage: React.FC = () => {
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
-    const data: FeedbackItem[] = [
+    const data: Feedback[] = [
         {
             id: 1,
             user: "cww",
@@ -46,66 +38,65 @@ export const Feedback: React.FC = () => {
     const handleToggle = (id: number) => {
         setExpandedRow((prev) => (prev === id ? null : id));
     };
-    const [feedbackData, setFeedbackData] = useState<FeedbackItem[]>(data);
+    const [feedbackData, setFeedbackData] = useState<Feedback[]>(data);
 
     return (
-        <div className="feedback-container">
-            <div className="feedback-header">
-                <span>Hi, Username</span>
-            </div>
-
-            <div className="feedback-table-wrapper">
-                <table className="feedback-table">
-                    <thead>
-                        <tr>
-                            <th>編號</th>
-                            <th>使用者帳號</th>
-                            <th>問題類別</th>
-                            <th>問題主旨</th>
-                            <th>管理者帳號</th>
-                            <th>處理進度</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {feedbackData.map((item) => (
-                            <React.Fragment key={item.id}>
-                                <tr onClick={() => handleToggle(item.id)} className="clickable-row">
-                                    <td>{item.id}</td>
-                                    <td>{item.user}</td>
-                                    <td>{item.category}</td>
-                                    <td>{item.subject}</td>
-                                    <td>{item.admin || "-"}</td>
-                                    <td>
-                                        <select
-                                            value={item.status}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => {
-                                                const newStatus = e.target.value;
-                                                setFeedbackData((prev) =>
-                                                    prev.map((f) =>
-                                                        f.id === item.id ? { ...f, status: newStatus } : f
-                                                    )
-                                                );
-                                            }}
-                                        >
-                                            <option value="未處理">未處理</option>
-                                            <option value="處理中">處理中</option>
-                                            <option value="已完成">已完成</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                                {expandedRow === item.id && (
-                                    <tr className="expanded-row">
-                                        <td colSpan={6}>
-                                            <div className="feedback-detail">內容:{item.detail}</div>
+        <>
+            <Header />
+            <div className="feedback-container">
+                <div className="feedback-table-wrapper">
+                    <table className="feedback-table">
+                        <thead>
+                            <tr>
+                                <th>編號</th>
+                                <th>使用者帳號</th>
+                                <th>問題類別</th>
+                                <th>問題主旨</th>
+                                <th>管理者帳號</th>
+                                <th>處理進度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {feedbackData.map((item) => (
+                                <React.Fragment key={item.id}>
+                                    <tr onClick={() => handleToggle(item.id)} className="clickable-row">
+                                        <td>{item.id}</td>
+                                        <td>{item.user}</td>
+                                        <td>{item.category}</td>
+                                        <td>{item.subject}</td>
+                                        <td>{item.admin || "-"}</td>
+                                        <td>
+                                            <select
+                                                value={item.status}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onChange={(e) => {
+                                                    const newStatus = e.target.value;
+                                                    setFeedbackData((prev) =>
+                                                        prev.map((f) =>
+                                                            f.id === item.id ? { ...f, status: newStatus } : f
+                                                        )
+                                                    );
+                                                }}
+                                            >
+                                                <option value="未處理">未處理</option>
+                                                <option value="處理中">處理中</option>
+                                                <option value="已完成">已完成</option>
+                                            </select>
                                         </td>
                                     </tr>
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </tbody>
-                </table>
+                                    {expandedRow === item.id && (
+                                        <tr className="expanded-row">
+                                            <td colSpan={6}>
+                                                <div className="feedback-detail">內容:{item.detail}</div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
