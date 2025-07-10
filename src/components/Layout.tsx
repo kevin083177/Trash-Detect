@@ -1,7 +1,15 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import '../styles/Layout.css';
+import './styles/Layout.css';
 import { useAuth } from '../context/AuthContext';
+import { 
+  FaChartBar, 
+  FaComments, 
+  FaUsers, 
+  FaStore, 
+  FaGamepad, 
+  FaSignOutAlt 
+} from 'react-icons/fa';
 
 export const Layout: React.FC = () => {
   const { logout } = useAuth();
@@ -16,19 +24,34 @@ export const Layout: React.FC = () => {
         </div>
         <nav className="main-button">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
-            <button>統計資料</button>
+            <button>
+              <FaChartBar className="button-icon" />
+              統計資料
+            </button>
           </NavLink>
           <NavLink to="/feedback" className={({ isActive }) => (isActive ? 'active' : '')}>
-            <button>訊息回饋</button>
+            <button>
+              <FaComments className="button-icon" />
+              訊息回饋
+            </button>
           </NavLink>
           <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>
-            <button>使用者資訊</button>
+            <button>
+              <FaUsers className="button-icon" />
+              使用者資訊
+            </button>
           </NavLink>
           <NavLink to="/theme" className={({ isActive }) => (isActive ? 'active' : '')}>
-            <button>商品區域</button>
+            <button>
+              <FaStore className="button-icon" />
+              商品區域
+            </button>
           </NavLink>
           <NavLink to="/game" className={({ isActive }) => (isActive ? 'active' : '')}>
-            <button>遊戲區域</button>
+            <button>
+              <FaGamepad className="button-icon" />
+              遊戲區域
+            </button>
           </NavLink>
 
         </nav>
@@ -37,7 +60,10 @@ export const Layout: React.FC = () => {
             to="#"
             className={({ isActive }) => (isActive ? 'active' : '')}
           >
-            <button onClick={logout}>登出</button>
+            <button onClick={logout}>
+              <FaSignOutAlt className="button-icon" />
+              登出
+            </button>
           </NavLink>
         </div>
       </aside>
