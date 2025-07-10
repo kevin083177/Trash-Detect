@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/Home.css";
+import { Header } from "../components/Header";
 import {
     PieChart, Pie, Cell, RadialBarChart, RadialBar, PolarAngleAxis
 } from "recharts";
@@ -14,7 +15,6 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 
-
 // 範例資料
 const data = [
     { name: "塑膠", value: 300 },
@@ -23,6 +23,7 @@ const data = [
     { name: "鐵鋁罐", value: 150 },
     { name: "紙類", value: 400 },
 ];
+
 const chartData = [
     { date: '7/01', scans: 30, logins: 5 },
     { date: '7/02', scans: 50, logins: 8 },
@@ -30,23 +31,22 @@ const chartData = [
     { date: '7/04', scans: 60, logins: 12 },
     { date: '7/05', scans: 80, logins: 10 },
 ];
+
 const carbonData = [
     {
         name: '總碳排',
-        value: 68, // 百分比或數值
+        value: 68,
         fill: '#5F8D4E',
     },
 ];
 
 const COLORS = ["#FFA07A", "#87CEEB", "#90EE90", "#FFD700", "#BA55D3"];
 
-
 export const Home: React.FC = () => {
     return (
         <div className="home-container">
-            <div className="home-header">
-                <span>Hi, Username</span>
-            </div>
+            <Header/>
+            
             <div className="home-main">
                 <div className="home-top">
                     <div className="home-chart-section">
@@ -63,71 +63,35 @@ export const Home: React.FC = () => {
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
-
                     </div>
                     <div className="home-side">
-                        {/* <div className="home-side-title">碳排總量</div>
-                        <div className="carbon-chart-wrapper">
-                            <RadialBarChart
-                                width={220}
-                                height={220}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={80}
-                                outerRadius={100}
-                                barSize={20}
-                                data={carbonData}
-                                startAngle={90}
-                                endAngle={450}
-                            >
-                                <PolarAngleAxis
-                                    type="number"
-                                    domain={[0, 100]}
-                                    angleAxisId={0}
-                                    tick={false}
-                                />
-                                <RadialBar
-                                    background
-                                    clockWise
-                                    dataKey="value"
-                                    cornerRadius={10}
-                                />
-                            </RadialBarChart>
-                            <div className="carbon-center-text">68%</div>
-                        </div>*/
-                        <div className="carbon-note">to bo continue...</div>}
+                        <div className="carbon-note">to be continued...</div>
                     </div>
-
                 </div>
             </div>
+            
             <div className="home-bottom">
                 <div className="home-bottom-title">回收統計圖</div>
                 <div className="home-circles">
-                    <div className="home-circles">
-                        {data.map((entry, index) => (
-                            <div className="home-circle" key={index}>
-                                <PieChart width={160} height={160}>
-                                    <Pie
-                                        data={[{ ...entry }]} // 單一資料
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        dataKey="value"
-                                    >
-                                        <Cell fill={COLORS[index % COLORS.length]} />
-                                    </Pie>
-                                </PieChart>
-                                <div className="circle-label">{entry.name}</div>
-                            </div>
-                        ))}
-                    </div>
-                    {/* <div className="home-circle">寶特瓶</div>
-                        <div className="home-circle">紙容器</div>
-                        <div className="home-circle">鐵鋁罐</div>
-                        <div className="home-circle">紙類</div> */}
+                    {data.map((entry, index) => (
+                        <div className="home-circle" key={index}>
+                            <PieChart width={160} height={160}>
+                                <Pie
+                                    data={[{ ...entry }]}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={50}
+                                    outerRadius={80}
+                                    dataKey="value"
+                                >
+                                    <Cell fill={COLORS[index % COLORS.length]} />
+                                </Pie>
+                            </PieChart>
+                            <div className="circle-label">{entry.name}</div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};

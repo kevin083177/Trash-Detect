@@ -23,6 +23,7 @@ export const Login: React.FC = () => {
         setError("請輸入密碼");
         return
       }
+      
       try {
         const response = await asyncPost(auth_api.login, {
             body: {
@@ -33,7 +34,10 @@ export const Login: React.FC = () => {
 
         if (response.status === 200 && response.body) {
           localStorage.setItem("token", response.body.token);
-          login();
+          
+          const username = response.body.user.username;
+          
+          login(username);
           navigate("/");
         } else {
           setError("帳號密碼錯誤")
@@ -42,6 +46,7 @@ export const Login: React.FC = () => {
         setError("伺服器錯誤");
       }
     }
+    
     return (
       <div className="login-wrapper">
         <div className="login-container">

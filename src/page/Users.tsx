@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/Users.css";
+import { Header } from "../components/Header";
 
 export const Users: React.FC = () => {    
         const users = [
@@ -8,34 +9,34 @@ export const Users: React.FC = () => {
     ];
 
     return (
-        <div className="users-container">
-            <div className="users-header">
-                <span>Hi, Username</span>
-            </div>
-            <div className="users-table-wrapper">
-                <table className="users-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>使用者帳號</th>
-                            <th>每日掃描次數</th>
-                            <th>總掃描量</th>
-                            <th>遊戲進度</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.map(user => (
-                            <tr key={user.id}>
-                                <td>{user.id}</td>
-                                <td>{user.name}</td>
-                                <td>{user.daily}</td>
-                                <td>{user.total}</td>
-                                <td>{user.range}</td>
+        <>
+            <Header />
+            <div className="users-container">
+                <div className="users-table-wrapper">
+                    <table className="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>使用者帳號</th>
+                                <th>每日掃描次數</th>
+                                <th>總掃描量</th>
+                                <th>遊戲進度</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {users.map(user => (
+                                <tr key={user.id}>
+                                    <td>{user.id}</td>
+                                    <td>{user.name}</td>
+                                    <td>{user.daily}</td>
+                                    <td>{user.total}</td>
+                                    <td>{user.range}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
