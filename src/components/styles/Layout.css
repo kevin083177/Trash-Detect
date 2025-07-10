@@ -1,0 +1,254 @@
+.left-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    min-width: 100vw;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+    margin-bottom: 20px;
+}
+
+.circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 0;
+    margin-right: 16px;
+    background: #fff;
+}
+
+.circle img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.title {
+    font-size: 50px;
+    font-weight: bold;
+    text-align: center;
+    margin: 16px 0;
+}
+
+aside {
+    width: 250px;
+    min-width: 250px;
+    height: 100vh;
+    position: fixed;
+    border: 0;
+    background-color: #AAC8A9;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* 上方 logo + nav / 下方登出 */
+    padding-bottom: 20px;
+}
+
+
+.right-layout {
+    flex: 1;
+    padding: 32px;
+    margin-left: 250px;
+    width: calc(100vw - 250px);
+    min-height: 100vh;
+    overflow-x: auto;
+    display: flex;
+    background: #f8f9fa;
+}
+
+.right-content {
+  width: 100%;
+  flex: 1;
+}
+
+.main-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border-top: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+}
+
+.main-button a {
+    text-decoration: none;
+}
+
+.main-button a:hover {
+    text-decoration: none;
+}
+
+.main-button a:focus {
+    text-decoration: none;
+}
+
+.main-button button {
+  font-size: 20px;
+  color: #ffffff;
+  width: 250px;
+  height: 60px;
+  box-sizing: border-box;
+  background: #AAC8A9;
+  border: none;
+  border-bottom: 2px solid #ffffff;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 30px;
+  cursor: pointer;
+}
+
+.main-button button:hover {
+  background: #b4cfb3;
+  color: #ffffff;
+  box-shadow: 0 2px 8px #c2c2c2;
+}
+
+.main-button .active button {
+    background: #b4cfb3;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.main-button .logout-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.logout-button {
+    display: flex;
+    justify-content: center;
+}
+
+.logout-button a {
+    text-decoration: none;
+}
+
+.logout-button a:hover {
+    text-decoration: none;
+}
+
+.logout-button a:focus {
+    text-decoration: none;
+}
+
+.logout-button button {
+  font-size: 20px;
+  color: #ffffff;
+  width: 250px;
+  height: 60px;
+  box-sizing: border-box;
+  background: #AAC8A9;
+  border: none;
+  border-bottom: 2px solid #ffffff;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 30px;
+  cursor: pointer;
+}
+
+.logout-button button:hover {
+  background: #b4cfb3;
+  color: #ffffff;
+  box-shadow: 0 2px 8px #c2c2c2;
+}
+
+.button-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+    margin-right: 16px;
+}
+
+/* 響應式設計 */
+@media (max-width: 1024px) {
+    .right-layout {
+        padding: 20px;
+    }
+    
+    .right-content {
+        padding: 0 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    aside {
+        width: 200px;
+        min-width: 200px;
+    }
+    
+    .right-layout {
+        margin-left: 200px;
+        width: calc(100vw - 200px);
+        padding: 16px;
+    }
+    
+    .main-button button,
+    .logout-button button {
+        width: 200px;
+        font-size: 18px;
+        padding-left: 25px;
+    }
+    
+    .title {
+        font-size: 40px;
+    }
+    
+    .circle {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    aside {
+        width: 180px;
+        min-width: 180px;
+    }
+    
+    .right-layout {
+        margin-left: 180px;
+        width: calc(100vw - 180px);
+        padding: 12px;
+    }
+    
+    .main-button button,
+    .logout-button button {
+        width: 180px;
+        font-size: 16px;
+        height: 50px;
+        padding-left: 20px;
+    }
+    
+    .title {
+        font-size: 35px;
+    }
+    
+    .circle {
+        width: 50px;
+        height: 50px;
+        margin-right: 12px;
+    }
+    
+    .button-icon {
+        font-size: 16px;
+        width: 18px;
+        margin-right: 12px;
+    }
+}
