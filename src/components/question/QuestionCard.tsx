@@ -189,14 +189,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           )}
         </div>
       </div>
-
-      {/* 驗證錯誤提示 */}
-      {questionData.isTemporary && !canSaveOrConfirm() && (
-        <div className="validation-message">
-          {getValidationMessage()}
-        </div>
-      )}
-           
+         
       {/* 題目輸入區域 */}
       <div className="question-input-area">
         <textarea
@@ -208,6 +201,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           rows={3}
         />
       </div>
+
+      {/* 驗證錯誤提示 */}
+      {questionData.isTemporary && !canSaveOrConfirm() && (
+        <div className="validation-message">
+          {getValidationMessage()}
+        </div>
+      )}
 
       {/* 選項區域 */}
       <div className="options-area">
@@ -225,14 +225,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
             {/* 選項標籤和輸入框 */}
             <div className="option-content">
-              <span className="option-label">({option.id})</span>
               <textarea
                 value={option.text}
                 onChange={(e) => handleOptionChange(option.id, e.target.value)}
                 className="option-input"
                 placeholder={`選項 ${option.id}`}
                 disabled={!isEditing}
-                rows={2}
               />
             </div>
           </div>
