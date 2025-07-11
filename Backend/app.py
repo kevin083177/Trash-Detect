@@ -4,7 +4,7 @@ from flask_cors import CORS
 from sockets import start_server
 from config import Config
 from routes import register_blueprints
-from utils import logger
+from utils import logger, start_scheduler, stop_scheduler
 from gevent import pywsgi
 import sys, signal
 from services import DetectionService
@@ -18,6 +18,7 @@ def index():
 
 def signal_handler(sig, frame):
     logger.info("Server shutting down...")
+    stop_scheduler()
     sys.exit(0)
 
 def create_app():
@@ -45,6 +46,9 @@ def create_app():
         thread.start()
         
         logger.info(f"Socket server listening on *:{Config.SOCKET_PORT}")
+        
+        start_scheduler()
+        logger.info("Daily trash statistics scheduler started")
         
         return app
     except Exception as e:
