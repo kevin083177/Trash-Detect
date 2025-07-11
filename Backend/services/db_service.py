@@ -16,7 +16,8 @@ class DatabaseService:
             "levels": self.db.levels,
             'questions': self.db.questions,
             'question_categories': self.db.question_categories,
-            'verifications': self.db.verifications
+            'verifications': self.db.verifications,
+            'daily_trash': self.db.daily_trash,
         }
     
     def get_collection(self, collection_name):

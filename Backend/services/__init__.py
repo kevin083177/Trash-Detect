@@ -13,6 +13,7 @@ from .question_service import QuestionService
 from .question_category_service import QuestionCategoryService
 from .detection_service import DetectionService
 from .email_service import VerificationService
+from .daliy_trash_service import DailyTrashService
 
 __all__ = [
     'DatabaseService',
@@ -29,5 +30,6 @@ __all__ = [
     'QuestionService',
     'QuestionCategoryService',
     'DetectionService',
-    'VerificationService'
+    'VerificationService',
+    'DailyTrashService'
 ]

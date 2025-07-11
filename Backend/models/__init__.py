@@ -10,6 +10,7 @@ from .question_category_model import QuestionCategory
 from .detection_model import DetectionResult, DetectionResponse
 from .email_model import EmailVerification
 from .image_model import Image
+from . daily_trash_model import DailyTrash
 
 __all__ = [
     'User',
@@ -23,5 +24,6 @@ __all__ = [
     'QuestionCategory',
     'DetectionResult', 'DetectionResponse',
     'EmailVerification',
-    'Image'
+    'Image',
+    'DailyTrash'
 ]
