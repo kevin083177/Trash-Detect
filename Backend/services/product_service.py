@@ -53,7 +53,6 @@ class ProductService(DatabaseService):
             product_data['image'] = {
                 'public_id': image_result['public_id'],
                 'url': image_result['url'],
-                'thumbnail_url': image_result['thumbnail_url'],
             }
             
             product = Product(**product_data)
@@ -199,7 +198,6 @@ class ProductService(DatabaseService):
                 updates['image'] = {
                     'public_id': new_image_result['public_id'],
                     'url': new_image_result['url'],
-                    'thumbnail_url': new_image_result['thumbnail_url'],
                 }
                 
                 # 刪除舊圖片

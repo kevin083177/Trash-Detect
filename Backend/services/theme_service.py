@@ -53,7 +53,6 @@ class ThemeService(DatabaseService):
             theme_image = {
                 'public_id': image_result['public_id'],
                 'url': image_result['url'],
-                'thumbnail_url': image_result['thumbnail_url'],
             }
             
             # 創建主題對象

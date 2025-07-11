@@ -1,5 +1,5 @@
 from .db_service import DatabaseService
-from .admin_service import AdminService
+from .admin_service import AdminService, SystemInfo
 from .auth_service import AuthService
 from .product_service import ProductService
 from .purchase_service import PurchaseService
@@ -13,10 +13,11 @@ from .question_service import QuestionService
 from .question_category_service import QuestionCategoryService
 from .detection_service import DetectionService
 from .email_service import VerificationService
+from .daliy_trash_service import DailyTrashService
 
 __all__ = [
     'DatabaseService',
-    'AuthService',
+    'AuthService', 'SystemInfo',
     'PurchaseService',
     'UserService',
     'UserLevelService',
@@ -29,5 +30,6 @@ __all__ = [
     'QuestionService',
     'QuestionCategoryService',
     'DetectionService',
-    'VerificationService'
+    'VerificationService',
+    'DailyTrashService'
 ]

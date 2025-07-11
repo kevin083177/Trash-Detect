@@ -57,7 +57,6 @@ class ImageService:
             result:Image = {
                 "public_id": upload_result["public_id"],  # 會包含資料夾路徑
                 "url": upload_result["secure_url"],
-                "thumbnail_url": upload_result["eager"][0]["secure_url"]
             }
             
             return result

@@ -10,7 +10,6 @@ export interface Product {
 
 interface ProductImage {
   public_id: string;
-  thumbnail_url: string;
   url: string;
 }
 

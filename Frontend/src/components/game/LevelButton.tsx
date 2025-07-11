@@ -1,6 +1,5 @@
 import React from "react-native";
 import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { LevelDetail } from "@/components/game/LevelDetail";
 
 interface LevelButtonProps {
   sequence: number;

@@ -1,10 +1,11 @@
-from services import UserService, AuthService
+from services import UserService, AuthService, DailyTrashService
 from config import Config
 from bson import ObjectId
 from flask import request
 
 auth_service = AuthService(Config.MONGO_URI)
 user_service = UserService(Config.MONGO_URI)
+daily_trash_service = DailyTrashService(Config.MONGO_URI)
 
 class UserController:
     @staticmethod
@@ -244,11 +245,19 @@ class UserController:
             result = user_service.add_user_trash_stats(user_id, trash_type, count)
             
             if result:
-                return {
-                    "message": "成功增加垃圾數量",
-                    "body": result
-                }, 200
-            
+                daily_update_success = daily_trash_service._update_daily_trash(trash_type, count)
+                
+                if daily_update_success:
+                    return {
+                        "message": "成功增加垃圾數量並更新每日統計",
+                        "body": result
+                    }, 200
+                else:
+                    return {
+                        "message": "成功增加垃圾數量，但每日統計更新失敗",
+                        "body": result
+                    }, 400
+                    
             return {
                 "message": "無法找到使用者"
             }, 404
@@ -256,4 +265,31 @@ class UserController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(add_user_trash_stats): {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def delete_user():
+        try:
+            data = request.get_json()
+            
+            if 'user_id' not in data:
+                return {
+                    "message": "缺少 user_id"
+                }, 400
+            
+            user_id = data['user_id']
+            success, message = user_service.delete_user(user_id)
+            
+            if success:
+                return {
+                    "message": message
+                }, 200
+                
+            return {
+                "message": message
+            }, 404
+                
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(delete_user) {str(e)}"
             }, 500

@@ -2,31 +2,18 @@ import React, { useEffect, useState } from "react";
 import { View, Image, Modal, TouchableOpacity, StyleSheet, Dimensions, Text, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { asyncGet } from "@/utils/fetch";
-import { level_api, question_api, user_level_api } from "@/api/api";
+import { level_api, question_api } from "@/api/api";
 import { tokenStorage } from "@/utils/tokenStorage";
 import { LevelButton } from "./LevelButton";
 import { LevelDetail } from "./LevelDetail";
 import { Router } from "expo-router";
 import { Question } from "@/interface/Question";
 import { Stars } from "@/components/game/Stars";
-
-interface LevelData {
-  _id: string;
-  chapter: string;
-  description: string;
-  name: string;
-  sequence: number;
-  unlock_requirement: number;
-}
-
-interface LevelProgressData {
-  score: number;
-  stars: number;
-}
+import { UserLevel } from "@/interface/UserLevel";
+import { Level } from "@/interface/Level";
 
 // 隨機選取問題
 function getRandomQuestions(allQuestions: Question[], count: number): Question[] {
-  // 複製問題陣列，避免修改原始資料
   const shuffled = [...allQuestions];
   
   // Fisher-Yates
@@ -64,23 +51,31 @@ function shuffleOptions(questions: Question[]): Question[] {
   });
 }
 
-export function LevelSelector({ router, visible, chapter_name, chapter_sequence, chapter_background, onClose, onSelectLevel }: { 
+export function LevelSelector({ 
+  router, 
+  visible, 
+  chapter_name, 
+  chapter_sequence, 
+  chapter_background, 
+  userLevelProgress,
+  onClose, 
+  onSelectLevel 
+}: { 
   router: Router
   visible: boolean;
   chapter_name: string;
   chapter_sequence: number;
   chapter_background: string;
+  userLevelProgress: UserLevel;
   onClose(): void;
   onSelectLevel?(levelSequence: number): void;
 }) {
-  const [userHighestLevel, setUserHighestLevel] = useState<number>(0);
   const [userScores, setUserScores] = useState<number[]>([]);
   const [userStars, setUserStars] = useState<number[]>([]);
-  const [levels, setLevels] = useState<LevelData[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [detailModalVisible, setDetailModalVisible] = useState<boolean>(false);
-  const [selectedLevel, setSelectedLevel] = useState<LevelData | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
 
-  // 提取指定範圍的問題
   const extractQuestions = (questions: any[], levelSequence: number): Question[] => {
     const startIndex = (levelSequence - 1) * 20;
     const endIndex = startIndex + 20;
@@ -88,9 +83,7 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
     // 提取範圍內的問題
     const levelQuestions = questions.slice(startIndex, endIndex);
     
-    // 轉換為我們定義的 Question 格式
     return levelQuestions.map(q => {
-      // 找出正確答案的索引
       const correctOptionIndex = q.options.findIndex(
         (option: any) => option.id === q.correct_answer
       );
@@ -108,43 +101,29 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
     });
   };
 
- 
-  const fetchUserHighestLevel = async() => {
-    try {
-      const response = await asyncGet(user_level_api.get_user_level, {
-        headers: {  
-          "Authorization": `Bearer ${await tokenStorage.getToken()}`
-        }
+  const processUserProgress = () => {
+    if (userLevelProgress.level_progress && typeof userLevelProgress.level_progress === 'object') {
+      const scores: number[] = [];
+      const stars: number[] = [];
+      
+      const levelNumbers = Object.keys(userLevelProgress.level_progress)
+        .map(key => parseInt(key))
+        .sort((a, b) => a - b);
+      
+      levelNumbers.forEach(levelNum => {
+        const levelProgress = userLevelProgress.level_progress[levelNum];
+        scores[levelNum - 1] = levelProgress.score || 0;
+        stars[levelNum - 1] = levelProgress.stars || 0;
       });
       
-      setUserHighestLevel(response.body.highest_level as number);
-      
-      if (response.body.level_progress && typeof response.body.level_progress === 'object') {
-        const scores: number[] = [];
-        const stars: number[] = [];
-        
-        const levelNumbers = Object.keys(response.body.level_progress)
-          .map(key => parseInt(key))
-          .sort((a, b) => a - b);
-        
-        levelNumbers.forEach(levelNum => {
-          const levelData = response.body.level_progress[levelNum] as LevelProgressData;
-          scores[levelNum - 1] = levelData.score || 0;
-          stars[levelNum - 1] = levelData.stars || 0;
-        });
-        
-        setUserScores(scores);
-        setUserStars(stars);
-      }
-    } catch (error) {
-      console.error("Error fetching user level:", error);
+      setUserScores(scores);
+      setUserStars(stars);
     }
   };
   
   const fetchChaptersLevelInformation = async() => {
     try {
-      const endpoint = `${level_api.get_chapters_level}${chapter_name}`;
-      const response = await asyncGet(endpoint, {
+      const response = await asyncGet(`${level_api.get_chapters_level}${chapter_name}`, {
         headers: {  
           "Authorization": `Bearer ${await tokenStorage.getToken()}`
         }
@@ -157,36 +136,34 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
 
   useEffect(() => {
     if (visible) {
-      fetchUserHighestLevel();
+      processUserProgress();
       fetchChaptersLevelInformation();
     }
-  }, [visible]);
+  }, [visible, userLevelProgress]);
 
   // LevelButton 定點位置
   const getPositionForSequence = (sequence: number) => {
+    const positionIndex = (sequence - 1) % 5;
     const positions = [
-      { x: 95, y: -50 },    // Level 1
-      { x: 145, y: 80 },   // Level 2
-      { x: 205, y: 200 },   // Level 3
-      { x: 105, y: 330 },   // Level 4
-      { x: 80, y: 480 },   // Level 5
+      { x: 95, y: -50 },    // Level 1 6 11 ...
+      { x: 145, y: 80 },    // Level 2 7 12 ...
+      { x: 205, y: 200 },   // Level 3 8 13 ...
+      { x: 105, y: 330 },   // Level 4 9 14 ...
+      { x: 80, y: 480 },    // Level 5 10 15 ...
     ];
-    
-    return positions[sequence - 1] || { x: 100 * sequence, y: 150 };
+
+    return positions[positionIndex];
   };
 
   // 用於設定選擇的關卡資料
-  const handleLevelSelect = (level: LevelData) => {
-    // First show detail modal
+  const handleLevelSelect = (level: Level) => {
     setSelectedLevel(level);
     setDetailModalVisible(true);
   };
 
-  // 用於處理 LevelDetail 中的開始按鈕
   const handleStartLevel = async () => {
     if (selectedLevel) {
       try {
-        // 獲取該類別的問題
         const response = await asyncGet(`${question_api.get_question_by_category}${chapter_name.substring(0, 3)}`, {
           headers: {
             "Authorization": `Bearer ${await tokenStorage.getToken()}`
@@ -232,8 +209,8 @@ export function LevelSelector({ router, visible, chapter_name, chapter_sequence,
   };
 
   // 渲染每個關卡及其星星
-  const renderLevelWithStars = (level: LevelData) => {
-    const isUnlocked = userHighestLevel >= level.unlock_requirement;
+  const renderLevelWithStars = (level: Level) => {
+    const isUnlocked = userLevelProgress.highest_level >= level.unlock_requirement;
     const position = getPositionForSequence(level.sequence);
     const levelStars = userStars[level.sequence - 1] || 0;
     
@@ -358,7 +335,7 @@ const styles = StyleSheet.create({
     zIndex: 5
   },
   levelMapContainer: {
-    width: 1100,  // Make it wide enough for horizontal scrolling
+    width: 1100,
     height: '100%',
     marginTop: 60
   },

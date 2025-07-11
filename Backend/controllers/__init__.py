@@ -9,6 +9,7 @@ from .chapter_controller import ChapterController
 from .level_controller import LevelController
 from .question_controller import QuestionController
 from .question_category_controller import QuestionCategoryController
+from .daily_trash_controller import DailyTrashController
 
 __all__ = [
     'AuthController',
@@ -22,4 +23,5 @@ __all__ = [
     'LevelController',
     'QuestionController',
     'QuestionCategoryController',
+    'DailyTrashController'
 ]
