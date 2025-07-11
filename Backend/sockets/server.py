@@ -1,9 +1,9 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import uuid
-from utils import logger
-from services import DetectionService
+from utils import logger, verify_token
+from services import DetectionService, SystemService
 
 def start_server(port, detection_service: DetectionService=None):
     """啟動 Socket 服務器"""
@@ -13,6 +13,8 @@ def start_server(port, detection_service: DetectionService=None):
     
     # 創建SocketIO
     socketio = SocketIO(socket_app, cors_allowed_origins="*", logger=False, engineio_logger=False)
+    
+    system_service = SystemService(socketio)
     
     @socket_app.route('/')
     def test():
@@ -31,6 +33,8 @@ def start_server(port, detection_service: DetectionService=None):
     @socketio.on('disconnect')
     def handle_disconnect():
         logger.info("Client disconnected")
+        if hasattr(request, 'sid'):
+            system_service.remove_admin_connection(request.sid)
     
     @socketio.on('detect_image')
     def handle_detect_image(data):
@@ -63,6 +67,40 @@ def start_server(port, detection_service: DetectionService=None):
         emit('detection_result', result)
         
         # logger.info(f"Detection completed: {len(detection_response.detections)} objects")
+        
+    @socketio.on('start_monitoring')
+    def handle_start_monitoring(data):
+        try:
+            token = data.get("token")
+            if not token:
+                emit('monitoring error', {'message': '缺少 Token'})
+                return
+            
+            token_data = verify_token(token)
+            if not token_data:
+                emit('monitoring error', {'message': '權限不足'})
+                return
+            
+            join_room("monitor")
+            system_service.add_admin_connection(request.sid)
+            
+            emit('monitoring started', {
+                'message': "系統監控啟動",
+            })
+        except Exception as e:
+            emit('monitoring error', {'message': f'啟動系統監控失敗: {str(e)}'})
+            
+    @socketio.on('stop_monitoring')
+    def handle_stop_monitoring():
+        try:
+            leave_room("monitor")
+            system_service.remove_admin_connection(request.sid)
+            
+            emit('monitoring stop', {'message': '系統監控已停止'})
+            
+        except Exception as e:
+            emit('monitoring error', {'message': f'停止系統監控失敗: {str(e)}'})
+            
     try:
         socketio.run(
             socket_app,
