@@ -11,12 +11,14 @@ export function ChapterButton({
     chapter, 
     unlocked, 
     isActive = true,
-    onPress 
+    onPress,
+    requiresPreviousChapter = false
 }: {
     chapter: Chapter, 
     unlocked: boolean, 
     isActive?: boolean, 
-    onPress: () => void
+    onPress: () => void,
+    requiresPreviousChapter?: boolean
 }) {
     return (
         <TouchableOpacity 
@@ -24,12 +26,13 @@ export function ChapterButton({
             disabled={!unlocked}
             style={[
                 styles.buttonContainer,
-                !isActive && styles.inactiveButton
+                !isActive && styles.inactiveButton,
+                !unlocked && styles.disabledButton
             ]}
-            activeOpacity={0.8}
+            activeOpacity={unlocked ? 0.8 : 1}
         >
             <ImageBackground 
-                source={{ uri: chapter.banner_image.url }} 
+                source={{ uri: chapter.image.url }} 
                 style={styles.banner}
                 imageStyle={styles.bannerImage}
             >
@@ -37,18 +40,30 @@ export function ChapterButton({
                 {!unlocked && (
                     <View style={styles.lockOverlay}>
                         <Ionicons name="lock-closed" size={50} color="white" style={styles.lockIcon} />
+                        <Text style={styles.lockText}>
+                            {requiresPreviousChapter ? '需完成前一章節' : '需要更多回收統計'}
+                        </Text>
+                        <Text style={styles.requirementText}>
+                            {requiresPreviousChapter 
+                                ? '' 
+                                : `${chapter.trash_requirement} 次的回收紀錄`
+                            }
+                        </Text>
                     </View>
                 )}
                 
                 {/* 非激活狀態遮罩 */}
-                {!isActive && (
+                {unlocked && !isActive && (
                     <View style={styles.inactiveOverlay}>
                     </View>
                 )}
                 
                 {/* 章節名稱 */}
                 <View style={styles.textContainer}>
-                    <Text style={styles.chapterName}>
+                    <Text style={[
+                        styles.chapterName,
+                        !unlocked && styles.lockedChapterName
+                    ]}>
                         {chapter.name}
                     </Text>
                 </View>
@@ -94,23 +109,50 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 3,
     },
+    lockedChapterName: {
+        opacity: 0.7,
+    },
     lockOverlay: {
         ...StyleSheet.absoluteFillObject, // 填滿整個容器
-        backgroundColor: 'rgba(128, 128, 128, 0.7)', // 半透明灰色
+        backgroundColor: 'rgba(128, 128, 128, 0.8)', // 半透明灰色，更明顯
         justifyContent: 'center',
         alignItems: 'center',
     },
     lockIcon: {
         opacity: 0.9,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         padding: 16,
         borderRadius: 50,
+        marginBottom: 16,
     },
-    // 新增：非激活狀態的按鈕樣式
+    lockText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 8,
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 3,
+    },
+    requirementText: {
+        color: 'white',
+        fontSize: 14,
+        textAlign: 'center',
+        opacity: 0.9,
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 3,
+    },
+    // 非激活狀態的按鈕樣式
     inactiveButton: {
         opacity: 0.8, // 略微降低不活躍章節的不透明度
     },
-    // 新增：非激活狀態的遮罩
+    // 禁用狀態的按鈕樣式
+    disabledButton: {
+        opacity: 0.9,
+    },
+    // 非激活狀態的遮罩
     inactiveOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0, 0, 0, 0.3)', // 輕微灰暗，但仍然可見

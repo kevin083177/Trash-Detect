@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, FlatList, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Headers from '@/components/Headers';
 import { asyncGet } from '@/utils/fetch';
-import { chapter_api, user_api } from '@/api/api';
+import { chapter_api, user_api, user_level_api } from '@/api/api';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { ChapterButton } from '@/components/game/ChapterButton';
 import { Chapter } from '@/interface/Chapter';
 import { router } from 'expo-router';
 import { ChapterDots } from '@/components/game/ChapterDots';
 import { LevelSelector } from '@/components/game/LevelSelector';
+import { RecycleValues } from '@/interface/Recycle';
+import { UserLevel } from '@/interface/UserLevel';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.8;
@@ -28,6 +29,56 @@ export default function GameChapterScreen() {
   const [selectedChapterName, setSelectedChapterName] = useState<string>('');
   const [selectChapterBackground, setSelectChapterBackground] = useState<string>('');
   const [selectChapterSequence, setSelectChapterSequence] = useState<number>(0);
+  const [trashStats, setTrashStats] = useState<RecycleValues>({
+    bottles: 0,
+    cans: 0,
+    containers: 0,
+    paper: 0,
+    plastic: 0
+  });
+  const [userLevelProgress, setUserLevelProgress] = useState<UserLevel>({
+    chapter_progress: {},
+    highest_level: 0,
+    level_progress: {}
+  });
+
+  // 計算垃圾總數
+  const calculateTotalTrash = (stats: RecycleValues): number => {
+    return stats.bottles + stats.cans + stats.containers + stats.paper + stats.plastic;
+  };
+
+  // 檢查章節是否完成
+  const isChapterCompleted = (sequence: number): boolean => {
+    const startLevel = (sequence - 1) * 5 + 1;
+    const endLevel = sequence * 5;
+    for (let levelId = startLevel; levelId <= endLevel; levelId++) {
+      const progress = userLevelProgress.level_progress[levelId];
+      if (!progress || progress.stars < 1) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+
+  // 判斷章節是否解鎖
+  const isChapterUnlocked = (sequence: number): boolean => {
+    if (sequence === 1) return true;
+    return isChapterCompleted(sequence - 1);
+  };
+
+  // 獲取應該渲染的章節列表
+  const getChaptersToRender = (allChapters: Chapter[]): Chapter[] => {
+    const sorted = [...allChapters].sort((a, b) => a.sequence - b.sequence);
+    const result: Chapter[] = [];
+    for (let chapter of sorted) {
+      result.push(chapter);
+      if (!isChapterUnlocked(chapter.sequence)) {
+        break;
+      }
+    }
+    return result;
+  };
 
   const fetchUserProfile = async () => {
     if (!token) return;
@@ -42,12 +93,35 @@ export default function GameChapterScreen() {
       if (response) {
         setUsername(response.body.username);
         setMoney(response.body.money);
+        setTrashStats(response.body.trash_stats);
       }
       else {
         Alert.alert("錯誤", "無法連接至伺服器");
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+    }
+  };
+
+  // 獲取用戶關卡進度數據
+  const fetchUserLevelProgress = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await asyncGet(user_level_api.get_user_level, {
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        }
+      });
+      
+      if (response && response.status === 200) {
+        setUserLevelProgress(response.body);
+      } else {
+        console.error('Error fetching user level progress:', response?.statusText);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching user level progress:', error);
     }
   };
 
@@ -59,7 +133,7 @@ export default function GameChapterScreen() {
           'Authorization': `Bearer ${token}`,
         }
       });
-      
+
       if (response.status === 200) {
         const chaptersData = response.body;
         setChapters(chaptersData);
@@ -94,14 +168,15 @@ export default function GameChapterScreen() {
     if (token) {
       fetchUserProfile();
       fetchChapters();
+      fetchUserLevelProgress();
     }
   }, [token]);
 
   const handleChapterPress = (chapter_name: string, chapter_sequence: number, chapter_background: string) => {
-      setSelectedChapterName(chapter_name);
-      setSelectChapterSequence(chapter_sequence);
-      setSelectChapterBackground(chapter_background);
-      setLevelSelectorVisible(true);
+    setSelectedChapterName(chapter_name);
+    setSelectChapterSequence(chapter_sequence);
+    setSelectChapterBackground(chapter_background);
+    setLevelSelectorVisible(true);
   };
 
   // 處理非激活卡片的點擊，滾動至該卡片位置
@@ -123,6 +198,12 @@ export default function GameChapterScreen() {
 
   const renderItem = ({ item, index }: { item: Chapter, index: number}) => {
     const isActive = index === activeIndex;
+    const unlocked = isChapterUnlocked(item.sequence);
+    const totalTrash = calculateTotalTrash(trashStats);
+    
+    // 判斷是否因為前章節未完成而無法解鎖
+    const hasEnoughTrash = totalTrash >= item.trash_requirement;
+    const requiresPreviousChapter = item.sequence > 1 && hasEnoughTrash && !unlocked;
     
     return (
       <View style={styles.cardContainer}>
@@ -130,17 +211,28 @@ export default function GameChapterScreen() {
           <View style={styles.cardContent}>
             <ChapterButton 
               chapter={item} 
-              unlocked={true} 
+              unlocked={unlocked} 
               isActive={isActive}
-              onPress={() => isActive
-                ? handleChapterPress(item.name, item.sequence, item.background_image.url) 
-                : handleNonActiveCardPress(index)}
+              requiresPreviousChapter={requiresPreviousChapter}
+              onPress={() => {
+                if (unlocked) {
+                  if (isActive) {
+                    handleChapterPress(item.name, item.sequence, item.image.url);
+                  } else {
+                    handleNonActiveCardPress(index);
+                  }
+                }
+                // 如果未解鎖，點擊無效果
+              }}
             />
           </View>
         </View>
       </View>
     );
   };
+
+  // 獲取要渲染的章節
+  const chaptersToRender = getChaptersToRender(chapters);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,13 +253,13 @@ export default function GameChapterScreen() {
         <View style={styles.carouselContainer}>
           <FlatList
             ref={flatListRef}
-            data={chapters}
+            data={chaptersToRender}
             renderItem={renderItem}
             keyExtractor={(item) => item._id}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_WIDTH} // Width of card without adding spacing
+            snapToInterval={CARD_WIDTH}
             decelerationRate="fast"
             contentContainerStyle={styles.flatListContent}
             onViewableItemsChanged={handleViewableItemsChanged}
@@ -176,7 +268,7 @@ export default function GameChapterScreen() {
           
           {/* Floating dot indicator component */}
           <ChapterDots 
-            totalDots={chapters.length} 
+            totalDots={chaptersToRender.length} 
             activeDotIndex={activeIndex} 
           />
         </View>
@@ -187,6 +279,7 @@ export default function GameChapterScreen() {
         chapter_sequence={selectChapterSequence}
         chapter_name={selectedChapterName}
         chapter_background={selectChapterBackground}
+        userLevelProgress={userLevelProgress}
         onClose={() => setLevelSelectorVisible(false)}
       />
     </SafeAreaView>
@@ -202,16 +295,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative', // For absolute positioning of the dots
+    position: 'relative',
   },
   flatListContent: {
-    paddingHorizontal: width * 0.1, // To center the first and last cards
+    paddingHorizontal: width * 0.1,
     alignItems: 'center',
   },
   cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginHorizontal: 0, // No horizontal margin to show next card
+    marginHorizontal: 0,
     borderRadius: 15,
     overflow: 'hidden',
     shadowOpacity: 0.2,
