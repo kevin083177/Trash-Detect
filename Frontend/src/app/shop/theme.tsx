@@ -12,7 +12,6 @@ interface ThemeData {
   name: string;
   description: string;
   image: {
-    thumbnail_url: string;
     url: string;
   };
 }
