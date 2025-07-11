@@ -7,28 +7,17 @@ product_service = ProductService(Config.MONGO_URI)
 
 class AdminController:
     @staticmethod
-    def delete_user():
+    def get_all_users_info():
         try:
-            data = request.get_json()
+            users_info = admin_service.get_all_users_info()
             
-            if 'user_id' not in data:
-                return {
-                    "message": "缺少 user_id"
-                }, 400
-            
-            user_id = data['user_id']
-            success, message = admin_service.delete_user(user_id)
-            
-            if success:
-                return {
-                    "message": message
-                }, 200
-                
             return {
-                "message": message
-            }, 404
-                
+                "message": f"成功獲取所有使用者資料",
+                "body": users_info
+            }, 200
+            
         except Exception as e:
             return {
-                "message": f"伺服器錯誤(delete_user) {str(e)}"
+                "message": f"伺服器錯誤(get_all_users_info) {str(e)}"
             }, 500
+            

@@ -1,6 +1,6 @@
 from flask import Blueprint
 from controllers import UserController
-from middlewares import token_required, log_request
+from middlewares import token_required, log_request, admin_required
 
 user_blueprint = Blueprint('users', __name__)
 
@@ -15,6 +15,12 @@ def get_user(user):
 @token_required
 def update_user(user):
     return UserController.update_user(user['_id'])
+
+@user_blueprint.route('/delete', methods=['DELETE'])
+@log_request
+@admin_required
+def delete_user():
+    return UserController.delete_user()
 
 @user_blueprint.route('/money/add', methods=['PUT'])
 @log_request
