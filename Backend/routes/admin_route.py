@@ -22,3 +22,9 @@ def delete_user():
 @log_request
 def get_all_trash():
     return DailyTrashController.get_all_trash()
+
+@admin_blueprint.route('/system/info', methods=['GET'])
+@admin_required
+@log_request
+def get_system_info():
+    return AdminController.get_system_info()
