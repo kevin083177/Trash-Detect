@@ -65,38 +65,3 @@ export const USER_TAB_SCREENS = [
     },
   },
 ] as const;
-
-export const ADMIN_TAB_SCREENS = [
-  {
-    name: 'index',
-    title: '總覽',
-    icon: {
-      focused: 'pie-chart',
-      outline: 'pie-chart-outline',
-    },
-  },
-  {
-    name: 'users',
-    title: '用戶管理',
-    icon: {
-      focused: 'people',
-      outline: 'people-outline',
-    },
-  },
-  {
-    name: 'products',
-    title: '商品管理',
-    icon: {
-      focused: 'bag-check',
-      outline: 'bag-check-outline'
-    }
-  },
-  {
-    name: 'themes',
-    title: '主題管理',
-    icon: {
-      focused: 'color-palette',
-      outline: 'color-palette-outline'
-    }
-  }
-] as const;

@@ -21,7 +21,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string>('');
-  const { user, isAdminMode, toggleAdminMode, setUser } = useAuth();
+  const { user, setUser } = useAuth();
   // get token
   useEffect(() => {
     const getToken = async () => {
@@ -35,17 +35,12 @@ export default function Profile() {
     try {
         setIsLoading(true);
         
-        // const storage = await tokenStorage.getUserInfo();
-        // console.log(storage);
-        // console.log('Fetching from URL:', user_api.get_record);
-        
         const response = await asyncGet(user_api.get_user_trash_stats, {
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
         });
 
-        // console.log('API Response:', response);
 
         if (response) {
             const transformedData: RecyclingItem[] = [
@@ -106,7 +101,7 @@ export default function Profile() {
               });
 
               await tokenStorage.clearAll();
-              setUser(null); // 會自動執行畫面跳轉
+              setUser(null);
             } catch (error) {
               console.error('Logout failed:', error);
               Alert.alert('錯誤', '登出失敗，請稍後再試');
@@ -122,7 +117,6 @@ export default function Profile() {
     router.push('/(tabs)/profile/settings');
   };
 
-  // 當畫面取得焦點時 取得record, user 資料
   useFocusEffect(
     useCallback(() => {
       if (token) {
@@ -158,26 +152,6 @@ export default function Profile() {
           />
         ))}
       </View>
-      {user?.role === 'admin' && (
-        <TouchableOpacity 
-          style={[
-            styles.adminModeButton, 
-            { 
-              backgroundColor: isAdminMode ? '#4CAF50' : '#2196F3' 
-            }
-          ]}
-          onPress={toggleAdminMode}
-        >
-          <Ionicons 
-            name={isAdminMode ? "shield" : "shield-outline"} 
-            size={24} 
-            color="white" 
-          />
-          <Text style={styles.adminModeButtonText}>
-            {isAdminMode ? '管理員模式已開啟' : '切換到管理員模式'}
-          </Text>
-        </TouchableOpacity>
-      )}
         <TouchableOpacity style={styles.logoutContainer} onPress={() => handleLogout()}>
           <Ionicons name="log-out-outline" size={24} color="red" />
           <Text style={styles.logoutText}>登出</Text>
@@ -237,18 +211,5 @@ const styles = StyleSheet.create({
       marginLeft: 8,
       fontSize: 14,
       color: 'red',
-  },
-  adminModeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 15,
-    borderRadius: 10,
-    gap: 10,
-  },
-  adminModeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  }
 });
