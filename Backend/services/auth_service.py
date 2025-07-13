@@ -73,6 +73,6 @@ class AuthService(DatabaseService):
         """檢查用戶名是否已存在"""
         return self.users.find_one({"username": username}) is not None
 
-    def check_email_exists(self, email):
+    def _check_email_exists(self, email):
         """檢查郵箱是否已存在"""
         return self.users.find_one({"email": email}) is not None

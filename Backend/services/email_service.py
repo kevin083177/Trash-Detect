@@ -134,15 +134,24 @@ class VerificationService(DatabaseService):
     def create_verification(self, email: str, username: str, password: str, user_role: str = "user") -> tuple[bool, str]:
         """創建新的驗證記錄並發送驗證郵件"""
         try:
-            existing = self.verifications.find_one({
+            existing_email = self.verifications.find_one({
                 "email": email,
                 "expires_at": {"$gt": datetime.now()},
                 "is_verified": False
             })
             
-            if existing:
+            if existing_email:
                 return False, "驗證郵件已經發送，請檢查您的郵箱或等待5分鐘後重試"
-                       
+            
+            existing_username = self.verifications.find_one({
+                "username": username,
+                "expires_at": {"$gt": datetime.now()},
+                "is_verified": False
+            })
+            
+            if existing_username:
+                return False, "該帳號正在驗證中，請等待驗證完成或5分鐘後重試"
+               
             verification_code = self.email_service.send_verification_email(email, username)
             if not verification_code:
                 return False, "郵件發送失敗，請稍後再試"
@@ -156,6 +165,7 @@ class VerificationService(DatabaseService):
             )
             
             self.verifications.delete_many({"email": email})
+            self.verifications.delete_many({"username": username})
             
             result = self.verifications.insert_one(verification.to_dict())
             
@@ -255,7 +265,7 @@ class VerificationService(DatabaseService):
             # 檢查是否可以重新發送 > 1 min
             last_created = verification_doc["created_at"]
             if datetime.now() - last_created < timedelta(minutes=1):
-                return False, "請稍後重試"
+                return False, "請等待 1 分鐘後重試"
             
             # 生成新的驗證碼
             new_verification_code = self.email_service.send_verification_email(

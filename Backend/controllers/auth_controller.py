@@ -29,7 +29,7 @@ class AuthController:
                 }, 409
 
             # 檢查 email 是否已存在
-            if auth_service.check_email_exists(data['email']):
+            if auth_service._check_email_exists(data['email']):
                 return {
                     "message": "電子郵件已被註冊",
                 }, 409
@@ -82,35 +82,52 @@ class AuthController:
                     "message": message,
                 }, 400
             
-            # 創建用戶
-            result = auth_service.register(user_data)
-            created_user = user_service.get_user(result)
-            if created_user:
-                # 初始化用戶購買商品、關卡資訊
-                purchase_success = purchase_service.init_user_purchase(result)
-                user_level_success = user_level_service.init_user_level(result)
-            
-                if not purchase_success or not user_level_success:
-                    # 初始化失敗刪除已創建的用戶
-                    auth_service.users.delete_one({"_id": result})
-                    return {
-                        "message": "初始化使用者資料失敗",
-                    }, 500
-                
-                # 初始化第一章和第一關
-                user_level_service._add_new_chapter(result, 1)
-                user_level_service._add_new_level(result, 1)
-            
-                # 清理驗證記錄
+            # 更新用戶email
+            existing_user = user_service.users.find_one({"email": data['email']})
+            if existing_user:
+                user_service._set_email_verified(str(existing_user["_id"]))
                 verification_service.verifications.delete_one({"email": data['email']})
+                
+                updated_user = user_service.get_user(str(existing_user['_id']))
+                updated_user.pop('password', None)
+                updated_user['_id'] = str(updated_user['_id'])
+                
+                return {
+                    "message": "電子郵件驗證成功",
+                    "body": updated_user
+                }, 200
             
-                created_user.pop('password', None)
-                created_user['_id'] = str(created_user['_id'])
-            
-            return {
-                "message": "註冊成功",
-                "body": created_user
-            }, 200
+            # 創建用戶
+            else:
+                result = auth_service.register(user_data)
+                created_user = user_service.get_user(result)
+                if created_user:
+                    # 初始化用戶購買商品、關卡資訊
+                    purchase_success = purchase_service.init_user_purchase(result)
+                    user_level_success = user_level_service.init_user_level(result)
+                
+                    if not purchase_success or not user_level_success:
+                        # 初始化失敗刪除已創建的用戶
+                        auth_service.users.delete_one({"_id": result})
+                        return {
+                            "message": "初始化使用者資料失敗",
+                        }, 500
+                    
+                    # 初始化第一章和第一關
+                    user_level_service._add_new_chapter(result, 1)
+                    user_level_service._add_new_level(result, 1)
+                
+                    # 清理驗證記錄，並將 verification 設為 true
+                    verification_service.verifications.delete_one({"email": data['email']})
+                    user_service._set_email_verified(result)
+
+                    created_user.pop('password', None)
+                    created_user['_id'] = str(created_user['_id'])
+                
+                return {
+                    "message": "註冊成功",
+                    "body": created_user
+                }, 200
             
         except Exception as e:
             return {
