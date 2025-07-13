@@ -157,7 +157,7 @@ class DailyTrashService(DatabaseService):
             print(f"Get Daily Trash Error: {str(e)}")
             raise
     
-    def auto__create_daily_trash(self):
+    def auto_create_daily_trash(self):
         """自動生成今日統計"""
         try:
             today = datetime.now().strftime("%Y-%m-%d")
