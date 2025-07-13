@@ -13,6 +13,17 @@ interface ProductImage {
   url: string;
 }
 
+export interface PurchasedProducts {
+  bookshelf: Product[];
+  box: Product[];
+  calendar: Product[];
+  carpet: Product[];
+  lamp: Product[];
+  pendant: Product[];
+  table: Product[];
+  wallpaper: Product[];
+}
+
 export type ProductCategory = 
   | 'bookshelf' 
   | 'box' 
