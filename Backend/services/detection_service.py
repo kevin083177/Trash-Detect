@@ -3,17 +3,21 @@ import numpy as np
 from ultralytics import YOLO
 from models import DetectionResult, DetectionResponse
 import base64
+from pathlib import Path
 
 class DetectionService:
     def __init__(self):
         self.model = None
         self.confidence_threshold = 0.85
+        self.dir = Path(__file__).resolve().parent
         self._load_model()
         
     def _load_model(self):
         """載入YOLO模型"""
         try:
-            self.model = YOLO("../detect_models/yolov8m.pt")
+            dir = Path(__file__).resolve().parent
+            model_path = dir.parent / "detect_models" / "yolov8m.pt"
+            self.model = YOLO(model_path)
             print("YOLO model loaded successfully")
         except Exception as e:
             print(f"Error loading YOLO model: {str(e)}")
