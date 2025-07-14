@@ -1,6 +1,7 @@
 // 關閉 Tab Bar 的路由
 export const HIDE_TAB_BAR_PATHS = [
   'setting',
+  'verification',
   '/backpack',
   '/shop/theme',
   '/game/gameplay',
