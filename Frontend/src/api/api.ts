@@ -35,12 +35,14 @@ export const user_api = {
     get_user: `${user_url}/`,
     get_user_trash_stats: `${user_url}/trash`,
     add_trash_stats: `${user_url}/trash/add_trash`,
-    update_user: `${user_url}/update`,
     add_money: `${user_url}/money/add`,
     subtract_money: `${user_url}/money/subtract`,
     daily_check_in: `${user_url}/checkIn`,
     daily_check_in_status: `${user_url}/checkIn/status`,
     update_user_level: `${user_url}/level/update_level`,
+    update_username: `${user_url}/update/username`,
+    update_password: `${user_url}/update/password`, 
+    update_email: `${user_url}/update/email`,
 } as const;
 
 export const purchase_api = {
