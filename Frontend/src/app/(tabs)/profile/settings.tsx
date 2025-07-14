@@ -1,16 +1,386 @@
-import React, { View, Text, StyleSheet } from "react-native"
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Alert 
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import ClearableInput from '@/components/auth/ClearableInput';
+import PasswordInput from '@/components/auth/PasswordInput';
+import LoadingModal from '@/components/LoadingModal';
+import Toast from '@/components/Toast';
+import { useUser } from '@/hooks/user';
 
-export default function Setting() {
+type SettingType = 'username' | 'password' | 'email' | null;
+
+export default function Settings() {
+  const { 
+    user, 
+    updateUsername, 
+    updatePassword, 
+    updateEmail,
+    refreshUserData 
+  } = useUser();
+  
+  const [editingType, setEditingType] = useState<SettingType>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Username 相關狀態
+  const [newUsername, setNewUsername] = useState<string>('');
+  
+  // Password 相關狀態
+  const [oldPassword, setOldPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  
+  // Email 相關狀態
+  const [newEmail, setNewEmail] = useState<string>('');
+  
+  // Toast 狀態
+  const [toast, setToast] = useState({
+    visible: false,
+    message: '',
+    type: 'info' as 'success' | 'error' | 'info'
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ visible: true, message, type });
+  };
+
+  // 重置表單
+  const resetForm = () => {
+    setNewUsername('');
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setNewEmail('');
+    setEditingType(null);
+  };
+
+  // 更新用戶名
+  const handleUpdateUsername = async () => {
+    try {
+      setIsLoading(true);
+      const result = await updateUsername(newUsername);
+      
+      if (result.success) {
+        showToast(result.message, 'success');
+        resetForm();
+      } else {
+        showToast(result.message, 'error');
+      }
+    } catch (error) {
+      showToast('網路錯誤，請稍後再試', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      showToast('新密碼與確認密碼不一致', 'error');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const result = await updatePassword(oldPassword, newPassword);
+      
+      if (result.success) {
+        showToast(result.message, 'success');
+        resetForm();
+      } else {
+        showToast(result.message, 'error');
+      }
+    } catch (error) {
+      showToast('網路錯誤，請稍後再試', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 更新電子郵件
+  const handleUpdateEmail = async () => {
+    try {
+      setIsLoading(true);
+      const result = await updateEmail(newEmail);
+      
+      if (result.success) {
+          router.push({
+            pathname: "/(tabs)/profile/verification",
+            params: { 
+              newEmail: newEmail
+            }
+          });
+      } else {
+        showToast(result.message, 'error');
+      }
+    } catch (error) {
+      showToast('網路錯誤，請稍後再試', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      refreshUserData();
+    }
+  }, []);
+
+  const renderSettingItem = (
+    title: string,
+    currentValue: string,
+    type: SettingType,
+    icon: keyof typeof Ionicons.glyphMap
+  ) => {
+    const isEditing = editingType === type;
+
     return (
-        <View style={styles.container}>
-            <Text>hi</Text>
+      <View style={styles.settingItem}>
+        <View style={styles.settingHeader}>
+          <View style={styles.settingInfo}>
+            <Ionicons name={icon} size={24} color="#007AFF" style={styles.settingIcon} />
+            <View>
+              <Text style={styles.settingTitle}>{title}</Text>
+              <Text style={styles.settingValue}>{currentValue}</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => {
+              if (isEditing) {
+                resetForm();
+              } else {
+                setEditingType(type);
+                if (type === 'username') setNewUsername(currentValue);
+                if (type === 'email') setNewEmail(currentValue);
+              }
+            }}
+          >
+            <Ionicons 
+              name={isEditing ? "close" : "pencil"} 
+              size={20} 
+              color={isEditing ? "#FF3B30" : "#007AFF"} 
+            />
+          </TouchableOpacity>
         </View>
-    )
+
+        {isEditing && renderEditForm(type)}
+      </View>
+    );
+  };
+
+  // 渲染編輯表單
+  const renderEditForm = (type: SettingType) => {
+    switch (type) {
+      case 'username':
+        return (
+          <View style={styles.editForm}>
+            <ClearableInput
+              placeholder="新用戶名"
+              value={newUsername}
+              onChangeText={setNewUsername}
+            />
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleUpdateUsername}
+              disabled={isLoading}
+            >
+              <Text style={styles.saveButtonText}>
+                {isLoading ? '更新中...' : '保存'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'password':
+        return (
+          <View style={styles.editForm}>
+            <PasswordInput
+              placeholder="舊密碼"
+              value={oldPassword}
+              onChangeText={setOldPassword}
+            />
+            <PasswordInput
+              placeholder="新密碼"
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <PasswordInput
+              placeholder="確認新密碼"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleUpdatePassword}
+              disabled={isLoading}
+            >
+              <Text style={styles.saveButtonText}>
+                {isLoading ? '更新中...' : '保存'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'email':
+        return (
+          <View style={styles.editForm}>
+            <ClearableInput
+              placeholder="新電子郵件"
+              value={newEmail}
+              onChangeText={setNewEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleUpdateEmail}
+              disabled={isLoading}
+            >
+              <Text style={styles.saveButtonText}>
+                {isLoading ? '更新中...' : '發送驗證碼'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.helperText}>
+              更新電子郵件時將發送驗證碼
+            </Text>
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (!user) {
+    return <LoadingModal visible={true} text="載入設定中..." />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <LoadingModal visible={isLoading} text="處理中..." />
+      
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionTitle}>帳號設定</Text>
+        
+        {renderSettingItem(
+          '用戶名',
+          user.username,
+          'username',
+          'person-outline'
+        )}
+        
+        {renderSettingItem(
+          '密碼',
+          '••••••••',
+          'password',
+          'lock-closed-outline'
+        )}
+        
+        {renderSettingItem(
+          '電子郵件',
+          user.email,
+          'email',
+          'mail-outline'
+        )}
+      </ScrollView>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    }
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollView: {
+    flex: 1,
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  settingItem: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  settingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingIcon: {
+    marginRight: 12,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  settingValue: {
+    fontSize: 14,
+    color: '#666',
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+  },
+  editForm: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 8,
+    fontStyle: 'italic',
+    textAlign:'center'
+  },
 });
