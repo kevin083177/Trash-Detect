@@ -1,24 +1,18 @@
-import { user_api } from '@/api/api';
-import { asyncGet } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/tokenStorage';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import Headers from '@/components/Headers';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import LoadingModal from '@/components/LoadingModal';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/interface/Product';
 import ProductDetail from '@/components/shop/ProductDetail';
 import ConfirmModal from '@/components/shop/ConfirmModal';
 import { useProduct } from '@/hooks/product';
+import { useUser } from '@/hooks/user';
 
 const { width } = Dimensions.get('window');
 
 export default function Shop(): ReactNode {
-  const [token, setToken] = useState<string>('');
-  const [username, setUsername] = useState<string>('');
-  const [money, setMoney] = useState<number>(0);
-  
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   
@@ -33,33 +27,14 @@ export default function Shop(): ReactNode {
     themeLoading,
     loading: productLoading,
     fetchThemes,
+    fetchPurchasedProducts,
     purchaseProduct,
     refreshAll: refreshProducts,
     isProductPurchased,
     hasEnoughMoney,
   } = useProduct();
 
-  const fetchUserProfile = async () => {
-    if (!token) return;
-    
-    try {
-      const response = await asyncGet(user_api.get_user, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-      });
-      
-      if (response) {
-        setUsername(response.body.username);
-        setMoney(response.body.money);
-      }
-      else {
-        Alert.alert("錯誤", "無法連接至伺服器");
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
+  const { fetchUserProfile, getUsername, getMoney } = useUser();
 
   const handleThemePress = (theme: string) => {
     router.push(`/shop/theme?theme=${encodeURIComponent(theme)}`);
@@ -80,14 +55,15 @@ export default function Shop(): ReactNode {
   
   // 實際執行購買的函數
   const handleBuyProduct = async () => {
-    if (!selectedProduct || !token) return;
+    if (!selectedProduct) return;
     
     try {
       const success = await purchaseProduct(selectedProduct._id);
       
       if (success) {
         Alert.alert("成功", "購買成功！");
-        fetchUserProfile();
+        await fetchUserProfile();
+        await fetchPurchasedProducts();
       } else {
         Alert.alert("失敗", "購買失敗");
       }
@@ -119,34 +95,23 @@ export default function Shop(): ReactNode {
     } finally {
       setRefreshing(false);
     }
-  }, [token, refreshProducts]);
+  }, [fetchUserProfile, refreshProducts]);
 
   useEffect(() => {
-    const getToken = async () => {
+    const initializeShop = async () => {
       try {
-        const storedToken = await tokenStorage.getToken();
-        setToken(storedToken as string);
+        await Promise.all([
+          fetchThemes(),
+          fetchUserProfile(),
+          fetchPurchasedProducts()
+        ]);
       } catch (error) {
-        console.error('Error getting token:', error);
+        console.error('Failed to initialize shop:', error);
       }
     };
     
-    getToken();
-  }, []);
-  
-  useEffect(() => {
-    if (token) {
-      fetchThemes();
-    }
-  }, [token, fetchThemes]);
-  
-  useFocusEffect(
-    useCallback(() => {
-      if (token) {
-        fetchUserProfile();
-      }
-    }, [token])
-  );
+    initializeShop();
+  }, [fetchThemes, fetchUserProfile, fetchPurchasedProducts]);
 
   const renderProductItem = ({ item, index }: { item: Product, index: number }) => {
     const purchased = isProductPurchased(item._id);
@@ -252,7 +217,14 @@ export default function Shop(): ReactNode {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Headers username={username} money={money} router={router} showShop={false} showBackpack={false} showBackButton={true}/>
+      <Headers 
+        username={getUsername()} 
+        money={getMoney()} 
+        router={router} 
+        showShop={false} 
+        showBackpack={false} 
+        showBackButton={true}
+      />
       
       <FlatList
         data={themes}
@@ -272,7 +244,7 @@ export default function Shop(): ReactNode {
           product={selectedProduct}
           visible={detailModalVisible}
           purchased={isProductPurchased(selectedProduct._id)}
-          canAfford={hasEnoughMoney(selectedProduct.price, money)}
+          canAfford={hasEnoughMoney(selectedProduct.price, getMoney())}
           onClose={() => setDetailModalVisible(false)}
           onBuy={initiateProductPurchase}
         />

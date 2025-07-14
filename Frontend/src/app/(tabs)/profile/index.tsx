@@ -1,28 +1,28 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import RecyclingBar from '@/components/profile/RecyclingBar';
+import { RecyclingBar, RecyclingBarProps } from '@/components/profile/RecyclingBar';
 import React, { useState, useCallback, useEffect } from 'react';
-import { asyncGet, asyncPost } from '@/utils/fetch';
-import { auth_api, user_api } from '@/api/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { tokenStorage } from '@/utils/tokenStorage';
-import { useAuth } from '@/hooks/auth';
-import LoadingModal from '@/components/LoadingModal';
 import { router } from 'expo-router';
-
-interface RecyclingItem {
-  label: string;
-  value: number;
-  color: string;
-}
+import { useUser } from '@/hooks/user';
+import { useAuth } from '@/hooks/auth';
+import MenuButton from '@/components/profile/MenuButton';
 
 export default function Profile() {
-  const [recyclingData, setRecyclingData] = useState<RecyclingItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [recyclingData, setRecyclingData] = useState<RecyclingBarProps[]>([]);
   const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState<string>('');
-  const { user, setUser } = useAuth();
-  // get token
+  
+  const { 
+    user, 
+    fetchUserProfile, 
+    clearUser, 
+    getUsername, 
+    getTrashStats 
+  } = useUser();
+
+  const { logout } = useAuth();
+
   useEffect(() => {
     const getToken = async () => {
       const storedToken = await tokenStorage.getToken();
@@ -31,55 +31,18 @@ export default function Profile() {
     getToken();
   }, []);
 
-  const fetchRecyclingData = async () => {
-    try {
-        setIsLoading(true);
-        
-        const response = await asyncGet(user_api.get_user_trash_stats, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+  const transformTrashStatsToRecyclingData = useCallback(() => {
+    const trashStats = getTrashStats();
+    const transformedData: RecyclingBarProps[] = [
+      { label: '塑膠', value: trashStats.plastic, color: '#F44336' },
+      { label: '紙類', value: trashStats.paper, color: '#4CAF50' },
+      { label: '鐵鋁罐', value: trashStats.cans, color: '#9E9E9E' },
+      { label: '寶特瓶', value: trashStats.bottles, color: '#673AB7' },
+      { label: '紙容器', value: trashStats.containers, color: '#2196F3' },
+    ];
+    setRecyclingData(transformedData);
+  }, [getTrashStats]);
 
-
-        if (response) {
-            const transformedData: RecyclingItem[] = [
-                { label: '塑膠', value: response.body.plastic, color: '#F44336' },
-                { label: '紙類', value: response.body.paper, color: '#4CAF50' },
-                { label: '鐵鋁罐', value: response.body.cans, color: '#9E9E9E' },
-                { label: '寶特瓶', value: response.body.bottles, color: '#673AB7' },
-                { label: '紙容器', value: response.body.containers, color: '#2196F3' },
-            ];
-            setRecyclingData(transformedData);
-        } else {
-            console.error('Invalid response format:', response);
-            Alert.alert('錯誤', '資料格式不正確');
-        }
-    } catch (error) {
-        console.error('Failed to fetch recycling data:', error);
-        Alert.alert('錯誤', '無法取得資料，請檢查網路連線');
-    } finally {
-        setIsLoading(false);
-    }
-  };
-  const fetchUserProfile = async () => {
-    try {
-      setIsLoading(true);
-
-      const response = await asyncGet(user_api.get_user, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-      if (response)
-        setUsername(response.body.username);
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      Alert.alert('錯誤', '無法取得資料，請檢查網路連線');
-    } finally {
-      setIsLoading(false);
-    }
-  }
   const handleLogout = () => {
     Alert.alert(
       '登出確認',
@@ -94,14 +57,8 @@ export default function Profile() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await asyncPost(auth_api.logout, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-
-              await tokenStorage.clearAll();
-              setUser(null);
+              await logout();
+              clearUser();
             } catch (error) {
               console.error('Logout failed:', error);
               Alert.alert('錯誤', '登出失敗，請稍後再試');
@@ -117,28 +74,36 @@ export default function Profile() {
     router.push('/(tabs)/profile/settings');
   };
 
+  const handleFeedbackPress = () => {
+    router.push('/(tabs)/profile/feedback');
+  }
+
+  useEffect(() => {
+    if (user) {
+      transformTrashStatsToRecyclingData();
+    }
+  }, [user, transformTrashStatsToRecyclingData]);
+
   useFocusEffect(
     useCallback(() => {
       if (token) {
-        fetchRecyclingData();
         fetchUserProfile();
       }
-    }, [token])
+    }, [token, fetchUserProfile])
   );
+
   return (
     <View style={styles.container}>
-      <LoadingModal visible={isLoading} text='正在讀取資料中...' />
       <View style={styles.userContainer}>
         <View style={styles.userIconContainer}>
           <Ionicons name="person-outline" size={60} color="#666" />
         </View>
         <View style={styles.userName}>
-          <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>{username}</Text>
+          <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>
+            {getUsername()}
+          </Text>
           <Text style={{fontSize: 14}}>垃圾回收小達人</Text>
         </View>
-        <TouchableOpacity onPress={handleSettingsPress}>
-          <Ionicons name="settings-outline" size={30} color="#666" style={styles.settings} />
-        </TouchableOpacity>
       </View>
       
       <View style={styles.statsContainer}>
@@ -152,10 +117,11 @@ export default function Profile() {
           />
         ))}
       </View>
-        <TouchableOpacity style={styles.logoutContainer} onPress={() => handleLogout()}>
-          <Ionicons name="log-out-outline" size={24} color="red" />
-          <Text style={styles.logoutText}>登出</Text>
-        </TouchableOpacity>
+
+      <MenuButton icon='chatbubbles-outline' title='錯誤回報與改善建議' color='#007AFF' onPress={handleFeedbackPress}/>
+      <MenuButton icon='settings-outline' title='個人設定' color='#323436ff' onPress={handleSettingsPress}/>
+      <MenuButton icon='log-out-outline' title='登出' color='#ff0000ff' onPress={handleLogout}/>
+
     </View>
   );
 }
@@ -167,6 +133,7 @@ const styles = StyleSheet.create({
   },
   userContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
@@ -186,9 +153,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flexDirection: 'column'
   },
-  settings: {
-    marginLeft: 'auto',
-  },
   statsContainer: {
     padding: 16,
     borderBottomWidth: 1,
@@ -207,9 +171,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#ddd',
   },
-  logoutText: {
-      marginLeft: 8,
-      fontSize: 14,
-      color: 'red',
-  }
 });
