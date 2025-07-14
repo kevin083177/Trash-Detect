@@ -10,11 +10,23 @@ user_blueprint = Blueprint('users', __name__)
 def get_user(user):
     return UserController.get_user(user['_id'])
 
-@user_blueprint.route('/update', methods=['PUT'])
+@user_blueprint.route('/update/username', methods=['PUT'])
 @log_request
 @token_required
-def update_user(user):
-    return UserController.update_user(user['_id'])
+def update_username(user):
+    return UserController.update_username(user['_id'])
+
+@user_blueprint.route('/update/password', methods=['PUT'])
+@log_request
+@token_required
+def update_password(user):
+    return UserController.update_password(user['_id'])
+
+@user_blueprint.route('/update/email', methods=['PUT'])
+@log_request
+@token_required
+def update_email(user):
+    return UserController.update_email(user['_id'])
 
 @user_blueprint.route('/delete', methods=['DELETE'])
 @log_request

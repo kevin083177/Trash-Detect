@@ -1,19 +1,13 @@
-import { user_api } from '@/api/api';
-import { asyncGet, asyncPost } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/tokenStorage';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, Image, ImageBackground } from 'react-native';
 import Toast from '@/components/Toast';
 import dailyTips from '@/assets/data/daily_tips.json';
 import { router } from 'expo-router';
 import Headers from '@/components/Headers';
+import { useUser } from '@/hooks/user';
 
 export default function Index() {
-  const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState<string>('');
-  const [money, setMoney] = useState<number>(0);
   const [showToast, setShowToast] = useState(false);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [notification, setNotification] = useState<{
@@ -30,14 +24,14 @@ export default function Index() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<any>(null);
   const countdownTimer = useRef<NodeJS.Timeout>();
-  
-  useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await tokenStorage.getToken();
-      setToken(storedToken);
-    };
-    getToken();
-  }, []);
+
+  const { 
+    fetchUserProfile, 
+    getUsername, 
+    getMoney, 
+    dailyCheckIn, 
+    checkDailyCheckInStatus 
+  } = useUser();
 
   useEffect(() => {
     return () => {
@@ -46,6 +40,21 @@ export default function Index() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const initializeIndex = async () => {
+      try {
+        await Promise.all([
+          fetchUserProfile(),
+          fetchUserCheckInStatus()
+        ]);
+      } catch (error) {
+        console.error('Failed to initialize index:', error);
+      }
+    };
+    
+    initializeIndex();
+  }, [fetchUserProfile]);
 
   const showToastMessage = () => {
     if (animationRef.current) {
@@ -79,56 +88,32 @@ export default function Index() {
       animationRef.current = null;
     });
   };
-
-  const fetchUserProfile = async () => {
+  
+  const fetchUserCheckInStatus = async () => {
     try {
-      const user = await asyncGet(user_api.get_user, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-      if (user) {
-        setUsername(user.body.username);
-        setMoney(user.body.money);
+      const response = await checkDailyCheckInStatus();
+      switch (response.hasCheckedIn) {
+        case true:
+          setCheckInStatus('already');
+          startCountdown();
+          break;
+        case false:
+          setCheckInStatus('');
+          break;
+        default:
+          setCheckInStatus('error');
+          break;
       }
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
+      console.error('Failed to fetch check-in status:', error);
+      setCheckInStatus('error');
       setNotification({
         visible: true,
-        message: '無法取得資料，請檢查網路連線',
+        message: '無法取得簽到狀態，請檢查網路連線',
         type: 'error'
       });
     }
-  }
-  
-  const fetchUserCheckInStatus = async () => {
-    const response = await asyncGet(user_api.daily_check_in_status, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      }
-    })
-    switch (response.body.hasCheckedIn) {
-      case true:
-        setCheckInStatus('already');
-        startCountdown();
-        break;
-      case false:
-        setCheckInStatus('');
-        break;
-      default:
-        setCheckInStatus('error');
-        break;
-    }
-  }
-
-  useFocusEffect(
-    useCallback(() => {
-      if (token) {
-        fetchUserProfile();
-        fetchUserCheckInStatus();
-      }
-    }, [token])
-  );
+  };
 
   const calculateTimeUntilMidnight = () => {
     const now = new Date();
@@ -155,47 +140,34 @@ export default function Index() {
 
   const fetchDailyCheckIn = async () => {
     try {
-      const response = await asyncPost(user_api.daily_check_in, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
+      const response = await dailyCheckIn();
 
-      switch (response.status) {
-        case 200:
+      if (response.success) {
+        setCheckInStatus('already');
+        setNotification({
+          visible: true,
+          message: response.message,
+          type: 'success'
+        });
+        startCountdown();
+        await fetchUserProfile();
+      } else {
+        if (response.alreadyCheckedIn) {
           setCheckInStatus('already');
+          startCountdown();
           setNotification({
             visible: true,
-            message: '簽到成功！',
-            type: 'success'
-          });
-          startCountdown();
-          fetchUserProfile();
-          break;
-        case 400:
-          setCheckInStatus('already');
-          startCountdown();
-          setNotification({
-            visible: true,
-            message: `今天已經簽到過了！`,
+            message: response.message,
             type: 'info'
           });
-          break;
-        case 500:
+        } else {
           setCheckInStatus('error');
           setNotification({
             visible: true,
-            message: '伺服器異常，請稍後再試',
+            message: response.message,
             type: 'error'
           });
-          break;
-        default:
-          setCheckInStatus('error');
-          setNotification({
-            visible: true,
-            message: '未知錯誤，請稍後再試',
-            type: 'error'
-          });
+        }
       }
     } catch (error) {
       console.error('Daily check-in failed:', error);
@@ -214,9 +186,8 @@ export default function Index() {
   
   return (
     <View style={styles.container}>
-      <Headers router={router} username={username} money={money} />
+      <Headers router={router} username={getUsername()} money={getMoney()} />
       
-      {/* Background Building Area - 最底層 (zIndex: 1) */}
       <TouchableOpacity 
         style={styles.buildingArea}
         onPress={showToastMessage}
@@ -228,12 +199,10 @@ export default function Index() {
         />
       </TouchableOpacity>
 
-      {/* Dog Image - 中間層 (zIndex: 10) */}
       <TouchableOpacity style={styles.dogButton} onPress={handleDogPress}>
         <Image source={require("@/assets/images/dog.png")} style={styles.dogImage} />
       </TouchableOpacity>
 
-      {/* Floating Daily Check-in Section - 中間偏上層 (zIndex: 20) */}
       <TouchableOpacity 
         style={styles.floatingDailySection}
         onPress={fetchDailyCheckIn}
@@ -253,7 +222,6 @@ export default function Index() {
         </View>
       </TouchableOpacity>
 
-      {/* Daily Knowledge Section - 次高層 (zIndex: 50) */}
       <Animated.View 
         style={[
           styles.dailyKnowledgeContainer,
@@ -275,7 +243,6 @@ export default function Index() {
         </View>
       </Animated.View>
       
-      {/* Toast - 最高層 (zIndex: 100) */}
       <Toast
         visible={notification.visible}
         message={notification.message}
@@ -292,16 +259,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
   },
-  // 新增 toast 樣式，設置最高層級
   toast: {
     zIndex: 100,
     elevation: 10,
   },
-  // 修改 dog 樣式，設置中間層級
   dogButton: {
     position: 'absolute', 
-    zIndex: 10, // 中間層級
-    elevation: 4, // Android需要
+    zIndex: 10,
+    elevation: 4,
     bottom: 100,
     right: 100,
   },
@@ -324,7 +289,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
-    zIndex: 30, // 頭部應該在較高層級
+    zIndex: 30,
   },
   userSection: {
     flexDirection: 'row',
@@ -352,7 +317,7 @@ const styles = StyleSheet.create({
   coinText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#B7791F', // 金幣數字顏色
+    color: '#B7791F',
   },
   smallText: {
     fontSize: 12,
@@ -372,8 +337,8 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 1, // 最低層級
-    zIndex: 1, // 最低層級
+    elevation: 1,
+    zIndex: 1,
   },
   backgroundImage: {
     flex: 1,
@@ -384,7 +349,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2D3748',
   },
-  floatingDailySection: { // 每日簽到
+  floatingDailySection: {
     position: 'absolute',
     top: '15%',
     right: 16,
@@ -398,16 +363,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
-    zIndex: 20, // 中間層級，比狗高一點
+    zIndex: 20,
   },
-  dailyKnowledgeContainer: { // 小知識
+  dailyKnowledgeContainer: {
     position: 'absolute',
     bottom: 20,
     left: 0,
     right: 0,
     paddingHorizontal: 16,
-    zIndex: 50, // 較高層級，但低於toast
-    elevation: 6, // Android需要
+    zIndex: 50,
+    elevation: 6,
   },
   dailyContent: {
     backgroundColor: '#E5E5E5',

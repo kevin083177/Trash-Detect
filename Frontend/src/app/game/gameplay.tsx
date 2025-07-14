@@ -1,22 +1,18 @@
 import React, { useEffect, useState, useRef, useMemo, useLayoutEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, SafeAreaView, Easing, ImageBackground, BackHandler, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, router } from 'expo-router';
 import { Question } from '@/interface/Question';
-import { asyncPut } from '@/utils/fetch';
-import { user_level_api } from '@/api/api';
-import { tokenStorage } from '@/utils/tokenStorage';
 import { Timer } from '@/components/game/Timer';
 import { WaterScore } from '@/components/game/WaterScore';
-import { BlurView } from 'expo-blur';
+import { useUserLevel } from '@/hooks/userLevel';
 
 // 階段型別
 type Phase = 'show-info' | 'show-question' | 'show-options' | 'game-ended';
 
 export default function Gameplay() {
   const params = useLocalSearchParams();
+  const { updateLevelProgress } = useUserLevel();
 
-  const levelBackground = params.levelBackground as string;
   const levelId = Number(params.levelId);
   const initialQuestions = useMemo(() => {
     try { return JSON.parse(params.questions as string); } catch { return []; }
@@ -44,7 +40,7 @@ export default function Gameplay() {
   
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
-  const safeSetTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
+  const setPhaseTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
     const timeoutId = setTimeout(() => {
       if (!isGameEnd.current) {
         callback();
@@ -183,23 +179,23 @@ export default function Gameplay() {
     setPhase('show-info');
     
     // 設置延時顯示問題
-    const t1 = safeSetTimeout(() => {
+    const t1 = setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-question');
     }, 1500);
     
     // 設置延時顯示選項和啟動計時器
-    const t2 = safeSetTimeout(() => {
+    const t2 = setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-options');
       // 確保在進入options階段時才啟動計時器
-      safeSetTimeout(() => {
+      setPhaseTimeout(() => {
         if (isGameEnd.current) return;
         startCountdown();
       }, 100); // 短暫延遲確保UI已更新
     }, 2500);
     
-    // No need for cleanup here as we're using safeSetTimeout
+    // No need for cleanup here as we're using setPhaseTimeout
   }, [currentIndex, questions]);
 
   const resetPhase = () => {
@@ -258,7 +254,7 @@ export default function Gameplay() {
           }
           
           // 1秒後，如果還沒有回答，則自動處理為超時
-          safeSetTimeout(() => {
+          setPhaseTimeout(() => {
             if (!isAnswered && !isGameEnd.current) {
               handleAnswer(-1);
             }
@@ -315,7 +311,7 @@ export default function Gameplay() {
       });
     } else {
       console.log(`答錯! 維持總分: ${score}`);
-      safeSetTimeout(() => moveNext(score), 1500);
+      setPhaseTimeout(() => moveNext(score), 1500);
     }
   };
 
@@ -328,7 +324,7 @@ export default function Gameplay() {
     if (nextCount >= questions.length) {
       finishGame(currentScore);
     } else {
-      safeSetTimeout(() => {
+      setPhaseTimeout(() => {
         if (!isGameEnd.current) {
           setAnsweredCount(nextCount);
         }
@@ -350,11 +346,10 @@ export default function Gameplay() {
     console.log(`遊戲結束! 最終分數: ${finalScore}, 獲得星星: ${stars}`);
     
     try {
-      const token = await tokenStorage.getToken();
-      await asyncPut(user_level_api.update_level, {
-        headers: { Authorization: `Bearer ${token}` },
-        body: { sequence: levelId, score: finalScore, stars },
-      });
+      const success = await updateLevelProgress(levelId, finalScore, stars);
+      if (!success) {
+        console.error("Error updating level progress");
+      }
     } catch (error) {
       console.error("Error updating level progress:", error);
     }

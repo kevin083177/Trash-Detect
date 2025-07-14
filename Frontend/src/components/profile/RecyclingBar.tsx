@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "react-native"
 import React from "react";
 
-interface RecyclingBarProps {
+export interface RecyclingBarProps {
     label: string;
     value: number;
     color: string;
@@ -16,7 +16,7 @@ const calculateRange = (value: number): { minValue: number; maxValue: number } =
     };
 };
 
-export default function RecyclingBar({ label, value, color }: RecyclingBarProps) {
+export function RecyclingBar({ label, value, color }: RecyclingBarProps) {
     const { minValue, maxValue } = calculateRange(value);
     const percentage = (value - minValue) * 10; // %
     

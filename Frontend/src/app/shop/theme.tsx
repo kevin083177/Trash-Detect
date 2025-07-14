@@ -1,25 +1,18 @@
-import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, SafeAreaView } from 'react-native';
-import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import { useGlobalSearchParams, router } from 'expo-router';
+import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions, SafeAreaView } from 'react-native';
+import React, { ReactNode, useState, useEffect } from 'react';
+import { useGlobalSearchParams } from 'expo-router';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { theme_api } from '@/api/api';
 import { asyncGet } from '@/utils/fetch';
 import { Ionicons } from '@expo/vector-icons';
+import { Theme } from '@/interface/Theme';
 
 const { width } = Dimensions.get('window');
 
-interface ThemeData {
-  name: string;
-  description: string;
-  image: {
-    url: string;
-  };
-}
-
-export default function Theme(): ReactNode {
+export default function ThemeScreen(): ReactNode {
   const { theme } = useGlobalSearchParams();
   const [token, setToken] = useState<string>();
-  const [themeData, setThemeData] = useState<ThemeData | null>(null);
+  const [themeData, setThemeData] = useState<Theme | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [imageHeight, setImageHeight] = useState<number>(width / 9 * 16); // Default aspect ratio

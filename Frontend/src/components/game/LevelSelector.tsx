@@ -164,7 +164,7 @@ export function LevelSelector({
   const handleStartLevel = async () => {
     if (selectedLevel) {
       try {
-        const response = await asyncGet(`${question_api.get_question_by_category}${chapter_name.substring(0, 3)}`, {
+        const response = await asyncGet(`${question_api.get_question_by_category}${chapter_name.slice(0, -2)}`, {
           headers: {
             "Authorization": `Bearer ${await tokenStorage.getToken()}`
           }

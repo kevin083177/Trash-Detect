@@ -1,3 +1,5 @@
+import { Image } from "./Image";
+
 export interface Product {
   _id: string;
   name: string;
@@ -5,12 +7,18 @@ export interface Product {
   price: number;
   theme: string;
   type: string;
-  image: ProductImage;
+  image: Image;
 }
 
-interface ProductImage {
-  public_id: string;
-  url: string;
+export interface PurchasedProducts {
+  bookshelf: Product[];
+  box: Product[];
+  calendar: Product[];
+  carpet: Product[];
+  lamp: Product[];
+  pendant: Product[];
+  table: Product[];
+  wallpaper: Product[];
 }
 
 export type ProductCategory = 

@@ -11,9 +11,9 @@ import { StatusDot } from '@/components/scanner/StatusDot';
 import { ResultDisplay, translateCategory } from '@/components/scanner/ResultDisplay';
 import { Timer } from '@/components/scanner/Timer';
 import Toast from '@/components/Toast';
-import { socket_url, user_api } from '@/api/api';
-import { asyncPost } from '@/utils/fetch';
-import { tokenStorage } from '@/utils/tokenStorage';
+import { socket_url } from '@/api/api';
+import { useUser } from '@/hooks/user';
+import { RecycleValues } from '@/interface/Recycle';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const detectSpeed = 100; // divide 1 = fps
@@ -55,6 +55,8 @@ export default function Scanner() {
     message: '',
     type: 'info'
   });
+
+  const { addTrashStat } = useUser();
 
   // 文字轉換函數
   const translateCategoryToAPI = (category: string): string => {
@@ -109,44 +111,27 @@ export default function Scanner() {
   };
 
   const completeCountdown = async (itemName: string) => {
-    resetCountdown();
+  resetCountdown();
+  
+  try {
+    const trashType = translateCategoryToAPI(itemName) as keyof RecycleValues;
     
-    try {
-      const token = await tokenStorage.getToken();
-      const trashType = translateCategoryToAPI(itemName);
-      
-      const response = await asyncPost(user_api.add_trash_stats, {
-        headers: { 
-          'Authorization': `Bearer ${token}`
-        },
-        body: {
-          "trash_type": trashType,
-          "count": 1 
-        }
-      });
-
-      if (response.status === 200) {
-        setNotification({
-          visible: true,
-          message: '成功更新回收紀錄',
-          type: 'success'
-        });
-      } else {
-        setNotification({
-          visible: true,
-          message: `更新失敗 ${response.message}`,
-          type: 'error'
-        });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      setNotification({
-        visible: true,
-        message: `更新失敗: ${errorMessage}`,
-        type: 'error'
-      });
-    }
-  };
+    await addTrashStat(trashType);
+    
+    setNotification({
+      visible: true,
+      message: '成功更新回收紀錄',
+      type: 'success'
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+    setNotification({
+      visible: true,
+      message: `更新失敗: ${errorMessage}`,
+      type: 'error'
+    });
+  }
+};
 
   // 檢查倒數計時邏輯
   useEffect(() => {

@@ -1,10 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { asyncGet, asyncPost } from '@/utils/fetch';
-import { auth_api, purchase_api, user_api } from '@/api/api';
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
-import { tokenStorage } from '@/utils/tokenStorage';
 import PasswordInput from '@/components/auth/PasswordInput';
 import ClearableInput from '@/components/auth/ClearableInput';
 
@@ -18,9 +15,9 @@ export default function Login() {
   const [email, setEmail] = useState<string>(initialEmail || '');
   const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorFields, setErrorFields] = useState<ErrorFields>({});
-  const { setUser } = useAuth();
+  
+  const { login, isLoading } = useAuth();
 
   const validateForm = () => {
     const newErrorFields: ErrorFields = {};
@@ -47,62 +44,11 @@ export default function Login() {
   const handleLogin = async () => {
     if (!validateForm()) return;
 
-    try {
-      setIsLoading(true);
-      const response = await asyncPost(auth_api.login, {
-        body: { email, password }
-      });
-  
-      if (response.status === 200) {
-        const userData = {
-          ...response.body.user,  // 所有用戶資料
-          role: response.body.user.userRole,  // 映射 userRole 到 role
-          token: response.body.token  // 保留 token
-        };
-        
-        await tokenStorage.setToken(userData.token);
-        fetchUserProfile(userData.token);
-        setUser(userData);
-      } else {
-        setErrorMessage(response.message);
-        setErrorFields({ email: true, password: true });
-      }
-    } catch (error) {
-      setErrorMessage("伺服器錯誤");
-      setErrorFields({ email: true, password: true });
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchUserProfile = async (token: string) => {
-    try {
-      // fetch user_id
-      const user = await asyncGet(user_api.get_user, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-      });
-
-      const user_id: string = String(user.body['_id']);
-
-      // fetch user's purchase_id
-      const purchase = await asyncGet(purchase_api.get_purchase, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const purchase_id: string = String(purchase.body['_id']);
-       
-      // storage
-      tokenStorage.setUserInfo({
-        user_id: user_id,
-        purchase_id: purchase_id
-      });
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      Alert.alert('錯誤', '獲取用戶資料失敗');
+    const result = await login(email, password);
+    
+    if (!result.success) {
+      setErrorMessage(result.message);
+      setErrorFields(result.errorFields || {});
     }
   };
 
@@ -149,7 +95,8 @@ export default function Login() {
           {isLoading ? '登入中...' : '登入'}
         </Text>
       </TouchableOpacity>
-      { !isLoading &&
+      
+      {!isLoading &&
         <Link href="/register" style={styles.link}>
           還沒有帳號？
         </Link>

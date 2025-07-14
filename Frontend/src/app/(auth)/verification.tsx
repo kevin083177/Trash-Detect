@@ -1,23 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { asyncPost, asyncGet } from '@/utils/fetch';
-import { auth_api } from '@/api/api';
+import { useAuth } from '@/hooks/auth';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Verification() {
-  const { email, username } = useLocalSearchParams<{ 
-    email: string; 
-    username: string; 
-  }>();
+  const { email } = useLocalSearchParams<{ email: string }>();
   
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isResending, setIsResending] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [remainingAttempts, setRemainingAttempts] = useState<number>(5);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  const { verifyCode, resendCode, checkCodeStatus, isLoading } = useAuth();
 
   // 倒數計時
   useEffect(() => {
@@ -36,10 +33,10 @@ export default function Verification() {
 
   const checkVerificationStatus = async () => {
     try {
-      const response = await asyncGet(`${auth_api.code_status}?email=${email}`);
-      if (response.body?.exists) {
-        setRemainingAttempts(Math.max(0, 5 - response.body.attempts));
-        if (response.body.expired) {
+      const result = await checkCodeStatus(email);
+      if (result.exists) {
+        setRemainingAttempts(Math.max(0, 5 - result.attempts));
+        if (result.expired) {
           setErrorMessage('驗證碼已過期，請重新發送');
         }
       }
@@ -101,59 +98,40 @@ export default function Verification() {
       return;
     }
 
-    try {
-      setIsLoading(true);
-      const response = await asyncPost(auth_api.verify_code, {
-        body: {
-          email,
-          verification_code: codeString
-        }
-      });
+    const result = await verifyCode(email, codeString);
 
-      if (response.status === 200) {
-        setTimeout(() => {
-          router.replace({
-            pathname: '/login',
-            params: { email }
-          });
-        }, 500);
-      } else {
-        setErrorMessage(response.message);
-        setVerificationCode(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-      }
-    } catch (error) {
-      setErrorMessage('網路錯誤，請稍後再試');
-      console.error('Verification error:', error);
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      setTimeout(() => {
+        router.replace({
+          pathname: '/login',
+          params: { email }
+        });
+      }, 500);
+    } else {
+      setErrorMessage(result.message);
+      setVerificationCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
     }
   };
 
   const handleResendCode = async () => {
     if (countdown > 0) return;
 
-    try {
-      setIsResending(true);
-      const response = await asyncPost(auth_api.resend_code, {
-        body: { email }
-      });
-
-      if (response.status === 200) {
-        setErrorMessage('驗證碼已重新發送');
-        setCountdown(60); // 60秒倒數
-        setRemainingAttempts(5); // 重置嘗試次數
-        setVerificationCode(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-      } else {
-        setErrorMessage(response.message || '重新發送失敗');
-      }
-    } catch (error) {
-      setErrorMessage('網路錯誤，請稍後再試');
-      console.error('Resend error:', error);
-    } finally {
-      setIsResending(false);
+    setIsResending(true);
+    
+    const result = await resendCode(email);
+    
+    if (result.success) {
+      setErrorMessage('驗證碼已重新發送');
+      setCountdown(60);
+      setRemainingAttempts(5);
+      setVerificationCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } else {
+      setErrorMessage(result.message);
     }
+    
+    setIsResending(false);
   };
 
     return (

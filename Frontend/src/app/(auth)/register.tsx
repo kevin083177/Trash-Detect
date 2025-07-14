@@ -1,8 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
-import { asyncPost } from '@/utils/fetch';
-import { auth_api } from '@/api/api';
+import { useAuth } from '@/hooks/auth';
 import PasswordInput from '@/components/auth/PasswordInput';
 import ClearableInput from '@/components/auth/ClearableInput';
 
@@ -18,9 +17,10 @@ export default function Register() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [errorFields, setErrorFields] = useState<ErrorFields>({});
+
+  const { register, isLoading } = useAuth();
 
   const validateForm = () => {
     const newErrorFields: ErrorFields = {};
@@ -62,54 +62,21 @@ export default function Register() {
   };
 
   const handleRegister = async () => {
-    const newErrorFields: ErrorFields = {};
     if (!validateForm()) return;
 
-    try {
-      setIsLoading(true);
-      const response = await asyncPost(auth_api.register, {
-        body: {
-          username,
-          email,
-          password,
-          "userRole": 'user'
+    const result = await register(username, email, password);
+    
+    if (result.success && result.needsVerification) {
+      router.push({
+        pathname: "/verification",
+        params: {
+          email: email,
+          username: username
         }
       });
-
-      if (response.status === 200) {
-        router.push({
-          pathname: "/verification",
-          params: {
-            email: email,
-            username: username
-          }
-        });
-      } else {
-        const newErrorFields: ErrorFields = {};
-        if (response.message.includes("使用者名稱已存在")) {
-          newErrorFields.username = true;
-          setErrorMessage('使用者名稱已存在');
-        } else if (response.message.includes("電子郵件已被註冊")) {
-          newErrorFields.email = true;
-          setErrorMessage('電子郵件已被註冊');
-        } else if (response.message.includes("5分鐘")) {
-          router.push({
-            pathname: '/verification',
-            params: { 
-              email: email,
-              username: username
-            }
-          });
-          return;
-        } else {
-          setErrorMessage('註冊失敗 請稍後重試');
-        }
-      }
-    } catch (error) {
-      setErrorMessage('網路錯誤，請稍後重試');
-      console.error('Register error:', error);
-    } finally {
-      setIsLoading(false);
+    } else if (!result.success) {
+      setErrorMessage(result.message);
+      setErrorFields(result.errorFields || {});
     }
   };
 
@@ -181,7 +148,7 @@ export default function Register() {
         </Text>
       </TouchableOpacity>
       
-      { !isLoading &&
+      {!isLoading &&
         <Link href="/login" style={styles.link}>
           已有帳號？
         </Link>

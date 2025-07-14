@@ -21,26 +21,37 @@ class UserService(DatabaseService):
     def get_all_users(self):
         return list(self.users.find())
     
-    def update_user(self, user_id, username, email, password):
-        hashed_password = bcrypt.hashpw(
-            password.encode('utf-8'), 
-            bcrypt.gensalt()
-        ).decode('utf-8')
-         
-        update_data = {
-            "$set": {
-                "username": username,
-                "email": email,
-                "password": hashed_password
-            }
-        }
-        user = self.users.find_one_and_update(
-            {"_id": user_id},
-            update_data,
-            return_document=True
-        )
+    def update_username(self, user_id, new_username):
+        """更新使用者名稱"""
+        try:
+            user = self.users.find_one_and_update(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"username": new_username}},
+                return_document=True
+            )
+            return user
+        except Exception as e:
+            print(f"Update username Error: {str(e)}")
+            raise
         
-        return user
+    def update_password(self, user_id, new_password):
+        """更新密碼"""
+        try:
+            # 加密新密碼
+            hashed_password = bcrypt.hashpw(
+                new_password.encode('utf-8'), 
+                bcrypt.gensalt()
+            ).decode('utf-8')
+            
+            self.users.find_one_and_update(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"password": hashed_password}},
+                return_document=False
+            )
+            return True
+        except Exception as e:
+            print(f"Update password Error: {str(e)}")
+            raise
     
     def _get_user_money(self, user_id):
         user = self.get_user(user_id)
@@ -235,4 +246,32 @@ class UserService(DatabaseService):
             
         except Exception as e:
             print(f"Delete User Error: {str(e)}")
+            raise
+        
+    def _set_email_verified(self, user_id):
+        """設置email為已驗證"""
+        try:
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"verification": True}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Set email verified Error: {str(e)}")
+            raise
+        
+    def _set_email_unverified(self, user_id, new_email):
+        """若玩家更新email將其設置為未驗證並修改上新email"""
+        try:
+            user = self.users.find_one_and_update(
+                {"_id": ObjectId(user_id)},
+                {"$set": {
+                    "email": new_email,
+                    "verification": False
+                }},
+                return_document=True
+            )
+            return user
+        except Exception as e:
+            print(f"Update email unverified Error: {str(e)}")
             raise
