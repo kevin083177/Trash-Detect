@@ -119,6 +119,9 @@ class UserLevelService(DatabaseService):
                 {"$set": {f"chapter_progress.{chapter_sequence}.completed": True}}
             )
             
+            if result.modified_count > 0:
+                self._add_completed_chapter(user_id, chapter_sequence)
+            
             return bool(result.modified_count > 0)
     
     def set_highest_level(self, user_id: str | ObjectId, level_sequence: int):
@@ -330,3 +333,130 @@ class UserLevelService(DatabaseService):
         except Exception as e:
             print(f"Get level progress Error: {str(e)}")
             return None
+    
+    def _check_chapter_is_completed(self, user_id: str | ObjectId, chapter_sequence: int) -> bool:
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            
+            start_level = (chapter_sequence - 1) * 5 + 1
+            end_level = chapter_sequence * 5
+            
+            user_level = self.user_levels.find_one(
+                {"user_id": user_id},
+                {"level_progress": 1}
+            )
+            
+            if not user_level or "level_progress" not in user_level:
+                return False
+            
+            level_progress = user_level["level_progress"]
+            
+            for level_sequence in range(start_level, end_level + 1):
+                level_key = str(level_sequence)
+                
+                if level_key not in level_progress:
+                    return False
+                
+                stars = level_progress[level_key].get("stars", 0)
+                if stars < 3:
+                    return False
+            
+            return True
+    
+        except Exception as e:
+            print(f"Check chapter levels three stars Error: {str(e)}")
+            return False
+        
+    def _add_completed_chapter(self, user_id: str | ObjectId, chapter_sequence: str):
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            
+            result = self.user_levels.update_one(
+                {"user_id": user_id},
+                {"$set": {f"completed_chapter.{chapter_sequence}": {
+                    "remaining": 20,
+                    "highest_score": 0
+                }}}
+            )
+            
+            return result.modified_count > 0
+        
+        except Exception as e:
+            print(f"Init completed chapter Error: {str(e)}")
+            return False
+        
+    def _is_completed_chapter_exists(self, user_id: str | ObjectId, chapter_sequence):
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            
+            user_level = self.user_levels.find(
+                {"user_id": user_id},
+                {"completed_chapter": 1}
+            )
+            
+            if not user_level or "completed_chapter" not in user_level:
+                return False
+            
+            return chapter_sequence in user_level["completed_chapter"]
+        
+        except Exception as e:
+            print(f"Check completed chapter exists Error: {str(e)}")
+            return False
+        
+    def get_completed_chapter_info(self, user_id: str | ObjectId, chapter_sequence: str):
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        
+            user_level = self.user_levels.find_one(
+                {"user_id": user_id},
+                {f"completed_chapter.{chapter_sequence}": 1}
+            )
+            
+            if not user_level or "completed_chapter" not in user_level or chapter_sequence not in user_level["completed_chapter"]:
+                return None
+                
+            return user_level["completed_chapter"][chapter_sequence]
+        
+        except Exception as e:
+            print(f"Get completed chapter info Error: {str(e)}")
+            return None
+        
+    def update_completed_chapter(self, user_id: str | ObjectId, chapter_sequence: str, score: int = None):
+        try:
+            user_id = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            
+            chapter_info = self.get_completed_chapter_info(user_id, chapter_sequence)
+            if not chapter_info:
+                return {"success": False, "message": "找不到該章節記錄"}
+            
+            current_remaining = chapter_info.get("remaining", 0)
+            current_highest_score = chapter_info.get("highest_score", 0)
+            
+            if current_remaining <= 0:
+                return {"success": False, "message": "已無剩餘遊玩次數"}
+            
+            update_data = {
+                f"completed_chapter.{chapter_sequence}.remaining": current_remaining - 1
+            }
+            
+            if score is not None and score > current_highest_score:
+                update_data[f"completed_chapter.{chapter_sequence}.highest_score"] = score
+                current_highest_score = score
+                
+            result = self.user_levels.update_one(
+                {"user_id": user_id},
+                {"$set": update_data}
+            )
+            
+            if result.modified_count > 0:
+                return {
+                    "success": True,
+                    "remaining": current_remaining - 1,
+                    "highest_score": current_highest_score,
+                }
+            else:
+                return {"success": False, "message": "更新失敗"}
+            
+        except Exception as e:
+            print(f"Update completed chapter Error: {str(e)}")
+            return {"success": False, "message": f"系統錯誤: {str(e)}"}

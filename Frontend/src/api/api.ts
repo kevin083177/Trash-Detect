@@ -17,7 +17,6 @@ const level_url = `${api_url}/level`;
 const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
 
-
 export const auth_api = {
     login: `${auth_url}/login`,
     register: `${auth_url}/register`,
@@ -100,5 +99,6 @@ export const user_level_api = {
     unlocked_chapter: `${user_level_url}/unlocked`,
     completed_chapter: `${user_level_url}/completed`,
     get_user_level: `${user_level_url}/`,
-    update_level: `${user_level_url}/update_level`
+    update_level: `${user_level_url}/update_level`,
+    update_completed_chapter: `${user_level_url}/update_completed`
 }
