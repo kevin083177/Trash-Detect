@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
   levelNumber: {
     position: 'absolute',
     top: 15,
-    left: 35,
     color: 'white',
     fontWeight: 'bold',
     fontSize: 24
