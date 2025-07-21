@@ -22,7 +22,7 @@ interface UserContextType {
     dailyCheckIn: () => Promise<{ success: boolean; message: string; alreadyCheckedIn?: boolean }>;
     checkDailyCheckInStatus: () => Promise<{ hasCheckedIn: boolean }>;
 
-    addTrashStat: (type: keyof RecycleValues) => Promise<void>;
+    addTrashStat: (type: keyof RecycleValues) => Promise<number>;
     getTotalTrash: () => number;
     
     getUsername: () => string;
@@ -267,10 +267,16 @@ export function UserProvider({ children }: UserProviderProps) {
         }
     }, []);
 
-    const addTrashStat = useCallback(async (type: keyof RecycleValues) => {
+    const getTotalTrash = useCallback((): number => {
+        if (!user) return 0;
+        const { bottles = 0, cans = 0, containers = 0, paper = 0, plastic = 0 } = user.trash_stats || {};
+        return bottles + cans + containers + paper + plastic;
+    }, [user]);
+
+    const addTrashStat = useCallback(async (type: keyof RecycleValues): Promise<number> => {
         try {
             const token = await tokenStorage.getToken();
-            if (!token) return;
+            if (!token) return getTotalTrash();
 
             const trashMap: Record<keyof RecycleValues, string> = {
                 bottles: 'bottles',
@@ -291,6 +297,8 @@ export function UserProvider({ children }: UserProviderProps) {
             });
 
             if (response.status === 200) {
+                let newTotalTrash = 0;
+                
                 setUser(prevUser => {
                     if (!prevUser) return null;
 
@@ -302,19 +310,28 @@ export function UserProvider({ children }: UserProviderProps) {
                         cans: 0
                     };
 
+                    const newStats = {
+                        ...stats,
+                        [type]: (stats[type] ?? 0) + 1
+                    };
+
+                    newTotalTrash = Object.values(newStats).reduce((sum, count) => sum + count, 0);
+
                     return {
                         ...prevUser,
-                        trash_stats: {
-                            ...stats,
-                            [type]: (stats[type] ?? 0) + 1
-                        }
+                        trash_stats: newStats
                     };
                 });
+
+                return newTotalTrash;
+            } else {
+                return getTotalTrash();
             }
         } catch (error) {
             console.error('Failed to add trash stat:', error);
+            return getTotalTrash();
         }
-    }, []);
+    }, [getTotalTrash]);
 
     const dailyCheckIn = useCallback(async (): Promise<{ success: boolean; message: string; alreadyCheckedIn?: boolean }> => {
         try {
@@ -367,12 +384,6 @@ export function UserProvider({ children }: UserProviderProps) {
             return { hasCheckedIn: false };
         }
     }, []);
-
-    const getTotalTrash = useCallback((): number => {
-        if (!user) return 0;
-        const { bottles = 0, cans = 0, containers = 0, paper = 0, plastic = 0 } = user.trash_stats || {};
-        return bottles + cans + containers + paper + plastic;
-    }, [user]);
 
     const getUsername = useCallback((): string => {
         return user?.username || '';
