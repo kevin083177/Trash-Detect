@@ -13,10 +13,11 @@ import { Timer } from '@/components/scanner/Timer';
 import Toast from '@/components/Toast';
 import { socket_url } from '@/api/api';
 import { useUser } from '@/hooks/user';
+import { useUserLevel } from '@/hooks/userLevel';
 import { RecycleValues } from '@/interface/Recycle';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const detectSpeed = 100; // divide 1 = fps
+const detectSpeed = 100; // 1000 divide detectSpeed = fps
 
 export default function Scanner() {
   // Socket state
@@ -41,7 +42,7 @@ export default function Scanner() {
 
   // Countdown timer state
   const [isCountdownActive, setIsCountdownActive] = useState(false);
-  const [countdownTime, setCountdownTime] = useState(3.0);
+  const [countdownTime, setCountdownTime] = useState(3);
   const [targetItem, setTargetItem] = useState<string>('');
   const [canStartNewCountdown, setCanStartNewCountdown] = useState(true);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
@@ -56,7 +57,8 @@ export default function Scanner() {
     type: 'info'
   });
 
-  const { addTrashStat } = useUser();
+  const { addTrashStat, getTotalTrash, refreshUserData } = useUser();
+  const { setChapterUnlocked } = useUserLevel();
 
   // 文字轉換函數
   const translateCategoryToAPI = (category: string): string => {
@@ -84,19 +86,23 @@ export default function Scanner() {
   const startCountdown = (itemName: string) => {
     setIsCountdownActive(true);
     setTargetItem(itemName);
-    setCountdownTime(3.0);
+    setCountdownTime(3);
     setCanStartNewCountdown(false);
 
     countdownInterval.current = setInterval(() => {
       setCountdownTime(prev => {
-        const newTime = prev - 0.1;
-        if (newTime <= 0) {
+        const newTime = prev - 1;
+
+        if (newTime < 0) {
+          clearInterval(countdownInterval.current!);
+          countdownInterval.current = null;
           completeCountdown(itemName);
           return 0;
         }
+
         return newTime;
       });
-    }, 100);
+    }, 1000); // 每秒一次
   };
 
   // 重置倒數計時
@@ -106,32 +112,35 @@ export default function Scanner() {
       countdownInterval.current = null;
     }
     setIsCountdownActive(false);
-    setCountdownTime(3.0);
+    setCountdownTime(3);
     setTargetItem('');
   };
 
   const completeCountdown = async (itemName: string) => {
-  resetCountdown();
-  
-  try {
-    const trashType = translateCategoryToAPI(itemName) as keyof RecycleValues;
+    resetCountdown();
     
-    await addTrashStat(trashType);
-    
-    setNotification({
-      visible: true,
-      message: '成功更新回收紀錄',
-      type: 'success'
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-    setNotification({
-      visible: true,
-      message: `更新失敗: ${errorMessage}`,
-      type: 'error'
-    });
-  }
-};
+    try {
+      const trashType = translateCategoryToAPI(itemName) as keyof RecycleValues;
+      const totalTrash = await addTrashStat(trashType);
+      
+      if (totalTrash === 1) {
+        await setChapterUnlocked(1);
+      }
+
+      setNotification({
+        visible: true,
+        message: '成功更新回收紀錄',
+        type: 'success'
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      setNotification({
+        visible: true,
+        message: `更新失敗: ${errorMessage}`,
+        type: 'error'
+      });
+    }
+  };
 
   // 檢查倒數計時邏輯
   useEffect(() => {
@@ -267,7 +276,7 @@ export default function Scanner() {
         
         // 重置倒數計時狀態
         setIsCountdownActive(false);
-        setCountdownTime(3.0);
+        setCountdownTime(3);
         setTargetItem('');
         setCanStartNewCountdown(true);
       };
@@ -292,7 +301,7 @@ export default function Scanner() {
       setIsCapturing(true);
       
       const photo = await cameraRef.current.takeSnapshot({
-        quality: 10,
+        quality: 85,
       });
       
       if (!photo.path) {
