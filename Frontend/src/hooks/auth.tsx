@@ -11,9 +11,14 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
   logout: () => Promise<void>;
-  verifyCode: (email: string, verification_code: string) => Promise<{ success: boolean; message: string }>;
-  resendCode: (email: string) => Promise<{ success: boolean; message: string }>;
-  checkCodeStatus: (email: string) => Promise<{ exists: boolean; attempts: number; expired: boolean }>;
+  verifyEmailCode: (email: string, verification_code: string) => Promise<{ success: boolean; message: string;}>;
+  resendEmailCode: (email: string) => Promise<{ success: boolean; message: string }>;
+  checkEmailCodeStatus: (email: string) => Promise<{ exists: boolean; attempts: number; expired: boolean }>;
+  forgetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  verifyPasswordReset: (email: string, verification_code: string) => Promise<{ success: boolean; message: string; reset_token: string }>;
+  resetPassword: (reset_token: string, new_password: string) => Promise<{ success: boolean; message: string }>;
+  resendPasswordCode: (email: string) => Promise<{ success: boolean; message: string }>;
+  checkPasswordCodeStatus: (email: string) => Promise<{ exists: boolean; attempts: number; expired: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,9 +27,14 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false, message: '' }),
   register: async () => ({ success: false, message: '' }),
   logout: async () => {},
-  verifyCode: async () => ({ success: false, message: '' }),
-  resendCode: async () => ({ success: false, message: '' }),
-  checkCodeStatus: async () => ({ exists: false, attempts: 0, expired: false }),
+  verifyEmailCode: async () => ({ success: false, message: '' }),
+  resendEmailCode: async () => ({ success: false, message: '' }),
+  checkEmailCodeStatus: async () => ({ exists: false, attempts: 0, expired: false }),
+  forgetPassword: async () => ({ success: false, message: '' }),
+  verifyPasswordReset: async () => ({ success: false, message: '', reset_token: '' }),
+  resetPassword: async () => ({ success: false, message: '' }),
+  resendPasswordCode: async () => ({ success: false, message: '' }),
+  checkPasswordCodeStatus: async () => ({ exists: false, attempts: 0, expired: false }),
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -163,11 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const verifyCode = async (email: string, verification_code: string): Promise<{ success: boolean; message: string }> => {
+  const verifyEmailCode = async (email: string, verification_code: string): Promise<{ success: boolean; message: string }> => {
     try {
       setIsLoading(true);
       
-      const response = await asyncPost(auth_api.verify_code, {
+      const response = await asyncPost(auth_api.verify_email_code, {
         body: {
           email,
           verification_code
@@ -187,11 +197,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resendCode = async (email: string): Promise<{ success: boolean; message: string }> => {
+  const resendEmailCode = async (email: string): Promise<{ success: boolean; message: string }> => {
     try {
       setIsLoading(true);
       
-      const response = await asyncPost(auth_api.resend_code, {
+      const response = await asyncPost(auth_api.resend_email_code, {
         body: { email }
       });
 
@@ -208,9 +218,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkCodeStatus = async (email: string): Promise<{ exists: boolean; attempts: number; expired: boolean }> => {
+  const checkEmailCodeStatus = async (email: string): Promise<{ exists: boolean; attempts: number; expired: boolean }> => {
     try {
-      const response = await asyncGet(`${auth_api.code_status}?email=${email}`);
+      const response = await asyncGet(`${auth_api.email_code_status}?email=${email}`);
+      
+      if (response.body?.exists) {
+        return {
+          exists: true,
+          attempts: response.body.attempts || 0,
+          expired: response.body.expired || false
+        };
+      }
+      
+      return { exists: false, attempts: 0, expired: false };
+    } catch (error) {
+      console.error('Check code status error:', error);
+      return { exists: false, attempts: 0, expired: false };
+    }
+  };
+
+  const forgetPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      setIsLoading(true);
+      
+      const response = await asyncPost(auth_api.forget_password, {
+        body: { email }
+      });
+
+      if (response.status === 200) {
+        return { success: true, message: '驗證碼已發送到您的信箱' };
+      } else {
+        return { success: false, message: response.message || '發送失敗' };
+      }
+    } catch (error) {
+      console.error('Forget password error:', error);
+      return { success: false, message: '網路錯誤，請稍後再試' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyPasswordReset = async (email: string, verification_code: string): Promise<{ success: boolean; message: string; reset_token: string }> => {
+    try {
+      setIsLoading(true);
+      
+      const response = await asyncPost(auth_api.verify_password_reset, {
+        body: {
+          email,
+          verification_code
+        }
+      });
+  
+      if (response.status === 200) {
+        return { 
+          success: true, 
+          message: '驗證成功',
+          reset_token: response.body?.reset_token || response.reset_token || ''
+        };
+      } else {
+        return { success: false, message: response.message || '驗證失敗', reset_token: '' };
+      }
+    } catch (error) {
+      console.error('Verify password reset error:', error);
+      return { success: false, message: '網路錯誤，請稍後再試', reset_token: '' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (reset_token: string, new_password: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      setIsLoading(true);
+      
+      const response = await asyncPost(auth_api.reset_password, {
+        body: {
+          reset_token,
+          new_password
+        }
+      });
+
+      if (response.status === 200) {
+        return { success: true, message: '密碼重設成功' };
+      } else {
+        return { success: false, message: response.message || '重設失敗' };
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, message: '網路錯誤，請稍後再試' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendPasswordCode = async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      setIsLoading(true);
+      
+      const response = await asyncPost(auth_api.resend_password_code, {
+        body: { email }
+      });
+
+      if (response.status === 200) {
+        return { success: true, message: '驗證碼已重新發送' };
+      } else {
+        return { success: false, message: response.message || '重新發送失敗' };
+      }
+    } catch (error) {
+      console.error('Resend code error:', error);
+      return { success: false, message: '網路錯誤' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkPasswordCodeStatus = async (email: string): Promise<{ exists: boolean; attempts: number; expired: boolean }> => {
+    try {
+      const response = await asyncGet(`${auth_api.password_code_status}?email=${email}`);
       
       if (response.body?.exists) {
         return {
@@ -233,9 +356,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
-    verifyCode,
-    resendCode,
-    checkCodeStatus,
+    verifyEmailCode,
+    resendEmailCode,
+    checkEmailCodeStatus,
+    forgetPassword,
+    verifyPasswordReset,
+    resendPasswordCode,
+    checkPasswordCodeStatus,
+    resetPassword,
   };
 
    return (
