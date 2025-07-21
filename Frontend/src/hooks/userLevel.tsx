@@ -116,7 +116,6 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
                 const newUserLevelProgress = response.body;
                 setUserLevelProgress(newUserLevelProgress);
                 
-                // 檢查是否該章節的所有關卡都達到3星，如果是則設定章節完成
                 const chapterSequence = Math.ceil(levelId / 5);
                 const isChapterFullyCompleted = isChapterAllThreeStars(chapterSequence, newUserLevelProgress.level_progress);
                 
@@ -244,10 +243,17 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
     }, [userLevelProgress.chapter_progress]);
 
     const isChapterCompleted = useCallback((sequence: number): boolean => {
-        const chapterKey = sequence.toString();
-        const chapterProgress = userLevelProgress.chapter_progress?.[chapterKey];
-        return chapterProgress?.completed || false;
-    }, [userLevelProgress.chapter_progress]);
+        const startLevel = (sequence - 1) * 5 + 1;
+        const endLevel = sequence * 5;
+        
+        for (let levelId = startLevel; levelId <= endLevel; levelId++) {
+            const progress = userLevelProgress.level_progress[levelId];
+            if (!progress || progress.stars < 1) {
+                return false;
+            }
+        }
+        return true;
+    }, [userLevelProgress.level_progress]);
 
     const isChapterAllThreeStars = useCallback((sequence: number, levelProgress?: any): boolean => {
         const progressToCheck = levelProgress || userLevelProgress.level_progress;

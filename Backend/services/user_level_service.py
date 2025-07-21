@@ -358,13 +358,13 @@ class UserLevelService(DatabaseService):
                     return False
                 
                 stars = level_progress[level_key].get("stars", 0)
-                if stars < 3:
+                if stars < 1:
                     return False
             
             return True
     
         except Exception as e:
-            print(f"Check chapter levels three stars Error: {str(e)}")
+            print(f"Check chapter levels completion Error: {str(e)}")
             return False
         
     def _add_completed_chapter(self, user_id: str | ObjectId, chapter_sequence: str):

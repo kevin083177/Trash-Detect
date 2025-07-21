@@ -99,7 +99,7 @@ class UserLevelController:
                     "message": "章節不存在"
                 }, 404
             
-            # 檢查用戶關卡進度是否初始化
+            # 檢查使用者關卡進度是否初始化
             user_level = user_level_service.get_user_level(user_id)
             if not user_level:
                 user_level_service.init_user_level(user_id)
@@ -126,12 +126,12 @@ class UserLevelController:
                     "message": "該章節尚未解鎖"
                 }, 400
             
-            all_three_stars = user_level_service._check_chapter_is_completed(user_id, chapter_sequence)
+            all_levels_completed = user_level_service._check_chapter_is_completed(user_id, chapter_sequence)
             
-            if not all_three_stars:
+            if not all_levels_completed:
                 return {
-                    "message": f"該章節未達完成條件"
-                }, 500
+                    "message": f"該章節尚未達成完成條件"
+                }, 400
                 
             result = user_level_service.set_chapter_completed(user_id, chapter_sequence_str)
             
