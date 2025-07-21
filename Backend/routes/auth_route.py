@@ -10,19 +10,19 @@ auth_blueprint = Blueprint('auth', __name__)
 def register():
     return AuthController.register()
 
-@auth_blueprint.route('/verify', methods=['POST'])
+@auth_blueprint.route('/verify/register', methods=['POST'])
 @log_request
-def verify():
+def verify_email():
     return AuthController.verify_email()
 
-@auth_blueprint.route('/resend', methods=['POST'])
+@auth_blueprint.route('/resend/register', methods=['POST'])
 @log_request
-def resend():
+def resend_register_email():
     return AuthController.resend_verification()
 
-@auth_blueprint.route('/status', methods=['GET'])
+@auth_blueprint.route('/status/register', methods=['GET'])
 @log_request
-def status():
+def email_status():
     return AuthController.get_verification_status()
 
 @auth_blueprint.route('/login', methods=['POST'])
@@ -35,3 +35,28 @@ def login():
 @log_request
 def logout(user):
     return AuthController.logout(user)
+
+@auth_blueprint.route('/forget', methods=['POST'])
+@log_request
+def forget_password():
+    return AuthController.forget_password()
+
+@auth_blueprint.route('/verify/password', methods=['POST'])
+@log_request
+def verify_password():
+    return AuthController.verify_password_reset_code()
+
+@auth_blueprint.route('/reset/password', methods=['POST'])
+@log_request
+def reset_password():
+    return AuthController.reset_password()
+
+@auth_blueprint.route('/resend/password', methods=['POST'])
+@log_request
+def resend_password_verification():
+    return AuthController.resend_password_reset_code()
+
+@auth_blueprint.route('/status/password', methods=['GET'])
+@log_request
+def password_status():
+    return AuthController.get_reset_verification_status()

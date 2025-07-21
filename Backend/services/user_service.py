@@ -275,3 +275,27 @@ class UserService(DatabaseService):
         except Exception as e:
             print(f"Update email unverified Error: {str(e)}")
             raise
+        
+    def reset_password_with_verification(self, user_id: str, new_password: str) -> tuple[bool, str]:
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return False, "使用者不存在"
+            
+            hashed_password = bcrypt.hashpw(
+                new_password.encode('utf-8'), 
+                bcrypt.gensalt()
+            ).decode('utf-8')
+            
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"password": hashed_password}}
+            )
+            
+            if result.modified_count > 0:
+                return True, "密碼重設成功"
+            else:
+                return False, "密碼重設失敗"
+            
+        except Exception as e:
+            return False, f"伺服器錯誤: {str(e)}"
