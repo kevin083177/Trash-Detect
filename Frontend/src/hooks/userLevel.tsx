@@ -13,7 +13,7 @@ interface UserLevelContextType {
 
     fetchChapters: () => Promise<void>;
     fetchUserLevelProgress: () => Promise<void>;
-    updateLevelProgress: (levelId: number, score: number, stars: number) => Promise<boolean>;
+    updateLevelProgress: (levelId: number, score: number) => Promise<boolean>;
     updateCompletedChapter: (chapter_sequence: number, score: number, money: number) => Promise<boolean>;
     setChapterUnlocked: (chapterSequence: number) => Promise<boolean>;
     setChapterCompleted: (chapterSequence: number) => Promise<boolean>;
@@ -48,6 +48,7 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
     });
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [dataInitialized, setDataInitialized] = useState<boolean>(false);
 
     const fetchChapters = useCallback(async () => {
         try {
@@ -96,7 +97,7 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
         }
     }, []);
 
-    const updateLevelProgress = useCallback(async (levelId: number, score: number, stars: number): Promise<boolean> => {
+    const updateLevelProgress = useCallback(async (levelId: number, score: number): Promise<boolean> => {
         try {
             const token = await tokenStorage.getToken();
             if (!token) return false;
@@ -108,7 +109,6 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
                 body: { 
                     sequence: levelId, 
                     score, 
-                    stars 
                 },
             });
 
@@ -225,10 +225,20 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
     }, [fetchUserLevelProgress]);
 
     const refreshAll = useCallback(async () => {
-        await Promise.all([
-            fetchChapters(),
-            fetchUserLevelProgress()
-        ]);
+        try {
+            setLoading(true);
+            
+            await Promise.all([
+                fetchChapters(),
+                fetchUserLevelProgress()
+            ]);
+            
+            setDataInitialized(true);
+        } catch (error) {
+            console.error('Error in refreshAll:', error);
+        } finally {
+            setLoading(false);
+        }
     }, [fetchChapters, fetchUserLevelProgress]);
 
     const isChapterInDatabase = useCallback((sequence: number): boolean => {
@@ -283,11 +293,24 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
     }, [chapters, userLevelProgress.highest_level, isChapterInDatabase, isChapterUnlocked]);
 
     const getChaptersToRender = useCallback((allChapters?: Chapter[]): Chapter[] => {
+        if (!dataInitialized) {
+            return [];
+        }
+        
         const chaptersToUse = allChapters || chapters;
+        if (chaptersToUse.length === 0) {
+            return [];
+        }
+        
         const sorted = [...chaptersToUse].sort((a, b) => a.sequence - b.sequence);
         
+        if (!userLevelProgress.chapter_progress || 
+            Object.keys(userLevelProgress.chapter_progress).length === 0) {
+            return [];
+        }
+        
         return sorted.filter(chapter => isChapterInDatabase(chapter.sequence));
-    }, [chapters, isChapterInDatabase]);
+    }, [chapters, isChapterInDatabase, dataInitialized, userLevelProgress.chapter_progress]);
 
     const getChapterBySequence = useCallback((sequence: number): Chapter | undefined => {
         return chapters.find(chapter => chapter.sequence === sequence);
@@ -318,6 +341,8 @@ export function UserLevelProvider({ children }: UserLevelProviderProps){
             const token = await tokenStorage.getToken();
             if (token) {
                 await refreshAll();
+            } else {
+                setLoading(false);
             }
         };
         
