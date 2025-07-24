@@ -22,7 +22,7 @@ interface EditableProductProps {
 }
 
 const { width, height } = Dimensions.get('window');
-const PREVIEW_HEIGHT = height * 0.73;
+const TAB_BAR_HEIGHT = 62;
 const MIN_SCALE = 1; 
 const MAX_SCALE = 4;
 
@@ -61,23 +61,23 @@ export default function EditableProduct({
         
         const offsetX = (pan.x as any)._value;
         const offsetY = (pan.y as any)._value;
-        
+
         const actualX = initialPosition.x + offsetX;
         const actualY = initialPosition.y + offsetY;
-        
+
         const scaledSize = 60 * currentScale;
         const halfScaledSize = scaledSize / 2;
-        
+
         const boundedX = Math.max(halfScaledSize, Math.min(width - halfScaledSize, actualX));
-        const boundedY = Math.max(halfScaledSize, Math.min(PREVIEW_HEIGHT - halfScaledSize, actualY));
-        
+        const boundedY = Math.max(halfScaledSize, Math.min(height - TAB_BAR_HEIGHT - halfScaledSize, actualY));
+
         const boundedOffsetX = boundedX - initialPosition.x;
         const boundedOffsetY = boundedY - initialPosition.y;
-        
+
         if (boundedOffsetX !== offsetX || boundedOffsetY !== offsetY) {
           pan.setValue({ x: boundedOffsetX, y: boundedOffsetY });
         }
-      },
+      }
     })
   ).current;
 

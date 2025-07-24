@@ -48,19 +48,17 @@ export default function CategorySelector({
               ]}
               onPress={() => onCategoryChange(category.key)}
             >
-              <View style={styles.categoryContent}>
-                <Ionicons 
-                  name={category.icon}
-                  size={24}
-                  color={isSelected ? 'white' : '#007AFF'} 
-                />
-                <Text style={[
-                  styles.categoryText,
-                  isSelected && styles.selectedCategoryText
-                ]}>
-                  {category.name}
-                </Text>
-              </View>
+              <Ionicons 
+                name={category.icon}
+                size={24}
+                color={isSelected ? '#007AFF' : '#8E8E93'} 
+              />
+              <Text style={[
+                styles.categoryText,
+                isSelected && styles.selectedCategoryText
+              ]}>
+                {category.name}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -71,40 +69,35 @@ export default function CategorySelector({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    flex: 1,
+    backgroundColor: 'white',
+    paddingTop: 8,
   },
   scrollContainer: {
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    minWidth: '100%',
+    justifyContent: 'space-around',
   },
   categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: 'white',
-    minWidth: 70,
-    minHeight: 70,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    marginHorizontal: 8,
+    minWidth: 50,
+    flex: 1,
   },
   selectedCategoryButton: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  categoryContent: {
-    alignItems: 'center',
-    position: 'relative',
   },
   categoryText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 4,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginTop: 2,
     textAlign: 'center',
   },
   selectedCategoryText: {
-    color: 'white',
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
