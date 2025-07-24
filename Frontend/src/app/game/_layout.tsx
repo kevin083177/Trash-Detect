@@ -6,7 +6,6 @@ export default function GameLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="gameplay" />
-      <Stack.Screen name="result" />
     </Stack>
   );
 }
