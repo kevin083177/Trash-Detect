@@ -4,28 +4,55 @@ import { TouchableOpacity, View, StyleSheet, Text, Image, Dimensions, ImageBackg
 import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get('window');
-const button_width = width * 0.65;
-const button_height = 450;
 
 export function ChapterButton({ 
-    chapter, 
-    unlocked, 
-    isActive = true,
-    onPress,
-    requiresPreviousChapter = false
+  chapter, 
+  unlocked,
+  completed,
+  remaining,
+  isActive = true,
+  onPress,
+  lockReason = '',
+  style = {},
 }: {
-    chapter: Chapter, 
-    unlocked: boolean, 
-    isActive?: boolean, 
-    onPress: () => void,
-    requiresPreviousChapter?: boolean
+  chapter: Chapter, 
+  unlocked: boolean,
+  completed: boolean,
+  remaining?: number,
+  isActive?: boolean, 
+  onPress: () => void,
+  lockReason?: string,
+  style?: object,
 }) {
+    
+    const getLockText = () => {
+        switch (lockReason) {
+            case 'trash':
+                return {
+                    title: '需要更多回收統計',
+                    subtitle: `${chapter.trash_requirement} 次的回收紀錄`
+                };
+            case 'previous':
+                return {
+                    title: '需完成前一章節',
+                    subtitle: '完成前一章節的所有關卡'
+                };
+            default:
+                return {
+                    title: '',
+                    subtitle: ''
+                };
+        }
+    };
+
+    const lockText = getLockText();
+
     return (
         <TouchableOpacity 
             onPress={onPress} 
             disabled={!unlocked}
             style={[
-                styles.buttonContainer,
+                style,
                 !isActive && styles.inactiveButton,
                 !unlocked && styles.disabledButton
             ]}
@@ -36,29 +63,50 @@ export function ChapterButton({
                 style={styles.banner}
                 imageStyle={styles.bannerImage}
             >
-                {/* 未解鎖遮罩 */}
                 {!unlocked && (
                     <View style={styles.lockOverlay}>
                         <Ionicons name="lock-closed" size={50} color="white" style={styles.lockIcon} />
                         <Text style={styles.lockText}>
-                            {requiresPreviousChapter ? '需完成前一章節' : '需要更多回收統計'}
+                            {lockText.title}
                         </Text>
-                        <Text style={styles.requirementText}>
-                            {requiresPreviousChapter 
-                                ? '' 
-                                : `${chapter.trash_requirement} 次的回收紀錄`
-                            }
-                        </Text>
+                        {lockText.subtitle && (
+                            <Text style={styles.requirementText}>
+                                {lockText.subtitle}
+                            </Text>
+                        )}
+                    </View>
+                )}
+
+                {completed && (
+                    <View style={styles.completionBadge}>
+                        <Ionicons name="checkmark-circle" size={18} color="green" />
+                        <Text style={styles.completionText}>已完成</Text>
                     </View>
                 )}
                 
-                {/* 非激活狀態遮罩 */}
+                {remaining !== undefined && (
+                    <View style={[
+                        styles.remainingBadge,
+                        remaining < 1 ? styles.remainingBadgeEnded : styles.remainingBadgeActive
+                    ]}>
+                        <Ionicons 
+                            name="trophy" 
+                            size={16} 
+                            color={remaining < 1 ? "#FF6B6B" : "#FFD700"} 
+                        />
+                        <Text style={[
+                            styles.remainingText,
+                        ]}>
+                            {remaining < 1 ? '挑戰結束' : '可挑戰'}
+                        </Text>
+                    </View>
+                )}
+
                 {unlocked && !isActive && (
                     <View style={styles.inactiveOverlay}>
                     </View>
                 )}
                 
-                {/* 章節名稱 */}
                 <View style={styles.textContainer}>
                     <Text style={[
                         styles.chapterName,
@@ -73,24 +121,13 @@ export function ChapterButton({
 }
 
 const styles = StyleSheet.create({
-    buttonContainer: {
-        width: button_width,
-        height: button_height,
-        borderRadius: 12,
-        overflow: 'hidden',
-        elevation: 5, // Android 陰影
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-        marginVertical: 8,
-    },
     banner: {
         width: '100%',
         height: '100%',
-        justifyContent: 'flex-end', // 確保文字在底部
+        resizeMode: 'cover',
+        justifyContent: 'flex-end',
     },
     bannerImage: {
-        height: button_height,
         borderRadius: 12,
     },
     textContainer: {
@@ -98,7 +135,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         alignSelf: 'flex-end',
         width: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent background for better text visibility
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     chapterName: {
         color: 'white',
@@ -113,8 +150,8 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
     lockOverlay: {
-        ...StyleSheet.absoluteFillObject, // 填滿整個容器
-        backgroundColor: 'rgba(128, 128, 128, 0.8)', // 半透明灰色，更明顯
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(128, 128, 128, 0.8)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -144,17 +181,53 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 3,
     },
-    // 非激活狀態的按鈕樣式
     inactiveButton: {
-        opacity: 0.8, // 略微降低不活躍章節的不透明度
+        opacity: 0.8,
     },
-    // 禁用狀態的按鈕樣式
     disabledButton: {
         opacity: 0.9,
     },
-    // 非激活狀態的遮罩
     inactiveOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)', // 輕微灰暗，但仍然可見
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    },
+    completionBadge: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    completionText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginLeft: 4,
+    },
+    remainingBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    remainingBadgeActive: {
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    remainingBadgeEnded: {
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    remainingText: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        marginLeft: 4,
+        color: 'white'
     },
 });
