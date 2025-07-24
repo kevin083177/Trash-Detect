@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
-    height: 45
+    height: 50
   },
   userSection: {
     flexDirection: 'row',
