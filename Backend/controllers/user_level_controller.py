@@ -174,7 +174,7 @@ class UserLevelController:
         try:
             data = request.get_json()
             
-            required_fields = ['sequence', 'score', 'stars']
+            required_fields = ['sequence', 'score']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -184,7 +184,7 @@ class UserLevelController:
             
             sequence = data['sequence']
             new_score = data['score']
-            new_stars = data['stars']
+            new_stars = user_level_service._caculate_level_stars(new_score)
             
             # 檢查關卡記錄是否存在
             if not user_level_service._is_level_progress_exists(user_id, sequence):
@@ -209,7 +209,7 @@ class UserLevelController:
                     }, 200
             
             # 更新關卡進度（只有更好的成績才會到這裡）
-            result = user_level_service.update_level_progress(user_id, sequence, new_score, new_stars)
+            result = user_level_service.update_level_progress(user_id, sequence, new_score)
             
             if result:
                 user_level = user_level_service.get_user_level(user_id)

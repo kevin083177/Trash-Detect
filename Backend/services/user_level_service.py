@@ -265,13 +265,12 @@ class UserLevelService(DatabaseService):
             print(f"Add Level Progress Error: {str(e)}")
             return None
         
-    def update_level_progress(self, user_id: str | ObjectId, level_sequence: int, score: int, stars: int):
+    def update_level_progress(self, user_id: str | ObjectId, level_sequence: int, score: int):
         """更新已遊玩關卡紀錄
         Args:
             user_id(使用者ID): str | ObjectId
             level_sequence(關卡序列): int
             score(已遊玩分數): int
-            stars(星星數量): int
             
         Returns:
             
@@ -283,7 +282,7 @@ class UserLevelService(DatabaseService):
                 {"user_id": user_id},
                 {"$set": {f"level_progress.{level_sequence}": {
                     "score": score,
-                    "stars": stars
+                    "stars": self._caculate_level_stars(score)
                 }}}
             )
             
@@ -460,3 +459,10 @@ class UserLevelService(DatabaseService):
         except Exception as e:
             print(f"Update completed chapter Error: {str(e)}")
             return {"success": False, "message": f"系統錯誤: {str(e)}"}
+        
+    def _caculate_level_stars(self, score: int) -> int:
+        thresholds = [(1600, 3), (1000, 2), (600, 1)]
+        for threshold, stars in thresholds:
+            if score >= threshold:
+                return stars
+        return 0
