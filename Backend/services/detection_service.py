@@ -16,7 +16,7 @@ class DetectionService:
         """載入YOLO模型"""
         try:
             dir = Path(__file__).resolve().parent
-            model_path = dir.parent / "detect_models" / "yolov8m.pt"
+            model_path = dir.parent / "detect_models" / "yolov8l.pt"
             self.model = YOLO(model_path)
             print("YOLO model loaded successfully")
         except Exception as e:

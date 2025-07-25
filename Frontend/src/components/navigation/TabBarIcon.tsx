@@ -23,13 +23,12 @@ export function TabBarIcon({ size, source, color, focused }: TabBarIconProps) {
                     height: focused ? 40 : 36,
                 }
             ]}
-            // resizeMode="contain"
+            resizeMode="contain"
         />
     );
 }
 
 const styles = StyleSheet.create({
     icon: {
-        // 可以添加其他樣式，如有需要
     }
 });

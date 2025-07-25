@@ -81,6 +81,11 @@ export default function Login() {
         editable={!isLoading}
         hasError={errorFields.password}
       />
+      {errorFields.password &&
+        <Link href="/forget" style={styles.forgetLink}>
+          忘記密碼？
+        </Link>
+      }
 
       {errorMessage && 
         <Text style={styles.errorMessage}>{errorMessage}</Text>
@@ -97,9 +102,12 @@ export default function Login() {
       </TouchableOpacity>
       
       {!isLoading &&
-        <Link href="/register" style={styles.link}>
-          還沒有帳號？
-        </Link>
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>還沒有帳號？</Text>
+          <Link href="/register" style={styles.link}>
+            立即註冊
+          </Link>
+        </View>
       }
     </View>
   );
@@ -136,9 +144,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 20,
+  },
+  registerText: {
+    color: '#666'
+  },
   link: {
-    marginTop: 15,
-    textAlign: 'center',
     color: '#007AFF',
   },
+  forgetLink: {
+    textAlign: 'left',
+    color: '#007AFF',
+    marginLeft: 4,
+    marginBottom: 15,
+  }
 });

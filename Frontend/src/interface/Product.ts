@@ -21,6 +21,17 @@ export interface PurchasedProducts {
   wallpaper: Product[];
 }
 
+export interface SelectedDecorations {
+  wallpaper?: string;
+  box?: string;
+  table?: string;
+  carpet?: string;
+  bookshelf?: string;
+  lamp?: string;
+  pendant?: string;
+  calendar?: string;
+}
+
 export type ProductCategory = 
   | 'bookshelf' 
   | 'box' 

@@ -27,3 +27,9 @@ def get_user_level(user):
 @token_required
 def update_level_progress(user):
     return UserLevelController.update_level_progress(user['_id'])
+
+@user_level_blueprint.route('/update_completed', methods=['PUT'])
+@log_request
+@token_required
+def update_completed_chapter(user):
+    return UserLevelController.update_completed_chpater(user["_id"])

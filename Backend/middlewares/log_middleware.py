@@ -24,9 +24,6 @@ def log_request(f):
             except Exception as e:
                 request_data['body'] = str(e)
         
-        # 記錄請求信息
-        logger.http(f"Request: {json.dumps(request_data, ensure_ascii=False)}")
-
         try:
             # 執行原始請求
             response = f(*args, **kwargs)

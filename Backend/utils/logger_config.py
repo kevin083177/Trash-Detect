@@ -13,15 +13,12 @@ load_dotenv()
 colorama.init()
 
 class ColorFormatter(logging.Formatter):
-    """自定義的日誌格式化器，添加顏色支援"""
-    
     colors = {
         'ERROR': colorama.Fore.RED,
         'WARNING': colorama.Fore.YELLOW,
         'INFO': colorama.Fore.GREEN,
         'DEBUG': colorama.Fore.WHITE,
         'CRITICAL': colorama.Fore.RED,
-        'HTTP': colorama.Fore.MAGENTA
     }
 
     def format(self, record):
@@ -35,7 +32,6 @@ class ColorFormatter(logging.Formatter):
         return f"{record.levelname}: [{record.timestamp}]: {record.getMessage()}"
     
 def setup_logger():
-    """設置並返回 logger 實例"""
     # 創建 logger
     logger = logging.getLogger('app')
     logger.setLevel(logging.DEBUG)
@@ -90,13 +86,4 @@ def setup_logger():
 
     return logger
 
-# 創建 logger 實例
 logger = setup_logger()
-
-# 自定義 HTTP 日誌級別
-logging.addLevelName(logging.INFO + 1, 'HTTP')
-def http(self, message, *args, **kwargs):
-    self.log(logging.INFO + 1, message, *args, **kwargs)
-
-# 添加 HTTP 方法到 logger
-logging.Logger.http = http

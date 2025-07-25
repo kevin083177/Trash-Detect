@@ -46,7 +46,7 @@ export default function ProductSection({ products, onProductPress, selectedProdu
   };
 
   return (
-    <ScrollView style={styles.scrollView}>
+    <ScrollView style={styles.scrollView} horizontal>
       <View style={styles.container}>
         {products.map(renderProduct)}
       </View>

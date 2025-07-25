@@ -21,6 +21,10 @@ export function LevelDetail({
   onClose,
   onStart,
 }: LevelDetailProps) {
+    const formatDescription = (text: string) => {
+        return text.replace(/，/g, '\n').replace(/。/g, '');
+    };
+
     return (
         <Modal
           visible={visible}
@@ -30,62 +34,100 @@ export function LevelDetail({
         >
             <View style={styles.overlay}>
                 <View style={styles.container}>
-                    {/* Header with title and close button */}
-                    <View style={styles.header}>
-                        <Text style={styles.title}>{level_name}</Text>
-                        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                            <Ionicons name="close" size={24} color="#444" />
-                        </TouchableOpacity>
-                    </View>
+                    <View style={styles.innerBorder} />
                     
-                    {/* Level details section */}
-                    <View style={styles.content}>
-                        <View style={styles.descriptionContainer}>
-                            <Text style={styles.descriptionTitle}>關卡介紹</Text>
-                            <Text style={styles.description}>{level_description}</Text>
+                    <View style={styles.backgroundDecorations}>
+                        <View style={styles.decoration1} />
+                        <View style={styles.decoration2} />
+                        <View style={styles.decoration3} />
+                        <View style={styles.decoration4} />
+                        <View style={styles.decoration5} />
+                        <View style={styles.decoration6} />
+                        <View style={styles.decoration7} />
+                        <View style={styles.decoration8} />
+                    </View>
+
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Ionicons name="close" size={24} color="#8B5A3C" />
+                    </TouchableOpacity>
+                    
+                    <View style={styles.contentWrapper}>
+                        <View style={styles.levelTitleContainer}>
+                            <Text style={styles.levelTitle}>{level_name}</Text>
                         </View>
                         
-                        {/* Stats section */}
-                        <View style={styles.statsContainer}>
-                            <Text style={styles.statsTitle}>歷史紀錄</Text>
-                            
-                            <View style={styles.statItem}>
-                                <View style={styles.statIconContainer}>
-                                    <Ionicons name="trophy" size={28} color="#FF9500" />
-                                </View>
-                                <View style={styles.statTextContainer}>
-                                    <Text style={styles.statLabel}>最高分數</Text>
-                                    <Text style={styles.statValue}>{user_scores}</Text>
-                                </View>
-                            </View>
-                            
-                            <View style={styles.statItem}>
-                                <View style={styles.statIconContainer}>
-                                    <Ionicons name="star" size={28} color="#FF9500" />
-                                </View>
-                                <View style={styles.statTextContainer}>
-                                    <Text style={styles.statLabel}>獲得星星</Text>
-                                    <View style={styles.starsContainer}>
-                                        {[1, 2, 3].map((star) => (
-                                            <Ionicons 
-                                                key={star}
-                                                name={star <= user_stars ? "star" : "star-outline"} 
-                                                size={22} 
-                                                color={star <= user_stars ? "#FF9500" : "#CCC"} 
-                                                style={styles.starIcon}
+                        <View style={styles.starsSection}>
+                            <View style={styles.starsContainer}>
+                                {[1, 2, 3].map((star) => {
+                                    const isStarActive = () => {
+                                        if (user_stars === 1) return star === 1; // 只亮左邊
+                                        if (user_stars === 2) return star === 1 || star === 3; // 亮左右邊
+                                        if (user_stars >= 3) return true; // 全亮
+                                        return false;
+                                    };
+                                    
+                                    const getStarRequirement = (starNumber: number) => {
+                                        switch(starNumber) {
+                                            case 1: return 600;
+                                            case 2: return 1600;
+                                            case 3: return 1000;
+                                            default: return 0;
+                                        }
+                                    };
+                                    
+                                    const starRequirement = getStarRequirement(star);
+                                    const isActive = isStarActive();
+                                    
+                                    return (
+                                        <View 
+                                            key={star}
+                                            style={[
+                                                styles.starWrapper,
+                                                star === 2 && styles.starCenter,
+                                            ]}
+                                        >
+                                            <Image 
+                                                source={
+                                                    isActive
+                                                        ? require('@/assets/images/Star.png')
+                                                        : require('@/assets/images/Star_Disable.png')
+                                                }
+                                                style={[
+                                                    styles.starImage,
+                                                    star === 2 && styles.centerStarImage
+                                                ]}
+                                                resizeMode="contain"
                                             />
-                                        ))}
-                                    </View>
-                                </View>
+                                            
+                                            {!isActive && (
+                                                <Text style={styles.scoreRequirementText}>
+                                                    {starRequirement}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    );
+                                })}
                             </View>
                         </View>
-                    </View>
-                    
-                    {/* Footer with start button */}
-                    <View style={styles.footer}>
-                        <TouchableOpacity style={styles.startButton} onPress={onStart}>
-                            <Text style={styles.startButtonText}>開始遊戲</Text>
-                        </TouchableOpacity>
+                                           
+                        <View style={styles.scoreSection}>
+                            <Text style={styles.scoreTitle}>最高得分</Text>
+                            <Text style={styles.scoreText}>{user_scores}</Text>
+                        </View>
+                        
+                        <View style={styles.divider} />
+
+                        <View style={styles.descriptionSection}>
+                            <Text style={styles.descriptionText}>{formatDescription(level_description)}</Text>
+                        </View>
+                        
+                        <View style={styles.footer}>
+                            <TouchableOpacity style={styles.startButton} onPress={onStart}>
+                                <View style={styles.buttonGradient}>
+                                    <Text style={styles.startButtonText}>開始遊戲</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -93,123 +135,249 @@ export function LevelDetail({
     );
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
     },
     container: {
         width: width * 0.85,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        overflow: 'hidden',
-        elevation: 5,
+        backgroundColor: '#F5E6D3',
+        borderRadius: 25,
+        elevation: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        position: 'relative',
+        paddingVertical: 30,
+        paddingHorizontal: 25,
+        maxHeight: height * 0.85,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#F0F4FF',
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E0E7FF',
+    innerBorder: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        right: 8,
+        bottom: 8,
+        borderWidth: 2,
+        borderColor: '#8B5A3C',
+        borderRadius: 17,
+        zIndex: 1,
+        pointerEvents: 'none',
     },
-    title: {
-        color: '#4A6CFA',
-        fontSize: 22,
-        fontWeight: 'bold',
+    backgroundDecorations: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    decoration1: {
+        position: 'absolute',
+        top: 100,
+        left: 30,
+        width: 20,
+        height: 6,
+        backgroundColor: '#FF8C42',
+        borderRadius: 3,
+        transform: [{ rotate: '25deg' }],
+    },
+    decoration2: {
+        position: 'absolute',
+        top: 80,
+        right: 40,
+        width: 15,
+        height: 6,
+        backgroundColor: '#4A90E2',
+        borderRadius: 3,
+        transform: [{ rotate: '-15deg' }],
+    },
+    decoration3: {
+        position: 'absolute',
+        top: '30%',
+        left: 20,
+        width: 12,
+        height: 6,
+        backgroundColor: '#FFD93D',
+        borderRadius: 3,
+        transform: [{ rotate: '45deg' }],
+    },
+    decoration4: {
+        position: 'absolute',
+        top: '35%',
+        right: 30,
+        width: 18,
+        height: 6,
+        backgroundColor: '#FF8C42',
+        borderRadius: 3,
+        transform: [{ rotate: '-30deg' }],
+    },
+    decoration5: {
+        position: 'absolute',
+        bottom: '30%',
+        left: 40,
+        width: 16,
+        height: 6,
+        backgroundColor: '#4A90E2',
+        borderRadius: 3,
+        transform: [{ rotate: '20deg' }],
+    },
+    decoration6: {
+        position: 'absolute',
+        bottom: '25%',
+        right: 25,
+        width: 14,
+        height: 6,
+        backgroundColor: '#FFD93D',
+        borderRadius: 3,
+        transform: [{ rotate: '-40deg' }],
+    },
+    decoration7: {
+        position: 'absolute',
+        bottom: 60,
+        left: 35,
+        width: 20,
+        height: 6,
+        backgroundColor: '#FF8C42',
+        borderRadius: 3,
+        transform: [{ rotate: '35deg' }],
+    },
+    decoration8: {
+        position: 'absolute',
+        bottom: 80,
+        right: 45,
+        width: 16,
+        height: 6,
+        backgroundColor: '#4A90E2',
+        borderRadius: 3,
+        transform: [{ rotate: '-25deg' }],
+    },
+    contentWrapper: {
+        zIndex: 10,
     },
     closeButton: {
-        padding: 5,
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        zIndex: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 8,
     },
-    content: {
-        padding: 20,
-    },
-    descriptionContainer: {
-        marginBottom: 25,
-    },
-    descriptionTitle: {
-        color: '#4A6CFA',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    description: {
-        color: '#444',
-        fontSize: 16,
-        lineHeight: 24,
-    },
-    statsContainer: {
-        backgroundColor: '#F7F9FF',
-        borderRadius: 15,
-        padding: 15,
-        borderWidth: 1,
-        borderColor: '#E0E7FF',
-    },
-    statsTitle: {
-        color: '#4A6CFA',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 15,
-    },
-    statItem: {
-        flexDirection: 'row',
+    levelTitleContainer: {
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 30,
+        marginTop: -60,
+        zIndex: 15,
+        position: 'relative',
     },
-    statIconContainer: {
-        width: 50,
-        height: 50,
-        backgroundColor: '#FFF5E6',
+    levelTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
+        backgroundColor: '#3b8132',
+        paddingHorizontal: 25,
+        paddingVertical: 12,
         borderRadius: 25,
-        justifyContent: 'center',
+        shadowRadius: 4,
+    },
+    starsSection: {
         alignItems: 'center',
-        marginRight: 15,
-        borderWidth: 1,
-        borderColor: '#FFE0B2',
-    },
-    statTextContainer: {
-        flex: 1,
-    },
-    statLabel: {
-        color: '#777',
-        fontSize: 14,
-    },
-    statValue: {
-        color: '#333',
-        fontSize: 20,
-        fontWeight: 'bold',
+        marginTop: 30,
+        zIndex: 10,
+        position: 'relative',
     },
     starsContainer: {
         flexDirection: 'row',
-        marginTop: 5,
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        height: 80,
     },
-    starIcon: {
-        marginRight: 5,
+    starWrapper: {
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        position: 'relative',
+    },
+    starCenter: {
+        marginBottom: 30,
+    },
+    starImage: {
+        width: 70,
+        height: 70,
+    },
+    centerStarImage: {
+        width: 85,
+        height: 85,
+    },
+    scoreRequirementText: {
+        color: 'gray'
+    },
+    divider: {
+        height: 3,
+        borderColor: '#5e4436d8',
+        marginHorizontal: 60,
+        marginBottom: 25,
+        borderWidth: 2,
+        borderRadius: 50,
+        zIndex: 10,
+        position: 'relative',
+    },
+    scoreSection: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
+        position: 'relative',
+    },
+    scoreTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#8B5A3C',
+    },
+    scoreText: {
+        fontSize: 64,
+        fontWeight: 'bold',
+        color: '#8B5A3C',
+    },
+    descriptionSection: {
+        paddingHorizontal: 10,
+        marginBottom: 20,
+        zIndex: 10,
+        position: 'relative',
+    },
+    descriptionText: {
+        fontSize: 16,
+        color: '#8B5A3C',
+        textAlign: 'center',
+        lineHeight: 24,
+        fontWeight: '500',
     },
     footer: {
-        padding: 20,
-        backgroundColor: '#F7F9FF',
-        borderTopWidth: 1,
-        borderTopColor: '#E0E7FF',
+        zIndex: 10,
+        position: 'relative',
+        marginTop: 15,
     },
     startButton: {
-        backgroundColor: '#4A6CFA',
-        paddingVertical: 15,
-        borderRadius: 10,
+        width: "60%",
+        alignSelf: 'center',
+        borderRadius: 25,
+        overflow: 'hidden',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        elevation: 3,
+    },
+    buttonGradient: {
+        backgroundColor: '#72bf6a',
+        paddingVertical: 12,
         alignItems: 'center',
     },
     startButtonText: {
-        color: 'white',
-        fontSize: 18,
+        color: '#FFFFFF',
+        fontSize: 20,
         fontWeight: 'bold',
-    }
+        letterSpacing: 1,
+    },
 });

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/auth';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Verification() {
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, type } = useLocalSearchParams<{ email: string, type: "forget" | "register" }>();
   
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
   const [isResending, setIsResending] = useState<boolean>(false);
@@ -13,10 +13,18 @@ export default function Verification() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [remainingAttempts, setRemainingAttempts] = useState<number>(5);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const [resetToken, setResetToken] = useState<string>('');
 
-  const { verifyCode, resendCode, checkCodeStatus, isLoading } = useAuth();
+  const { 
+    isLoading,
+    verifyEmailCode, 
+    resendEmailCode, 
+    checkEmailCodeStatus,
+    verifyPasswordReset,
+    resendPasswordCode,
+    checkPasswordCodeStatus
+  } = useAuth();
 
-  // 倒數計時
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -31,9 +39,21 @@ export default function Verification() {
     }
   }, [email]);
 
+  useEffect(() => {
+    if (resetToken && type === 'forget') {
+      router.push({
+        pathname: '/reset',
+        params: { 
+          reset_token: resetToken,
+          email: email 
+        }
+      });
+    }
+  }, [resetToken, type, email]);
+
   const checkVerificationStatus = async () => {
     try {
-      const result = await checkCodeStatus(email);
+      const result = await (type === 'forget' ? checkPasswordCodeStatus : checkEmailCodeStatus)(email);
       if (result.exists) {
         setRemainingAttempts(Math.max(0, 5 - result.attempts));
         if (result.expired) {
@@ -98,19 +118,31 @@ export default function Verification() {
       return;
     }
 
-    const result = await verifyCode(email, codeString);
-
-    if (result.success) {
-      setTimeout(() => {
-        router.replace({
-          pathname: '/login',
-          params: { email }
-        });
-      }, 500);
+    if (type === 'forget') {
+      const result = await verifyPasswordReset(email, codeString);
+      
+      if (result.success) {
+          setResetToken(result.reset_token);
+      } else {
+        setErrorMessage(result.message);
+        setVerificationCode(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
     } else {
-      setErrorMessage(result.message);
-      setVerificationCode(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      const result = await verifyEmailCode(email, codeString);
+      
+      if (result.success) {
+        setTimeout(() => {
+          router.replace({
+            pathname: '/login',
+            params: { email }
+          });
+        }, 500);
+      } else {
+        setErrorMessage(result.message);
+        setVerificationCode(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      }
     }
   };
 
@@ -119,7 +151,7 @@ export default function Verification() {
 
     setIsResending(true);
     
-    const result = await resendCode(email);
+    const result = await (type === 'forget' ? resendPasswordCode : resendEmailCode)(email);
     
     if (result.success) {
       setErrorMessage('驗證碼已重新發送');
@@ -134,82 +166,98 @@ export default function Verification() {
     setIsResending(false);
   };
 
-    return (
-        <View style={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color="#007AFF" />
-            </TouchableOpacity>
+  const getTitle = () => {
+    return type === 'forget' ? '重設密碼驗證' : '驗證您的電子郵件';
+  };
 
-            <View style={styles.content}>
-                <Ionicons name="mail-outline" size={80} color="#007AFF" style={styles.icon} />
-                
-                <Text style={styles.title}>驗證您的電子郵件</Text>
-                
-                <Text style={styles.subtitle}>我們已發送驗證碼至</Text>
-                <Text style={styles.email}>{email}</Text>
-                
-                <View style={styles.codeContainer}>
-                {verificationCode.map((digit, index) => (
-                    <TextInput
-                    key={index}
-                    ref={(ref) => inputRefs.current[index] = ref}
-                    style={[
-                        styles.codeInput,
-                        digit !== '' && styles.codeInputFilled
-                    ]}
-                    value={digit}
-                    onChangeText={(value) => handleCodeChange(value, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    keyboardType="numeric"
-                    maxLength={6}
-                    selectTextOnFocus
-                    editable={!isLoading}
-                    />
-                ))}
-                </View>
+  const getDescription = () => {
+    return type === 'forget' 
+      ? '請輸入發送到您郵箱的驗證碼以重設密碼' 
+      : '請輸入發送到您郵箱的驗證碼以完成註冊';
+  };
 
-                { errorMessage && 
-                    <Text
-                        style={[
-                        styles.errorMessage,
-                        errorMessage.includes('驗證碼已重新發送') && styles.successMessage
-                        ]}
-                    >
-                        { errorMessage }
-                    </Text>
-                }
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#007AFF" />
+      </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.verifyButton, isLoading && styles.buttonDisabled]}
-                    onPress={() => handleVerify()}
-                    disabled={isLoading || verificationCode.join('').length !== 6}
-                >
-                    <Text style={styles.verifyButtonText}>
-                        {isLoading ? '驗證中...' : '驗證'}
-                    </Text>
-                </TouchableOpacity>
-
-                <View style={styles.resendContainer}>
-                    <Text style={styles.resendText}>沒有收到驗證碼？</Text>
-                    <TouchableOpacity
-                        onPress={handleResendCode}
-                        disabled={countdown > 0 || isResending}
-                        style={styles.resendButton}
-                    >
-                        <Text style={[
-                        styles.resendButtonText,
-                        (countdown > 0 || isResending) && styles.resendButtonDisabled
-                        ]}>
-                        {isResending ? '發送中...' : 
-                        countdown > 0 ? `重新發送 (${countdown}s)` : '重新發送'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={styles.note}>驗證碼將在5分鐘後過期</Text>
-            </View>
+      <View style={styles.content}>
+        <Ionicons 
+          name={type === 'forget' ? "lock-closed-outline" : "mail-outline"} 
+          size={80} 
+          color="#007AFF" 
+          style={styles.icon} 
+        />
+        
+        <Text style={styles.title}>{getTitle()}</Text>
+        
+        <Text style={styles.subtitle}>我們已發送驗證碼至</Text>
+        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.description}>{getDescription()}</Text>
+        
+        <View style={styles.codeContainer}>
+          {verificationCode.map((digit, index) => (
+            <TextInput
+              key={index}
+              ref={(ref) => inputRefs.current[index] = ref}
+              style={[
+                styles.codeInput,
+                digit !== '' && styles.codeInputFilled
+              ]}
+              value={digit}
+              onChangeText={(value) => handleCodeChange(value, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
+              keyboardType="numeric"
+              maxLength={6}
+              selectTextOnFocus
+              editable={!isLoading}
+            />
+          ))}
         </View>
-    );
+
+        {errorMessage && 
+          <Text
+            style={[
+              styles.errorMessage,
+              errorMessage.includes('驗證碼已重新發送') && styles.successMessage
+            ]}
+          >
+            {errorMessage}
+          </Text>
+        }
+
+        <TouchableOpacity
+          style={[styles.verifyButton, isLoading && styles.buttonDisabled]}
+          onPress={() => handleVerify()}
+          disabled={isLoading || verificationCode.join('').length !== 6}
+        >
+          <Text style={styles.verifyButtonText}>
+            {isLoading ? '驗證中...' : '驗證'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>沒有收到驗證碼？</Text>
+          <TouchableOpacity
+            onPress={handleResendCode}
+            disabled={countdown > 0 || isResending}
+            style={styles.resendButton}
+          >
+            <Text style={[
+              styles.resendButtonText,
+              (countdown > 0 || isResending) && styles.resendButtonDisabled
+            ]}>
+              {isResending ? '發送中...' : 
+               countdown > 0 ? `重新發送 (${countdown}s)` : '重新發送'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.note}>驗證碼將在5分鐘後過期</Text>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -251,7 +299,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#007AFF',
     textAlign: 'center',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 30,
+    lineHeight: 20,
   },
   codeContainer: {
     flexDirection: 'row',
@@ -276,7 +331,8 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     marginBottom: 20,
-    color: 'red'
+    color: 'red',
+    textAlign: 'center',
   },
   successMessage: {
     color: '#1c8020'

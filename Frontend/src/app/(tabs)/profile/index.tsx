@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { RecyclingBar, RecyclingBarProps } from '@/components/profile/RecyclingBar';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { tokenStorage } from '@/utils/tokenStorage';
@@ -8,9 +7,12 @@ import { router } from 'expo-router';
 import { useUser } from '@/hooks/user';
 import { useAuth } from '@/hooks/auth';
 import MenuButton from '@/components/profile/MenuButton';
+import RecyclePieChart from '@/components/profile/RecyclePieChart';
+import { RecycleValues } from '@/interface/Recycle';
+import { clearRoom } from '@/utils/roomStorage';
 
 export default function Profile() {
-  const [recyclingData, setRecyclingData] = useState<RecyclingBarProps[]>([]);
+  const [recyclingData, setRecyclingData] = useState<RecycleValues>();
   const [token, setToken] = useState<string | null>(null);
   
   const { 
@@ -31,16 +33,16 @@ export default function Profile() {
     getToken();
   }, []);
 
-  const transformTrashStatsToRecyclingData = useCallback(() => {
-    const trashStats = getTrashStats();
-    const transformedData: RecyclingBarProps[] = [
-      { label: '塑膠', value: trashStats.plastic, color: '#F44336' },
-      { label: '紙類', value: trashStats.paper, color: '#4CAF50' },
-      { label: '鐵鋁罐', value: trashStats.cans, color: '#9E9E9E' },
-      { label: '寶特瓶', value: trashStats.bottles, color: '#673AB7' },
-      { label: '紙容器', value: trashStats.containers, color: '#2196F3' },
-    ];
-    setRecyclingData(transformedData);
+  const transformTrashStats = useCallback(() => {
+    const trashStatsData = getTrashStats();
+    const trashStats = {
+      plastic: trashStatsData.plastic,
+      cans: trashStatsData.cans,
+      bottles: trashStatsData.bottles,
+      containers: trashStatsData.containers,
+      paper: trashStatsData.paper
+    }
+    setRecyclingData(trashStats);
   }, [getTrashStats]);
 
   const handleLogout = () => {
@@ -58,6 +60,7 @@ export default function Profile() {
           onPress: async () => {
             try {
               await logout();
+              await clearRoom();
               clearUser();
             } catch (error) {
               console.error('Logout failed:', error);
@@ -80,9 +83,58 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      transformTrashStatsToRecyclingData();
+      transformTrashStats();
     }
-  }, [user, transformTrashStatsToRecyclingData]);
+  }, [user, transformTrashStats]);
+
+  const getListData = () => {
+    return [
+      { id: 'user', type: 'user' },
+      { id: 'stats', type: 'stats' },
+      { id: 'feedback', type: 'menu', icon: 'chatbubbles-outline', title: '錯誤回報與改善建議', color: '#007AFF', onPress: handleFeedbackPress },
+      { id: 'settings', type: 'menu', icon: 'settings-outline', title: '個人設定', color: '#323436ff', onPress: handleSettingsPress },
+      { id: 'logout', type: 'menu', icon: 'log-out-outline', title: '登出', color: '#ff0000ff', onPress: handleLogout },
+    ];
+  };
+
+  const renderItem = ({ item }: { item: any }) => {
+    switch (item.type) {
+      case 'user':
+        return (
+          <View style={styles.userContainer}>
+            <View style={styles.userIconContainer}>
+              <Ionicons name="person-outline" size={60} color="#666" />
+            </View>
+            <View style={styles.userName}>
+              <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>
+                {getUsername()}
+              </Text>
+            </View>
+          </View>
+        );
+      
+      case 'stats':
+        return recyclingData ? (
+          <View style={styles.statsContainer}>
+            <Text style={styles.statsTitle}>回收統計</Text>
+            <RecyclePieChart data={recyclingData} size={220} />
+          </View>
+        ) : null;
+      
+      case 'menu':
+        return (
+          <MenuButton 
+            icon={item.icon} 
+            title={item.title} 
+            color={item.color} 
+            onPress={item.onPress}
+          />
+        );
+      
+      default:
+        return null;
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -94,34 +146,13 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.userContainer}>
-        <View style={styles.userIconContainer}>
-          <Ionicons name="person-outline" size={60} color="#666" />
-        </View>
-        <View style={styles.userName}>
-          <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>
-            {getUsername()}
-          </Text>
-          <Text style={{fontSize: 14}}>垃圾回收小達人</Text>
-        </View>
-      </View>
-      
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsTitle}>回收統計</Text>
-        {recyclingData.map((item, index) => (
-          <RecyclingBar
-            key={index}
-            label={item.label}
-            value={item.value}
-            color={item.color}
-          />
-        ))}
-      </View>
-
-      <MenuButton icon='chatbubbles-outline' title='錯誤回報與改善建議' color='#007AFF' onPress={handleFeedbackPress}/>
-      <MenuButton icon='settings-outline' title='個人設定' color='#323436ff' onPress={handleSettingsPress}/>
-      <MenuButton icon='log-out-outline' title='登出' color='#ff0000ff' onPress={handleLogout}/>
-
+      <FlatList
+        data={getListData()}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+      />
     </View>
   );
 }
@@ -131,10 +162,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  listContainer: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
   userContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 16,
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
@@ -143,15 +179,14 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 20,
+    marginBottom: 16,
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   userName: {
     flex: 1,
-    marginLeft: 12,
     fontSize: 16,
-    flexDirection: 'column'
   },
   statsContainer: {
     padding: 16,
@@ -163,12 +198,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  logoutContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
   },
 });

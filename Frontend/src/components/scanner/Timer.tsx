@@ -20,7 +20,7 @@ export const Timer: React.FC<TimerProps> = ({
     <View style={styles.container}>
       <View style={styles.timerContainer}>
         <Text style={styles.targetText}>請維持不要移動</Text>
-        <Text style={styles.countdownText}>{timeLeft.toFixed(1)}</Text>
+        <Text style={styles.countdownText}>{timeLeft}</Text>
         
         {/* 進度條 */}
         <View style={styles.progressBar}>

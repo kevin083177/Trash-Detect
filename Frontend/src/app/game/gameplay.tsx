@@ -4,20 +4,76 @@ import { useFocusEffect, useLocalSearchParams, router } from 'expo-router';
 import { Question } from '@/interface/Question';
 import { Timer } from '@/components/game/Timer';
 import { WaterScore } from '@/components/game/WaterScore';
+import { ResultModal } from '@/components/game/ResultModal';
 import { useUserLevel } from '@/hooks/userLevel';
+import { asyncGet } from "@/utils/fetch";
+import { question_api } from "@/api/api";
+import { tokenStorage } from "@/utils/tokenStorage";
 
-// 階段型別
-type Phase = 'show-info' | 'show-question' | 'show-options' | 'game-ended';
+type Phase = 'show-info' | 'show-question' | 'show-options' | 'transitioning' | 'game-ended';
+
+function getRandomQuestions(allQuestions: Question[], count: number): Question[] {
+  const shuffled = [...allQuestions];
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled.slice(0, count);
+}
+
+function shuffleOptions(questions: Question[]): Question[] {
+  return questions.map(question => {
+    const questionCopy = { ...question };
+    
+    const correctOption = questionCopy.options[questionCopy.correctOptionIndex];
+    
+    const optionsCopy = [...questionCopy.options];
+    
+    for (let i = optionsCopy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [optionsCopy[i], optionsCopy[j]] = [optionsCopy[j], optionsCopy[i]];
+    }
+    
+    const newCorrectIndex = optionsCopy.findIndex(option => 
+      option.id === correctOption.id
+    );
+    
+    return {
+      ...questionCopy,
+      options: optionsCopy,
+      correctOptionIndex: newCorrectIndex
+    };
+  });
+}
 
 export default function Gameplay() {
   const params = useLocalSearchParams();
-  const { updateLevelProgress } = useUserLevel();
+  const { updateLevelProgress, updateCompletedChapter } = useUserLevel();
 
   const levelId = Number(params.levelId);
   const initialQuestions = useMemo(() => {
-    try { return JSON.parse(params.questions as string); } catch { return []; }
+    try { 
+      return JSON.parse(params.questions as string); 
+    } catch { 
+      return []; 
+    }
   }, [params.questions]);
+
+  const isChallenge = params.isChallenge === 'true';
+  const chapterSequence = Number(params.chapterSequence);
+  const chapterName = params.chapterName as string;
+  const levelBackground = params.levelBackground as string;
   
+  const categoryName = useMemo(() => {
+    if (chapterName) return chapterName;
+    if (initialQuestions.length > 0) {
+      return initialQuestions[0].category + '篇';
+    }
+    return '';
+  }, [chapterName, initialQuestions]);
+
   const isFirstLoad = useRef<boolean>(true);
   const isGameEnd = useRef<boolean>(false);
   
@@ -31,14 +87,25 @@ export default function Gameplay() {
   const [selectedOptions, setSelectedOptions] = useState<Record<number, number | null>>({});
   const [phase, setPhase] = useState<Phase>('show-info');
   
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
+  const [finalStars, setFinalStars] = useState(0);
+  const [finalMoney, setFinalMoney] = useState(0);
+  
   const infoFade = useRef(new Animated.Value(0)).current;
   const questionFade = useRef(new Animated.Value(0)).current;
   const optionsFade = useRef(new Animated.Value(0)).current;
   const scoreAnimRef = useRef(new Animated.Value(0)).current;
-  const waterScoreVisible = useRef(new Animated.Value(0)).current; // 新增水分數顯示動畫
+  const waterScoreVisible = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+
+  const hasNextLevel = useMemo(() => {
+    if (isChallenge) return false;
+    const currentLevelInChapter = ((levelId - 1) % 5) + 1;
+    return currentLevelInChapter < 5;
+  }, [isChallenge, levelId]);
 
   const setPhaseTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
     const timeoutId = setTimeout(() => {
@@ -50,36 +117,38 @@ export default function Gameplay() {
     return timeoutId;
   };
 
-  // Clear all timeouts
   const clearAllTimeouts = () => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
   };
 
-  // 確保在組件渲染前完成初始化
   useLayoutEffect(() => {
+    if (questions.length === 0) {
+      setQuestions(initialQuestions);
+    }
+    
     resetAllGameState();
     
-    // 是否為第一次加載
     isFirstLoad.current = false;
     
-    // 顯示水分數組件
-    Animated.timing(waterScoreVisible, {
-      toValue: 1,
-      duration: 800,
-      delay: 500,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-    
-    // Cleanup function
     return () => {
       clearAllTimeouts();
       clearTimers();
     };
   }, []);
+
+  useEffect(() => {
+    if (isFirstLoad.current === false && questions.length > 0) {
+      Animated.timing(waterScoreVisible, {
+        toValue: 1,
+        duration: 800,
+        delay: 500,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [questions]);
   
-  // Handle component unmount
   useEffect(() => {
     return () => {
       clearAllTimeouts();
@@ -87,12 +156,9 @@ export default function Gameplay() {
     };
   }, []);
   
-  // 重置所有狀態
   const resetAllGameState = () => {
-    // Reset the game ended flag
     isGameEnd.current = false;
     
-    setQuestions(initialQuestions);
     setAnsweredCount(0);
     setScore(0);
     setTimer(8);
@@ -101,8 +167,8 @@ export default function Gameplay() {
     setIsTimerRunning(false);
     setSelectedOptions({});
     setPhase('show-info');
+    setShowResultModal(false);
     
-    // 重置動畫
     infoFade.setValue(0);
     questionFade.setValue(0);
     optionsFade.setValue(0);
@@ -111,98 +177,100 @@ export default function Gameplay() {
     
     clearTimers();
     clearAllTimeouts();
+    
+    setTimeout(() => {
+      Animated.timing(waterScoreVisible, {
+        toValue: 1,
+        duration: 800,
+        delay: 500,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }, 100);
   };
 
-  // 當前問題索引
   const currentIndex = answeredCount;
   const currentQuestion = questions[currentIndex];
 
-  // 階段淡入
+  // 處理階段動畫
   useEffect(() => {
-    // Skip animation if game has ended
     if (isGameEnd.current || phase === 'game-ended') return;
     
     let anim: Animated.CompositeAnimation | null = null;
     
-    // 顯示題數
     if (phase !== 'show-info') infoFade.setValue(0);
-    
-    // 顯示題目 或 選項
     if (phase !== 'show-question' && phase !== 'show-options') questionFade.setValue(0);
-    
     if (phase !== 'show-options') optionsFade.setValue(0);
     
     if (phase === 'show-info') {
-      infoFade.setValue(0);
       anim = Animated.timing(infoFade, { 
         toValue: 1, 
-        duration: 500, 
-        delay: 100, 
+        duration: 400, 
+        delay: 50, 
         easing: Easing.out(Easing.ease), 
         useNativeDriver: true 
       });
     } else if (phase === 'show-question') {
-      questionFade.setValue(0);
       anim = Animated.timing(questionFade, { 
         toValue: 1, 
-        duration: 500, 
-        delay: 100, 
+        duration: 400, 
+        delay: 50, 
         easing: Easing.out(Easing.ease), 
         useNativeDriver: true 
       });
     } else if (phase === 'show-options') {
-      optionsFade.setValue(0);
       anim = Animated.timing(optionsFade, { 
         toValue: 1, 
-        duration: 500, 
-        delay: 100, 
+        duration: 400, 
+        delay: 50, 
         easing: Easing.out(Easing.ease), 
         useNativeDriver: true 
       });
+    } else if (phase === 'transitioning') {
+      Animated.parallel([
+        Animated.timing(infoFade, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(questionFade, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(optionsFade, { toValue: 0, duration: 200, useNativeDriver: true })
+      ]).start();
+      return;
     }
     
-    // 啟動動畫
     if (anim) {
       anim.start();
     }
   }, [phase]);
 
   useEffect(() => {
-    // Skip if game has ended
     if (isGameEnd.current) return;
     
-    // Skip if no questions or index out of range
     if (!questions.length || currentIndex >= questions.length) return;
     
-    // 首先重置階段
+    startNewQuestion();
+    
+  }, [currentIndex, questions]);
+
+  const startNewQuestion = () => {
     resetPhase();
     setPhase('show-info');
     
-    // 設置延時顯示問題
     const t1 = setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-question');
     }, 1500);
     
-    // 設置延時顯示選項和啟動計時器
     const t2 = setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-options');
-      // 確保在進入options階段時才啟動計時器
       setPhaseTimeout(() => {
         if (isGameEnd.current) return;
-        startCountdown();
-      }, 100); // 短暫延遲確保UI已更新
+        startCountdown(); 
+      }, 100);
     }, 2500);
-    
-    // No need for cleanup here as we're using setPhaseTimeout
-  }, [currentIndex, questions]);
+  };
 
   const resetPhase = () => {
-    // 清理計時器
     clearTimers();
     
-    // 重置狀態
     setTimer(8);
     setDisplayTimer(8);
     setIsAnswered(false);
@@ -210,31 +278,22 @@ export default function Gameplay() {
   };
 
   const clearTimers = () => {
-    // 清除間隔計時器
     if (timerRef.current) { 
       clearInterval(timerRef.current); 
       timerRef.current = null; 
     }
     
-    // 確保計時器動畫停止
     setIsTimerRunning(false);
   };
 
-  // 計時器相關邏輯
   const startCountdown = () => {
-    // Skip if game has ended
     if (isGameEnd.current) return;
-    
-    // 首先重置計時器狀態
     setTimer(8);
     setDisplayTimer(8);
     
-    // 啟動運行狀態
     setIsTimerRunning(true);
     
-    // 設置計時間隔
     timerRef.current = setInterval(() => {
-      // Skip if game has ended
       if (isGameEnd.current) {
         clearTimers();
         return;
@@ -242,18 +301,14 @@ export default function Gameplay() {
       
       setTimer(prev => {
         const next = prev - 1;
-        // 更新顯示時間
         setDisplayTimer(Math.max(next, 0));
         
-        // 當計時到0時
         if (next <= 0) {
-          // 清除計時器但保持運行狀態為true，讓動畫完成最後階段
           if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
           }
           
-          // 1秒後，如果還沒有回答，則自動處理為超時
           setPhaseTimeout(() => {
             if (!isAnswered && !isGameEnd.current) {
               handleAnswer(-1);
@@ -269,7 +324,7 @@ export default function Gameplay() {
   // 時間到自動答錯
   useEffect(() => {
     if (isGameEnd.current) return;
-    
+    console.log(currentQuestion?.correctOptionIndex);
     if (phase === 'show-options' && displayTimer === 0 && !isAnswered) {
       handleAnswer(-1);
     }
@@ -290,8 +345,6 @@ export default function Gameplay() {
       const newScore = score + gained;
       setScore(newScore);
       
-      console.log(`答對! 此題得分: ${gained}, 新總分: ${newScore}`);
-      
       Animated.sequence([
         Animated.timing(scoreAnimRef, { 
           toValue: 1, 
@@ -306,11 +359,10 @@ export default function Gameplay() {
         }),
       ]).start(() => {
         if (!isGameEnd.current) {
-          requestAnimationFrame(() => moveNext(newScore));
+          moveNext(newScore);
         }
       });
     } else {
-      console.log(`答錯! 維持總分: ${score}`);
       setPhaseTimeout(() => moveNext(score), 1500);
     }
   };
@@ -318,21 +370,27 @@ export default function Gameplay() {
   const moveNext = (currentScore: number) => {
     if (isGameEnd.current) return;
     
-    console.log(`回答題數: ${answeredCount + 1} 題`);
     const nextCount = answeredCount + 1;
     
     if (nextCount >= questions.length) {
       finishGame(currentScore);
-    } else {
-      setPhaseTimeout(() => {
-        if (!isGameEnd.current) {
-          setAnsweredCount(nextCount);
-        }
-      }, 1000);
+      return;
     }
-  };
 
-  const finishGame = async (finalScore: number) => {
+    setPhase('transitioning');
+    
+    setPhaseTimeout(() => {
+      if (!isGameEnd.current) {
+        setAnsweredCount(nextCount);
+      }
+    }, 0);
+  };
+  
+  const caculateMoney = (score: number) => {
+    return Math.floor(score / 200) * 10;  
+  }
+
+  const finishGame = async (gameScore: number) => {
     isGameEnd.current = true;
     
     setPhase('game-ended');
@@ -340,32 +398,170 @@ export default function Gameplay() {
     clearTimers();
     clearAllTimeouts();
     
-    // 1600 分 3 顆星 1000 分 2 顆星 600 分 1 顆星
-    const stars = finalScore >= 1600 ? 3 : finalScore >= 1000 ? 2 : finalScore >= 600 ? 1 : 0;
+    try {
+      const stars = gameScore >= 1600 ? 3 : gameScore >= 1000 ? 2 : gameScore >= 600 ? 1 : 0;
+      const money = caculateMoney(gameScore);
+
+      await (isChallenge 
+        ? updateCompletedChapter(chapterSequence, gameScore, money)
+        : updateLevelProgress(levelId, gameScore)
+      );
+
+      setFinalScore(gameScore);
+      setFinalStars(stars);
+      setFinalMoney(money);
+      
+      setTimeout(() => {
+        setShowResultModal(true);
+      }, 500);
+
+    } catch (error) {
+      console.error("Error updating progress:", error);
+    }
+  };
+
+  const handleBackToMenu = () => {
+    setShowResultModal(false);
+    router.replace('/game');
+  };
+
+  const handlePlayAgain = async () => {
+    setShowResultModal(false);
     
-    console.log(`遊戲結束! 最終分數: ${finalScore}, 獲得星星: ${stars}`);
+    if (isChallenge) {
+      try {
+        const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+          headers: {
+            "Authorization": `Bearer ${await tokenStorage.getToken()}`
+          }
+        });
+        
+        if (response.status === 200) {
+          const allQuestions = response.body.map((q: any) => {
+            const correctOptionIndex = q.options.findIndex(
+              (option: any) => option.id === q.correct_answer
+            );
+            
+            return {
+              id: q._id,
+              content: q.content,
+              category: q.category,
+              options: q.options.map((opt: any) => ({
+                id: opt.id,
+                text: opt.text
+              })),
+              correctOptionIndex: correctOptionIndex
+            };
+          });
+          
+          const selectedQuestions = getRandomQuestions(allQuestions, 10);
+          const gameQuestions = shuffleOptions(selectedQuestions);
+          
+          resetAllGameState();
+          setQuestions(gameQuestions);
+        }
+      } catch (error) {
+        console.error("重新獲取題目失敗:", error);
+        resetAllGameState();
+      }
+    } else {
+      try {
+        const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+          headers: {
+            "Authorization": `Bearer ${await tokenStorage.getToken()}`
+          }
+        });
+        
+        if (response.status === 200) {
+          const allLevelQuestions = extractQuestions(response.body, levelId);
+          const selectedQuestions = getRandomQuestions(allLevelQuestions, 10);
+          const gameQuestions = shuffleOptions(selectedQuestions);
+          
+          resetAllGameState();
+          setQuestions(gameQuestions);
+        }
+      } catch (error) {
+        console.error("重新獲取題目失敗:", error);
+        resetAllGameState();
+      }
+    }
+  };
+
+  // 提取關卡問題的函數
+  const extractQuestions = (questions: any[], levelSequence: number): Question[] => {
+    const normalizedSequence = ((levelSequence - 1) % 5) + 1;
+    const startIndex = (normalizedSequence - 1) * 20;
+    const endIndex = startIndex + 20;
+    
+    const levelQuestions = questions.slice(startIndex, endIndex);
+    
+    return levelQuestions.map(q => {
+      const correctOptionIndex = q.options.findIndex(
+        (option: any) => option.id === q.correct_answer
+      );
+      
+      return {
+        id: q._id,
+        content: q.content,
+        category: q.category,
+        options: q.options.map((opt: any) => ({
+          id: opt.id,
+          text: opt.text
+        })),
+        correctOptionIndex: correctOptionIndex
+      };
+    });
+  };
+
+  const handleNextLevel = async () => {
+    if (isChallenge) return;
     
     try {
-      const success = await updateLevelProgress(levelId, finalScore, stars);
-      if (!success) {
-        console.error("Error updating level progress");
+      const nextLevelId = levelId + 1;
+      
+      if (!categoryName) {
+        console.error("無法獲取章節名稱");
+        Alert.alert("錯誤", "無法獲取章節信息，請返回重新選擇關卡。");
+        return;
+      }
+
+      const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+        headers: {
+          "Authorization": `Bearer ${await tokenStorage.getToken()}`
+        }
+      });
+      
+      if (response.status === 200) {
+        const allLevelQuestions = extractQuestions(response.body, nextLevelId);
+        const selectedQuestions = getRandomQuestions(allLevelQuestions, 10);
+        const gameQuestions = shuffleOptions(selectedQuestions);
+        
+        setShowResultModal(false);
+        
+        router.replace({
+          pathname: '/game/gameplay',
+          params: {
+            isChallenge: 'false',
+            levelId: nextLevelId,
+            chapterName: categoryName,
+            levelBackground: levelBackground,
+            questions: JSON.stringify(gameQuestions),
+          }
+        });
+      } else {
+        console.error("獲取下一關問題失敗:", response.message);
+        Alert.alert("錯誤", "無法載入下一關，請稍後再試。");
       }
     } catch (error) {
-      console.error("Error updating level progress:", error);
+      console.error("載入下一關時發生錯誤:", error);
+      Alert.alert("錯誤", "載入下一關失敗，請檢查網路連接後再試。");
     }
-    
-    setTimeout(() => {
-      router.push({ 
-        pathname: '/game/result', 
-        params: { score: finalScore, stars } 
-      });
-    }, 500);
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const backAction = () => {
-        if (!isGameEnd.current) { // 如果遊戲尚未結束
+        if (!isGameEnd.current && !showResultModal) {
           Alert.alert(
             "離開遊戲", 
             "您確定要退出遊戲嗎？您的進度將不會被保存。",
@@ -378,9 +574,9 @@ export default function Gameplay() {
               }
             ]
           );
-          return true; // 防止默認返回行為
+          return true;
         }
-        return false; // 遊戲已結束時允許返回
+        return false;
       };
 
       const backHandler = BackHandler.addEventListener(
@@ -388,17 +584,14 @@ export default function Gameplay() {
         backAction
       );
 
-      return () => backHandler.remove(); // 清理事件監聽器
-    }, [])
+      return () => backHandler.remove();
+    }, [showResultModal])
   );
   
-  // 添加 componentWillUnmount 處理在返回時清理資源
   useEffect(() => {
     return () => {
-      // 確保在組件卸載時清理所有資源
       clearAllTimeouts();
       clearTimers();
-      // 確保所有動畫都被停止
       infoFade.stopAnimation();
       questionFade.stopAnimation();
       optionsFade.stopAnimation();
@@ -407,23 +600,18 @@ export default function Gameplay() {
     };
   }, []);
 
-  // 修改 handleExit 函數以提供確認提示
   const handleExit = () => {
-    // 設置遊戲結束標誌
     isGameEnd.current = true;
     
-    // 清理計時器和超時
     clearTimers(); 
     clearAllTimeouts();
     
-    // 停止所有動畫
     infoFade.stopAnimation();
     questionFade.stopAnimation();
     optionsFade.stopAnimation();
     scoreAnimRef.stopAnimation();
     waterScoreVisible.stopAnimation();
     
-    // 返回上一頁
     router.replace('/game');
   };
 
@@ -451,113 +639,106 @@ export default function Gameplay() {
     );
   }
 
-
-  // Don't render anything if game has ended
-  if (isGameEnd.current || phase === 'game-ended') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.loadingText}>跳轉中...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <ImageBackground 
-      // source={require('@/assets/images/Game_Background.png')} 
-      // style={styles.backgroundImage}
-      // resizeMode="cover"
-    >
-      {/* <BlurView intensity={70} style={StyleSheet.absoluteFill} tint="dark" /> */}
-      <SafeAreaView style={styles.container}>
-        {/* 液體波浪分數顯示組件 */}
+    <SafeAreaView style={styles.container}>
+      <Animated.View 
+        style={[
+          styles.waterScoreContainer,
+          {
+            opacity: waterScoreVisible,
+            transform: [{
+              scale: waterScoreVisible.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.5, 1],
+              })
+            }]
+          }
+        ]}
+      >
+        <WaterScore 
+          score={score} 
+          maxScore={2000} 
+          size={100}
+          showAnimation={true}
+        />
+      </Animated.View>
+
+      {phase === 'show-options' && (
         <Animated.View 
           style={[
-            styles.waterScoreContainer,
-            {
-              opacity: waterScoreVisible,
-              transform: [{
-                scale: waterScoreVisible.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.5, 1],
-                })
-              }]
-            }
+            styles.timerWrapper, 
+            { opacity: optionsFade }
           ]}
         >
-          <WaterScore 
-            score={score} 
-            maxScore={2000} 
-            size={100}
-            showAnimation={true}
+          <Timer
+            duration={8}
+            currentTime={displayTimer}
+            isRunning={isTimerRunning}
+            style={{paddingVertical: 20}}
           />
         </Animated.View>
+      )}
 
-        {/* 計時器只在顯示選項階段可見 */}
-        {phase === 'show-options' && (
-          <Animated.View 
-            style={[
-              styles.timerWrapper, 
-              { opacity: optionsFade }
-            ]}
-          >
-            <Timer
-              duration={8}
-              currentTime={displayTimer}
-              isRunning={isTimerRunning}
-              style={{paddingVertical: 20}}
-            />
-          </Animated.View>
-        )}
+      {phase === 'show-info' && currentQuestion && (
+        <Animated.View style={[styles.infoContainer, { opacity: infoFade }]}>
+          <Text style={styles.infoText}>
+            {currentIndex === questions.length - 1 
+              ? "最後一題" 
+              : `第 ${currentIndex + 1} 題`}
+          </Text>
+          <Text style={styles.categoryText}>{currentQuestion.category}</Text>
+        </Animated.View>
+      )}
 
-        {phase === 'show-info' && (
-          <Animated.View style={[styles.infoContainer, { opacity: infoFade }]}>
-            <Text style={styles.infoText}>
-              {currentIndex === questions.length - 1 
-                ? "最後一題" 
-                : `第 ${currentIndex + 1} 題`}
-            </Text>
-            <Text style={styles.categoryText}>{currentQuestion.category}</Text>
-          </Animated.View>
-        )}
+      {(phase === 'show-question' || phase === 'show-options') && currentQuestion && (
+        <Animated.View style={[styles.questionContainer, { opacity: questionFade }]}>
+          <Text style={styles.questionText}>{currentQuestion.content}</Text>
+        </Animated.View>
+      )}
 
-        {(phase === 'show-question' || phase === 'show-options') && (
-          <Animated.View style={[styles.questionContainer, { opacity: questionFade }]}>
-            <Text style={styles.questionText}>{currentQuestion.content}</Text>
-          </Animated.View>
-        )}
-
-        {phase === 'show-options' && (
-          <Animated.View style={[styles.optionsContainer, { opacity: optionsFade }]}>
-            {currentQuestion.options.map((opt, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={getOptionStyle(idx)}
-                onPress={() => handleAnswer(idx)}
-                disabled={isAnswered}
+      {phase === 'show-options' && currentQuestion && (
+        <Animated.View style={[styles.optionsContainer, { opacity: optionsFade }]}>
+          {currentQuestion.options.map((opt, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={getOptionStyle(idx)}
+              onPress={() => handleAnswer(idx)}
+              disabled={isAnswered}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  isAnswered &&
+                    (idx === currentQuestion.correctOptionIndex || idx === selectedOptions[currentIndex])
+                    ? styles.whiteText
+                    : null
+                ]}
               >
-                <Text
-                  style={[
-                    styles.optionText,
-                    isAnswered &&
-                      (idx === currentQuestion.correctOptionIndex || idx === selectedOptions[currentIndex])
-                      ? styles.whiteText
-                      : null
-                  ]}
-                >
                 {opt.text}
               </Text>
-              </TouchableOpacity>
-            ))}
-          </Animated.View>
-        )}
-      </SafeAreaView>
-    </ImageBackground>
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
+      )}
+
+      <ResultModal
+        visible={showResultModal}
+        isChallenge={isChallenge}
+        score={finalScore}
+        stars={finalStars}
+        money={finalMoney}
+        currentLevelId={levelId}
+        hasNextLevel={hasNextLevel}
+        onPlayAgain={handlePlayAgain}
+        onBackToMenu={handleBackToMenu}
+        onNextLevel={handleNextLevel}
+      />
+    </SafeAreaView>
   );
 }
 
 const { height, width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
@@ -567,7 +748,9 @@ const styles = StyleSheet.create({
     width: width,
     height: height,
   },
-  scoreBar: { padding: 20 },
+  scoreBar: { 
+    padding: 20
+  },
   centerContent: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -593,26 +776,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
-  // 新增的水分數容器樣式
   waterScoreContainer: {
     position: 'absolute',
     top: 50,
     right: 20,
     zIndex: 10,
   },
-
   timerWrapper: { 
     position: 'absolute', 
     top: 0, 
     alignSelf: 'center', 
     width: '100%'
   },
-
-  infoContainer: { position: 'absolute', top: height / 2 - 40, width: '100%', alignItems: 'center' },
-  infoText: { fontSize: 32, fontWeight: 'bold', color: 'white' },
-  categoryText: { width: 100, height: 30, fontSize: 18, backgroundColor: '#a83432', borderRadius: 10, color: 'white', marginTop: 5, textAlign: 'center'},
-
+  infoContainer: { 
+    position: 'absolute', 
+    top: height / 2 - 40, 
+    width: '100%', 
+    alignItems: 'center'
+  },
+  infoText: { 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    color: 'white'
+  },
+  categoryText: { 
+    width: 100, 
+    height: 30, 
+    fontSize: 18, 
+    backgroundColor: '#a83432', 
+    borderRadius: 10, 
+    color: 'white', 
+    marginTop: 5, 
+    textAlign: 'center'
+  },
   questionContainer: { 
     position: 'absolute', 
     top: 160, 
@@ -623,9 +819,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
   },
-  questionText: { fontSize: 20, fontWeight: '500', textAlign: 'center', color: 'white', textShadowColor: 'rgba(0, 0, 0, 0.75)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
-
-  optionsContainer: { position: 'absolute', top: 400, width: '75%', alignSelf: 'center' },
+  questionText: { 
+    fontSize: 20, 
+    fontWeight: '500', 
+    textAlign: 'center', 
+    color: 'white', 
+    textShadowColor: 'rgba(0, 0, 0, 0.75)', 
+    textShadowOffset: { width: 1, height: 1 }, 
+    textShadowRadius: 3
+  },
+  optionsContainer: { 
+    position: 'absolute', 
+    top: 400, 
+    width: '75%', 
+    alignSelf: 'center'
+  },
   option: { 
     height: 80,
     backgroundColor: 'rgba(255, 255, 255, 1)',
@@ -637,8 +845,20 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'space-between', 
   },
-  correctOption: { borderColor: '#70AA42', backgroundColor: '#70AA42'},
-  incorrectOption: { borderColor: '#E74C3C', backgroundColor: '#E74C3C' },
-  optionText: { fontSize: 20, flex: 1, textAlign: 'center' },
-  whiteText: { color: 'white' },
+  correctOption: { 
+    borderColor: '#70AA42', 
+    backgroundColor: '#70AA42'
+  },
+  incorrectOption: { 
+    borderColor: '#E74C3C', 
+    backgroundColor: '#E74C3C'
+  },
+  optionText: { 
+    fontSize: 20, 
+    flex: 1, 
+    textAlign: 'center'
+  },
+  whiteText: { 
+    color: 'white' 
+  },
 });

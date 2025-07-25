@@ -11,12 +11,11 @@ import { Question } from "@/interface/Question";
 import { Stars } from "@/components/game/Stars";
 import { UserLevel } from "@/interface/UserLevel";
 import { Level } from "@/interface/Level";
+import { ChallengeModal } from "./ChallengeModal";
 
-// 隨機選取問題
 function getRandomQuestions(allQuestions: Question[], count: number): Question[] {
   const shuffled = [...allQuestions];
   
-  // Fisher-Yates
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -25,7 +24,6 @@ function getRandomQuestions(allQuestions: Question[], count: number): Question[]
   return shuffled.slice(0, count);
 }
 
-// 隨機排序問題選項
 function shuffleOptions(questions: Question[]): Question[] {
   return questions.map(question => {
     const questionCopy = { ...question };
@@ -53,11 +51,13 @@ function shuffleOptions(questions: Question[]): Question[] {
 
 export function LevelSelector({ 
   router, 
-  visible, 
-  chapter_name, 
-  chapter_sequence, 
-  chapter_background, 
+  visible,
+  chapter_name,
+  chapter_sequence,
+  chapter_background,
   userLevelProgress,
+  remainingTimes,
+  challengeHighestScore,
   onClose, 
   onSelectLevel 
 }: { 
@@ -67,6 +67,8 @@ export function LevelSelector({
   chapter_sequence: number;
   chapter_background: string;
   userLevelProgress: UserLevel;
+  remainingTimes?: number;
+  challengeHighestScore?: number;
   onClose(): void;
   onSelectLevel?(levelSequence: number): void;
 }) {
@@ -75,12 +77,14 @@ export function LevelSelector({
   const [levels, setLevels] = useState<Level[]>([]);
   const [detailModalVisible, setDetailModalVisible] = useState<boolean>(false);
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
+  const [challengeVisible, setChallengeVisible] = useState<boolean>(false);
+  const challenge = !!remainingTimes;
 
   const extractQuestions = (questions: any[], levelSequence: number): Question[] => {
-    const startIndex = (levelSequence - 1) * 20;
+    const normalizedSequence = ((levelSequence - 1) % 5) + 1;
+    const startIndex = (normalizedSequence - 1) * 20;
     const endIndex = startIndex + 20;
     
-    // 提取範圍內的問題
     const levelQuestions = questions.slice(startIndex, endIndex);
     
     return levelQuestions.map(q => {
@@ -141,21 +145,19 @@ export function LevelSelector({
     }
   }, [visible, userLevelProgress]);
 
-  // LevelButton 定點位置
   const getPositionForSequence = (sequence: number) => {
     const positionIndex = (sequence - 1) % 5;
     const positions = [
-      { x: 95, y: -50 },    // Level 1 6 11 ...
-      { x: 145, y: 80 },    // Level 2 7 12 ...
-      { x: 205, y: 200 },   // Level 3 8 13 ...
-      { x: 105, y: 330 },   // Level 4 9 14 ...
-      { x: 80, y: 480 },    // Level 5 10 15 ...
+      { x: 105, y: -60 },    // Level 1 6 11 ...
+      { x: 165, y: 65 },    // Level 2 7 12 ...
+      { x: 205, y: 195 },   // Level 3 8 13 ...
+      { x: 100, y: 295 },   // Level 4 9 14 ...
+      { x: 100, y: 430 },    // Level 5 10 15 ...
     ];
 
     return positions[positionIndex];
   };
 
-  // 用於設定選擇的關卡資料
   const handleLevelSelect = (level: Level) => {
     setSelectedLevel(level);
     setDetailModalVisible(true);
@@ -171,25 +173,20 @@ export function LevelSelector({
         });
         
         if (response.status === 200) {
-          // 提取該關卡的問題 (所有20題)
           const allLevelQuestions = extractQuestions(response.body, selectedLevel.sequence);
-          
-          // 從20題中隨機選取10題
           const selectedQuestions = getRandomQuestions(allLevelQuestions, 10);
           
-          // 為每一題隨機排序選項
           const gameQuestions = shuffleOptions(selectedQuestions);
-          
           handleCloseDetail();
           onClose();
           
           router.replace({
             pathname: '/game/gameplay',
             params: {
+              isChallenge: 'false',
               levelId: selectedLevel.sequence,
-              levelName: selectedLevel.name,
+              chapterName: chapter_name,
               levelBackground: chapter_background,
-              levelDescription: selectedLevel.description,
               questions: JSON.stringify(gameQuestions),
             }
           });
@@ -202,13 +199,11 @@ export function LevelSelector({
     }
   };
 
-  // 關閉 LevelDetail
   const handleCloseDetail = () => {
     setDetailModalVisible(false);
     setSelectedLevel(null);
   };
 
-  // 渲染每個關卡及其星星
   const renderLevelWithStars = (level: Level) => {
     const isUnlocked = userLevelProgress.highest_level >= level.unlock_requirement;
     const position = getPositionForSequence(level.sequence);
@@ -232,7 +227,6 @@ export function LevelSelector({
           onPress={() => isUnlocked && handleLevelSelect(level)}
         />
         
-        {/* 星星渲染器 */}
         {isUnlocked && (
           <Stars
             stars={levelStars} 
@@ -259,12 +253,18 @@ export function LevelSelector({
             resizeMode="cover"
           />
           
-          {/* Back button */}
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
-          
-          {/* Level map with fixed positions */}
+
+          {challenge &&
+            <View style={styles.challengeContainer}>
+              <TouchableOpacity style={styles.challengeButton} onPress={() => setChallengeVisible(!challengeVisible)}>
+                <Image source={require("@/assets/images/trophy.png")} style={{width: 30, height: 30}} />
+              </TouchableOpacity>
+            </View>
+          }
+
           <ScrollView 
             contentContainerStyle={styles.levelMapContainer}
             horizontal={true}
@@ -275,7 +275,6 @@ export function LevelSelector({
             </View>
           </ScrollView>
 
-          {/* Level detail modal */}
           {selectedLevel && (
             <LevelDetail 
               visible={detailModalVisible}
@@ -285,6 +284,19 @@ export function LevelSelector({
               user_stars={userStars[selectedLevel.sequence - 1] || 0}
               onClose={handleCloseDetail}
               onStart={handleStartLevel}
+            />
+          )}
+
+          {challenge && (
+            <ChallengeModal
+              router={router}
+              visible={challengeVisible}
+              chapterName={chapter_name}
+              chapterSequence={chapter_sequence}
+              chapterBackground={chapter_background}
+              remainingTimes={remainingTimes}
+              highestScore={challengeHighestScore}
+              onClose={() => setChallengeVisible(false)}
             />
           )}
         </View>
@@ -302,8 +314,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)'
   },
   modalContainer: {
-    width: width * 0.9,
-    height: height * 0.8,
+    width: 384,
+    height: 608,
     borderRadius: 15,
     overflow: 'hidden',
     backgroundColor: 'white',
@@ -323,6 +335,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.3)'
   },
+  challengeContainer: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    zIndex: 10,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  challengeButton: {
+    borderRadius: 50,
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)'
+  },
   chapterTitle: {
     color: 'white',
     fontSize: 24,
@@ -335,7 +360,7 @@ const styles = StyleSheet.create({
     zIndex: 5
   },
   levelMapContainer: {
-    width: 1100,
+    width: width * 2.5,
     height: '100%',
     marginTop: 60
   },

@@ -17,14 +17,18 @@ const level_url = `${api_url}/level`;
 const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
 
-
 export const auth_api = {
     login: `${auth_url}/login`,
     register: `${auth_url}/register`,
     logout: `${auth_url}/logout`,
-    verify_code: `${auth_url}/verify`,
-    resend_code: `${auth_url}/resend`,
-    code_status: `${auth_url}/status`
+    verify_email_code: `${auth_url}/verify/register`,
+    verify_password_reset: `${auth_url}/verify/password`,
+    resend_email_code: `${auth_url}/resend/register`,
+    resend_password_code: `${auth_url}/resend/password`,
+    email_code_status: `${auth_url}/status/register`,
+    password_code_status: `${auth_url}/status/password`,
+    forget_password: `${auth_url}/forget`,
+    reset_password: `${auth_url}/reset/password`,
 } as const;
 
 export const admin_api = {
@@ -100,5 +104,6 @@ export const user_level_api = {
     unlocked_chapter: `${user_level_url}/unlocked`,
     completed_chapter: `${user_level_url}/completed`,
     get_user_level: `${user_level_url}/`,
-    update_level: `${user_level_url}/update_level`
+    update_level: `${user_level_url}/update_level`,
+    update_completed_chapter: `${user_level_url}/update_completed`
 }

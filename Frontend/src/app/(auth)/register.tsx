@@ -71,7 +71,7 @@ export default function Register() {
         pathname: "/verification",
         params: {
           email: email,
-          username: username
+          type: 'register'
         }
       });
     } else if (!result.success) {
@@ -149,9 +149,12 @@ export default function Register() {
       </TouchableOpacity>
       
       {!isLoading &&
-        <Link href="/login" style={styles.link}>
-          已有帳號？
-        </Link>
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>已經有帳號？</Text>
+          <Link href="/login" style={styles.link}>
+            登入
+          </Link>
+        </View>
       }
     </View>
   );
@@ -188,9 +191,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 20,
+  },
+  loginText: {
+    color: '#666'
+  },
   link: {
-    marginTop: 15,
-    textAlign: 'center',
     color: '#007AFF',
   },
 });

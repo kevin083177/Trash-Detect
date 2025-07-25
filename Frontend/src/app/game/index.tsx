@@ -1,22 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, FlatList, ImageBackground } from 'react-native';
 import Headers from '@/components/Headers';
 import { ChapterButton } from '@/components/game/ChapterButton';
 import { Chapter } from '@/interface/Chapter';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ChapterDots } from '@/components/game/ChapterDots';
 import { LevelSelector } from '@/components/game/LevelSelector';
 import { useUserLevel } from '@/hooks/userLevel';
 import { useUser } from '@/hooks/user';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.8;
-const CARD_HEIGHT = 500;
+const { width, height } = Dimensions.get('window');
+const CARD_WIDTH = 300;
+const CARD_HEIGHT = height * 0.6;
+const CARD_SPACE = (width - CARD_WIDTH) / 2;
 
 export default function GameChapterScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList<Chapter>>(null);
-  const [levelSelectorVisible, setLevelSelectorVisible] = useState(false);
+  const [levelSelectorVisible, setLevelSelectorVisible] = useState<boolean>(false);
   const [selectedChapterName, setSelectedChapterName] = useState<string>('');
   const [selectChapterBackground, setSelectChapterBackground] = useState<string>('');
   const [selectChapterSequence, setSelectChapterSequence] = useState<number>(0);
@@ -26,17 +27,46 @@ export default function GameChapterScreen() {
     loading, 
     error,
     isChapterUnlocked,
+    isChapterCompleted,
     getChaptersToRender,
-    fetchChapters
+    fetchChapters,
+    getRemainingTimes,
+    getChallengeHighestScore,
+    refreshAll,
+    setChapterUnlocked
   } = useUserLevel();
 
-  const { getUsername, getMoney, getTrashStats } = useUser();
+  const { getUsername, getMoney, getTotalTrash } = useUser();
 
-  // 計算垃圾總數
-  const calculateTotalTrash = (): number => {
-    const stats = getTrashStats();
-    return stats.bottles + stats.cans + stats.containers + stats.paper + stats.plastic;
-  };
+  useFocusEffect(
+    useCallback(() => {
+      refreshAll()
+    }, [refreshAll])
+  );
+
+  useEffect(() => {
+    const checkAndUnlockChapters = async () => {
+      const chapters = getChaptersToRender();
+      const totalTrash = getTotalTrash();
+      
+      for (const chapter of chapters) {
+        if (chapter.sequence === 1) continue;
+        
+        if (isChapterUnlocked(chapter.sequence)) continue;
+        
+        const hasEnoughTrash = totalTrash >= chapter.trash_requirement;
+        const previousChapterCompleted = isChapterCompleted(chapter.sequence - 1);
+        
+        if (hasEnoughTrash && previousChapterCompleted) {
+          await setChapterUnlocked(chapter.sequence);
+        }
+      }
+    };
+
+    if (!loading && getChaptersToRender().length > 0) {
+      checkAndUnlockChapters();
+    }
+  }, [userLevelProgress, loading, isChapterCompleted, isChapterUnlocked, setChapterUnlocked, getTotalTrash, getChaptersToRender]);
 
   const handleChapterPress = (chapter_name: string, chapter_sequence: number, chapter_background: string) => {
     setSelectedChapterName(chapter_name);
@@ -45,10 +75,9 @@ export default function GameChapterScreen() {
     setLevelSelectorVisible(true);
   };
 
-  // 處理非激活卡片的點擊，滾動至該卡片位置
   const handleNonActiveCardPress = (index: number) => {
     if (flatListRef.current) {
-      flatListRef.current.scrollToIndex({ index, animated: true });
+      flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     }
   };
 
@@ -65,21 +94,33 @@ export default function GameChapterScreen() {
   const renderItem = ({ item, index }: { item: Chapter, index: number}) => {
     const isActive = index === activeIndex;
     const unlocked = isChapterUnlocked(item.sequence);
-    const totalTrash = calculateTotalTrash();
+    const totalTrash = getTotalTrash();
     
-    // 判斷是否因為前章節未完成而無法解鎖
     const hasEnoughTrash = totalTrash >= item.trash_requirement;
-    const requiresPreviousChapter = item.sequence > 1 && hasEnoughTrash && !unlocked;
+    const previousChapterCompleted = item.sequence > 1 ? isChapterCompleted(item.sequence - 1) : true;
     
+    let lockReason = '';
+    if (!unlocked) {
+      if (!hasEnoughTrash) {
+        lockReason = 'trash';
+      } else if (!previousChapterCompleted) {
+        lockReason = 'previous';
+      }
+    }
+    
+    const chapterCompleted = isChapterCompleted(item.sequence);
+
     return (
       <View style={styles.cardContainer}>
         <View style={styles.chapterBackground}>
           <View style={styles.cardContent}>
             <ChapterButton 
-              chapter={item} 
-              unlocked={unlocked} 
+              chapter={item}
+              completed={chapterCompleted}
+              unlocked={unlocked}
+              remaining={getRemainingTimes(item.sequence)}
               isActive={isActive}
-              requiresPreviousChapter={requiresPreviousChapter}
+              lockReason={lockReason}
               onPress={() => {
                 if (unlocked) {
                   if (isActive) {
@@ -89,6 +130,7 @@ export default function GameChapterScreen() {
                   }
                 }
               }}
+              style={{ width: CARD_WIDTH, height: CARD_HEIGHT,  }}
             />
           </View>
         </View>
@@ -97,7 +139,6 @@ export default function GameChapterScreen() {
   };
 
   const chaptersToRender = getChaptersToRender();
-
   return (
     <SafeAreaView style={styles.container}>
       <Headers 
@@ -122,26 +163,25 @@ export default function GameChapterScreen() {
         </View>
       ) : (
         <View style={styles.carouselContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={chaptersToRender}
-            renderItem={renderItem}
-            keyExtractor={(item) => item._id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_WIDTH}
-            decelerationRate="fast"
-            contentContainerStyle={styles.flatListContent}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-          />
-          
-          {/* Floating dot indicator component */}
-          <ChapterDots 
-            totalDots={chaptersToRender.length} 
-            activeDotIndex={activeIndex} 
-          />
+            <FlatList
+              ref={flatListRef}
+              data={chaptersToRender}
+              renderItem={renderItem}
+              keyExtractor={(item) => item._id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={CARD_WIDTH + 50}
+              decelerationRate="fast"
+              contentContainerStyle={styles.flatListContent}
+              onViewableItemsChanged={handleViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+              ItemSeparatorComponent={() => <View style={{ width: 50 }} />}
+            />
+            
+            <ChapterDots 
+              totalDots={chaptersToRender.length} 
+              activeDotIndex={activeIndex} 
+            />
         </View>
       )}
       <LevelSelector 
@@ -151,6 +191,8 @@ export default function GameChapterScreen() {
         chapter_name={selectedChapterName}
         chapter_background={selectChapterBackground}
         userLevelProgress={userLevelProgress}
+        remainingTimes={getRemainingTimes(selectChapterSequence)}
+        challengeHighestScore={getChallengeHighestScore(selectChapterSequence)}
         onClose={() => setLevelSelectorVisible(false)}
       />
     </SafeAreaView>
@@ -160,26 +202,22 @@ export default function GameChapterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'white'
   },
   carouselContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   flatListContent: {
-    paddingHorizontal: width * 0.1,
+    paddingHorizontal: CARD_SPACE,
     alignItems: 'center',
   },
   cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginHorizontal: 0,
-    borderRadius: 15,
     overflow: 'hidden',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    borderRadius: 20,
   },
   chapterBackground: {
     width: CARD_WIDTH,
