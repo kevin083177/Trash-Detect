@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
   logout: () => Promise<void>;
+  handleAuthError: () => void;
   verifyEmailCode: (email: string, verification_code: string) => Promise<{ success: boolean; message: string;}>;
   resendEmailCode: (email: string) => Promise<{ success: boolean; message: string }>;
   checkEmailCodeStatus: (email: string) => Promise<{ exists: boolean; attempts: number; expired: boolean }>;
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false, message: '' }),
   register: async () => ({ success: false, message: '' }),
   logout: async () => {},
+  handleAuthError: () => {},
   verifyEmailCode: async () => ({ success: false, message: '' }),
   resendEmailCode: async () => ({ success: false, message: '' }),
   checkEmailCodeStatus: async () => ({ exists: false, attempts: 0, expired: false }),
@@ -42,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const router = useRouter();
   const segments = useSegments();
+
+  const handleAuthError = (): void => {
+    tokenStorage.clearAll();
+    setIsAuthenticated(false);
+  };
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -156,10 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = await tokenStorage.getToken();
       
       if (token) {
-        await asyncPost(auth_api.logout, {
+        // 嘗試告知伺服器登出，但不等待結果
+        asyncPost(auth_api.logout, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
+        }).catch(error => {
+          console.log('伺服器登出請求失敗，但本地清除仍然執行:', error);
         });
       }
 
@@ -356,6 +366,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    handleAuthError,
     verifyEmailCode,
     resendEmailCode,
     checkEmailCodeStatus,
