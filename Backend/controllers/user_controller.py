@@ -1,10 +1,11 @@
-from services import UserService, AuthService, DailyTrashService, VerificationService
+from services import UserService, AuthService, DailyTrashService, VerificationService, ImageService
 from config import Config
 from bson import ObjectId
 from flask import request
 
 auth_service = AuthService(Config.MONGO_URI)
-user_service = UserService(Config.MONGO_URI)
+image_service = ImageService(Config.get_cloudinary_config())
+user_service = UserService(Config.MONGO_URI, image_service)
 daily_trash_service = DailyTrashService(Config.MONGO_URI)
 verification_service= VerificationService(Config.MONGO_URI)
 
@@ -67,7 +68,7 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(update_username) {str(e)}"
             }, 500
-
+    
     @staticmethod
     def update_password(user_id):
         """更新密碼"""
@@ -378,4 +379,45 @@ class UserController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(delete_user) {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def update_profile(user_id):
+        try:
+            if 'image' not in request.files:
+                return {
+                    "message": "請選擇要上傳的圖片"
+                }, 400
+
+            file = request.files['image']
+            
+            if file.filename == '':
+                return {
+                    "message": "請選擇要上傳的圖片"
+                }, 400
+
+            if not ImageService._allowed_file(file.filename):
+                return {
+                    "message": f"只支持 {', '.join(ImageService.ALLOWED_EXTENSIONS)} 格式的圖片"
+                }, 400
+
+            if request.content_length and request.content_length > ImageService.MAX_FILE_SIZE:
+                return {
+                    "message": f"圖片大小不能超過 {ImageService.MAX_FILE_SIZE // (1024*1024)}MB"
+                }, 400
+
+            success = user_service.update_profile(user_id, file)
+            
+            if success:
+                return {
+                    "message": "頭像更新成功",
+                }, 200
+            
+            return {
+                "message": "頭像更新失敗"
+            }, 500
+
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(upload_profile_image) {str(e)}"
             }, 500

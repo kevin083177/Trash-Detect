@@ -11,6 +11,7 @@ from .level_route import level_blueprint
 from .user_level_route import user_level_blueprint
 from .question_route import question_blueprint
 from .question_category_route import question_category_blueprint
+from .feedback_route import feedback_blueprint
 
 api_prefix = '/api/v1/'
 
@@ -26,3 +27,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(user_level_blueprint, url_prefix=f"{api_prefix}users/level")
     app.register_blueprint(question_blueprint, url_prefix=f"{api_prefix}question")
     app.register_blueprint(question_category_blueprint, url_prefix=f"{api_prefix}question/category")
+    app.register_blueprint(feedback_blueprint, url_prefix=f"{api_prefix}feedback")

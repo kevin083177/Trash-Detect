@@ -124,58 +124,32 @@ class ThemeService(DatabaseService):
             print(f"Error getting {theme_name} theme: {str(e)}")
             raise
         
-    def get_all_themes(self):
-        """
-        取得所有主題
-                   
-        Returns:
-            list: [主題名稱]
-        """
+    def get_all_themes_with_products(self):
         try:
-            themes = self.themes.find({}, {"name": 1, "_id": 0})
-            theme_names = [theme['name'] for theme in themes]
+            themes = list(self.themes.find())
             
-            return theme_names
+            result = []
+            for theme in themes:
+                theme['_id'] = str(theme['_id'])
+                
+                product_ids = theme.get("products", [])
+                
+                products = []
+                for product_id in product_ids:
+                    product = self.collections["products"].find_one({"_id": product_id})
+                    if product:
+                        product["_id"] = str(product["_id"])
+                        products.append(product)
+                
+                theme["products"] = products
+                result.append(theme)
+                
+            return result
+            
         except Exception as e:
-            print(f"Error getting all themes: {str(e)}")
+            print(f"Error getting all themes with products: {str(e)}")
             raise
     
-    def get_theme_products(self, theme_name):
-        """
-        取得該主題所有商品
-        Args:
-            theme_name: 主題名稱
-                   
-        Returns:
-            list: 該主題所有商品: dict
-        """
-        try:
-            # 檢查主題是否存在
-            if theme_name not in self.get_all_themes():
-                return None
-            
-            # 查詢主題資訊
-            theme_data = self.themes.find_one({"name": theme_name})
-            
-            if not theme_data or "products" not in theme_data or not theme_data["products"]:
-                return []
-            
-            # 獲取主題中的產品 ID 列表
-            product_ids = theme_data["products"]
-            
-            # 根據產品 ID 列表查詢產品詳細資訊
-            products = []
-            for product_id in product_ids:
-                product = self.collections["products"].find_one({"_id": product_id})
-                if product:
-                    # 將 ObjectId 轉換為字串以便 JSON 序列化
-                    product["_id"] = str(product["_id"])
-                    products.append(product)
-            
-            return products
-        except Exception as e:
-            print(f"Error getting {theme_name} products: {str(e)}")
-            raise
     def _delete_theme_preview_image(self, theme):
         try:
             return self.image_service.delete_image(theme['image']['public_id'])

@@ -8,6 +8,7 @@ class User:
         self.email = email
         self.password = password
         self.money = 0
+        self.profile = None
         self.verification = False
         self.trash_stats = {
             "bottles": 0,
@@ -26,8 +27,9 @@ class User:
             "email": self.email,
             "password": self.password,
             "money": self.money,
-            "verification": self.verification,
+            "profile": self.profile,
             "trash_stats": self.trash_stats,
+            "verification": self.verification,
             "last_check_in": self.last_check_in,
             "created_at": self.created_at
         }

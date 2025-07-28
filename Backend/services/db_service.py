@@ -18,6 +18,7 @@ class DatabaseService:
             'question_categories': self.db.question_categories,
             'verifications': self.db.verifications,
             'daily_trash': self.db.daily_trash,
+            'feedbacks': self.db.feedbacks,
         }
     
     def get_collection(self, collection_name):

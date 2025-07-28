@@ -6,6 +6,8 @@ export const HIDE_TAB_BAR_PATHS = [
   '/shop/theme',
   '/game/gameplay',
   '/game/result',
+  'feedback',
+  'create'
 ]
 
 // Tab Bar styles

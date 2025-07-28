@@ -15,6 +15,7 @@ from .detection_service import DetectionService
 from .email_service import VerificationService
 from .daliy_trash_service import DailyTrashService
 from .system_service import SystemInfo, SystemService
+from .feedback_service import FeedbackService
 
 __all__ = [
     'DatabaseService',
@@ -33,5 +34,6 @@ __all__ = [
     'DetectionService',
     'VerificationService',
     'DailyTrashService',
-    'SystemInfo', 'SystemService'
+    'SystemInfo', 'SystemService',
+    'FeedbackService'
 ]

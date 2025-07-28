@@ -101,7 +101,7 @@ export default function Shop(): ReactNode {
     const initializeShop = async () => {
       try {
         await Promise.all([
-          fetchThemes(),
+          fetchThemes(), // 現在這個函數會同時獲取主題和產品
           fetchUserProfile(),
           fetchPurchasedProducts()
         ]);

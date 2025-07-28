@@ -16,6 +16,7 @@ const chapter_url = `${api_url}/chapter`;
 const level_url = `${api_url}/level`;
 const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
+const feedback_url = `${api_url}/feedback`
 
 export const auth_api = {
     login: `${auth_url}/login`,
@@ -47,6 +48,7 @@ export const user_api = {
     update_username: `${user_url}/update/username`,
     update_password: `${user_url}/update/password`, 
     update_email: `${user_url}/update/email`,
+    update_profile: `${user_url}/update/profile`
 } as const;
 
 export const purchase_api = {
@@ -64,8 +66,7 @@ export const product_api = {
 export const theme_api = {
     get_theme: `${theme_url}/`,
     add_theme: `${theme_url}/add_theme`,
-    get_all_themes: `${theme_url}/get_all_themes`,
-    get_theme_products: `${theme_url}/`, // + theme_name/products
+    get_all_themes: `${theme_url}/all`,
     delete_theme: `${theme_url}/delete_theme/`, // + theme_name
 } as const;
 
@@ -106,4 +107,9 @@ export const user_level_api = {
     get_user_level: `${user_level_url}/`,
     update_level: `${user_level_url}/update_level`,
     update_completed_chapter: `${user_level_url}/update_completed`
+}
+
+export const feedback_api = {
+    create_feedback: `${feedback_url}/add`,
+    get_user_feedbacks: `${feedback_url}/user`
 }

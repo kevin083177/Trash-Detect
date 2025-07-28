@@ -69,3 +69,9 @@ def daliy_check_in(user):
 @token_required
 def daily_check_in_status(user):
     return UserController.daily_check_in_status(user['_id'])
+
+@user_blueprint.route('/update/profile', methods=['PUT'])
+@log_request
+@token_required
+def update_profile(user):
+    return UserController.update_profile(user['_id'])

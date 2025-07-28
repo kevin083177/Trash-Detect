@@ -13,6 +13,7 @@ interface UserContextType {
     updateUsername: (username: string) => Promise<{ success: boolean; message: string }>;
     updatePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
     updateEmail: (email: string) => Promise<{ success: boolean; message: string; }>;
+    updateProfile: (imageUri: string) => Promise<{ success: boolean; message: string }>;
     clearUser: () => void;
     refreshUserData: () => Promise<void>;
 
@@ -61,6 +62,7 @@ export function UserProvider({ children }: UserProviderProps) {
                     username: response.body.username,
                     email: response.body.email,
                     money: response.body.money || 0,
+                    profile: response.body.profile || null,
                     role: response.body.userRole,
                     trash_stats: response.body.trash_stats,
                     checkInDate: response.body.checkInDate
@@ -195,7 +197,6 @@ export function UserProvider({ children }: UserProviderProps) {
                         requiresVerification: true 
                     };
                 } else {
-                    // 直接更新成功
                     setUser(prevUser => {
                         if (!prevUser) return null;
                         return { ...prevUser, email };
@@ -210,6 +211,52 @@ export function UserProvider({ children }: UserProviderProps) {
             return { success: false, message: '網路錯誤，請稍後再試' };
         }
     }, [user]);
+
+    const updateProfile = useCallback(async (imageUri: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const token = await tokenStorage.getToken();
+            if (!token) {
+                return { success: false, message: '未登入' };
+            }
+
+            const formData = new FormData();
+            const filename = imageUri.split('/').pop() || 'profile.jpg';
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+            formData.append('image', {
+                uri: imageUri,
+                name: filename,
+                type: type,
+            } as any);
+
+            const response = await asyncPut(user_api.update_profile, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: formData,
+            });
+            console.log(response);
+            if (response && response.body) {
+                console.log(response.body)
+                setUser(prevUser => {
+                    if (!prevUser) return null;
+                    return { 
+                        ...prevUser, 
+                        profile: response.body.profile 
+                    };
+                });
+
+                return { success: true, message: '頭像更新成功！' };
+            } else {
+                return { success: false, message: response.message };
+            }
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            return { success: false, message: '網路錯誤，請稍後再試' };
+        }
+    }, []);
 
     // logout
     const clearUser = useCallback(() => {
@@ -424,6 +471,7 @@ export function UserProvider({ children }: UserProviderProps) {
     updateUsername,
     updateEmail,
     updatePassword,
+    updateProfile,
     
     addMoney,
     subtractMoney,
