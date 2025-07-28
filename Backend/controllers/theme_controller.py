@@ -84,52 +84,24 @@ class ThemeController:
             return {
                 "message": f"伺服器錯誤(get_theme) {str(e)}"
             }, 500
-    def get_all_themes(user):
-        try:
-            themes = theme_service.get_all_themes()
             
-            if themes:
+    def get_all_themes_with_products(user):
+        try:
+            themes_with_products = theme_service.get_all_themes_with_products()
+            
+            if themes_with_products is not None:
                 return {
-                    "message": "成功找到所有主題",
-                    "body": themes
+                    "message": "成功獲取所有主題和商品",
+                    "body": themes_with_products
                 }, 200
             else:
                 return {
-                    "message": "無法找到任何主題"
-                }, 400
+                    "message": "無法找到任何主題",
+                    "body": []
+                }, 200
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(get_all_themes) {str(e)}"
-            }, 500
-            
-    def get_theme_products(user, theme_name):
-        try:
-            if not theme_name:
-                return {
-                    "message": "請提供主題名稱"
-                }, 400
-            
-            products = theme_service.get_theme_products(theme_name)
-            
-            if products is None:
-                return {
-                    "message": f"主題 {theme_name} 不存在, 已存在主題:{theme_service.get_all_themes()}"
-                }, 404
-                
-            if not products:
-                return {
-                    "message": f"主題 {theme_name} 下沒有商品",
-                    "body": []
-                }, 200
-            
-            return {
-                "message": f"成功獲取主題 {theme_name} 的商品",
-                "body": products
-            }, 200
-                
-        except Exception as e:
-            return {
-                "message": f"伺服器錯誤(get_theme_products) {str(e)}"
             }, 500
         
     def delete_theme(theme_name):

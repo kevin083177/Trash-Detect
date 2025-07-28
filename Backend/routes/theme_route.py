@@ -11,17 +11,11 @@ theme_blueprint = Blueprint('theme', __name__)
 def add_theme():
     return ThemeController.add_theme()
 
-@theme_blueprint.route('/get_all_themes', methods=['GET'])
+@theme_blueprint.route('/all', methods=['GET'])
 @log_request
 @token_required
 def get_all_themes(user):
-    return ThemeController.get_all_themes(user)
-
-@theme_blueprint.route('/<theme_name>/products', methods=['GET'])
-@log_request
-@token_required
-def get_theme_products(user, theme_name):
-    return ThemeController.get_theme_products(user, theme_name)
+    return ThemeController.get_all_themes_with_products(user)
 
 @theme_blueprint.route('/<theme_name>', methods=['GET'])
 @log_request

@@ -13,7 +13,6 @@ interface ProductContextType {
     loading: boolean;
 
     fetchThemes: () => Promise<void>;
-    fetchProductsByTheme: (theme: string) => Promise<void>;
     fetchPurchasedProducts: () => Promise<void>;
     fetchPurchasedProductsByType: () => Promise<void>;
     purchaseProduct: (productId: string) => Promise<boolean>;
@@ -52,25 +51,32 @@ export function ProductProvider ({ children }: ProductProviderProps) {
 
         try {
             setLoading(true);
+            
+            // 調用新的API路徑，獲取所有主題及其產品
             const response = await asyncGet(theme_api.get_all_themes, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
             })
+            
             if (response && response.body) {
-                const fetchedThemes = response.body;
-                setThemes(fetchedThemes);
-
+                const themesWithProducts = response.body;
+                
+                // 提取主題名稱
+                const themeNames: string[] = [];
+                const productsMap: Record<string, Product[]> = {};
                 const loadingState: Record<string, boolean> = {};
-                    fetchedThemes.forEach((theme: string) => {
-                    loadingState[theme] = true;
+                
+                themesWithProducts.forEach((themeData: any) => {
+                    const themeName = themeData.name;
+                    themeNames.push(themeName);
+                    productsMap[themeName] = themeData.products || [];
+                    loadingState[themeName] = false; // 數據已經加載完成
                 });
-
+                
+                setThemes(themeNames);
+                setThemeProducts(productsMap);
                 setThemeLoading(loadingState);
-
-                fetchedThemes.forEach((theme: string) => {
-                    fetchProductsByTheme(theme);
-                });
             } 
         }
         catch (error) {
@@ -110,33 +116,6 @@ export function ProductProvider ({ children }: ProductProviderProps) {
         }
     }, []);
 
-    const fetchProductsByTheme = useCallback(async (theme: string) => {
-        try {
-            const token = await tokenStorage.getToken();
-            if (!token) return;
-
-            const response = await asyncGet(`${theme_api.get_theme_products}/${encodeURIComponent(theme)}/products`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            })
-
-            if (response && response.body) {
-                setThemeProducts(prev => ({
-                    ...prev,
-                    [theme]: response.body
-                }));
-            }
-        } catch (error) {
-            console.log("Failed to fetch products by theme: ", error);
-        } finally {
-            setThemeLoading(prev => ({
-                ...prev,
-                [theme]: false
-            }));
-        }
-    }, []);
-
     const fetchPurchasedProducts = useCallback(async () => {
         try {
             const token = await tokenStorage.getToken();
@@ -160,7 +139,7 @@ export function ProductProvider ({ children }: ProductProviderProps) {
     const purchaseProduct = useCallback(async (productId: string): Promise<boolean> => {
         try {
             const token = await tokenStorage.getToken();
-            if (!token) false;
+            if (!token) return false;
 
             const response = await asyncPost(purchase_api.purchase, {
                 headers: {
@@ -211,7 +190,6 @@ export function ProductProvider ({ children }: ProductProviderProps) {
         loading,
         
         fetchThemes,
-        fetchProductsByTheme,
         fetchPurchasedProducts,
         fetchPurchasedProductsByType,
         purchaseProduct,

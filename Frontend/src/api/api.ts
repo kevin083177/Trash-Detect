@@ -48,6 +48,7 @@ export const user_api = {
     update_username: `${user_url}/update/username`,
     update_password: `${user_url}/update/password`, 
     update_email: `${user_url}/update/email`,
+    update_profile: `${user_url}/update/profile`
 } as const;
 
 export const purchase_api = {
@@ -65,8 +66,7 @@ export const product_api = {
 export const theme_api = {
     get_theme: `${theme_url}/`,
     add_theme: `${theme_url}/add_theme`,
-    get_all_themes: `${theme_url}/get_all_themes`,
-    get_theme_products: `${theme_url}/`, // + theme_name/products
+    get_all_themes: `${theme_url}/all`,
     delete_theme: `${theme_url}/delete_theme/`, // + theme_name
 } as const;
 
