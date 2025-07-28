@@ -10,10 +10,13 @@ import MenuButton from '@/components/profile/MenuButton';
 import RecyclePieChart from '@/components/profile/RecyclePieChart';
 import { RecycleValues } from '@/interface/Recycle';
 import { clearRoom } from '@/utils/roomStorage';
+import { asyncGet } from '@/utils/fetch';
+import { feedback_api } from '@/api/api';
 
 export default function Profile() {
   const [recyclingData, setRecyclingData] = useState<RecycleValues>();
   const [token, setToken] = useState<string | null>(null);
+  const [isCheckingFeedback, setIsCheckingFeedback] = useState<boolean>(false);
   
   const { 
     user, 
@@ -77,8 +80,35 @@ export default function Profile() {
     router.push('/(tabs)/profile/settings');
   };
 
-  const handleFeedbackPress = () => {
-    router.push('/(tabs)/profile/feedback');
+  const handleFeedbackPress = async () => {
+    if (!token || isCheckingFeedback) return;
+
+    try {
+      setIsCheckingFeedback(true);
+      
+      const response = await asyncGet(feedback_api.get_user_feedbacks, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      
+      if (response && response.body) {
+        const feedbacks = response.body;
+        
+        if (feedbacks.length === 0) {
+          router.push('/(tabs)/profile/create');
+        } else {
+          router.push('/(tabs)/profile/feedback');
+        }
+      } else {
+        router.push('/(tabs)/profile/feedback');
+      }
+    } catch (error) {
+      console.error('Error checking feedback:', error);
+      router.push('/(tabs)/profile/feedback');
+    } finally {
+      setIsCheckingFeedback(false);
+    }
   }
 
   useEffect(() => {
@@ -91,7 +121,14 @@ export default function Profile() {
     return [
       { id: 'user', type: 'user' },
       { id: 'stats', type: 'stats' },
-      { id: 'feedback', type: 'menu', icon: 'chatbubbles-outline', title: '錯誤回報與改善建議', color: '#007AFF', onPress: handleFeedbackPress },
+      { 
+        id: 'feedback', 
+        type: 'menu', 
+        icon: 'chatbubbles-outline', 
+        title: '意見回饋中心', 
+        color: '#007AFF', 
+        onPress: handleFeedbackPress,
+      },
       { id: 'settings', type: 'menu', icon: 'settings-outline', title: '個人設定', color: '#323436ff', onPress: handleSettingsPress },
       { id: 'logout', type: 'menu', icon: 'log-out-outline', title: '登出', color: '#ff0000ff', onPress: handleLogout },
     ];
@@ -106,7 +143,7 @@ export default function Profile() {
               <Ionicons name="person-outline" size={60} color="#666" />
             </View>
             <View style={styles.userName}>
-              <Text style={{fontSize: 23, fontWeight: 'bold', marginBottom: 8}}>
+              <Text style={{fontSize: 23, fontWeight: 'bold'}}>
                 {getUsername()}
               </Text>
             </View>
@@ -178,8 +215,7 @@ const styles = StyleSheet.create({
   userIconContainer: {
     width: 100,
     height: 100,
-    borderRadius: 20,
-    marginBottom: 16,
+    borderRadius: 50,
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',

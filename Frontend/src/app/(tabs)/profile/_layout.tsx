@@ -8,6 +8,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name='verification' />
       <Stack.Screen name='feedback' />
+      <Stack.Screen name='create' />
     </Stack>
   );
 }

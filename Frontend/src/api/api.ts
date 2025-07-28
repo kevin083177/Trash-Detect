@@ -16,6 +16,7 @@ const chapter_url = `${api_url}/chapter`;
 const level_url = `${api_url}/level`;
 const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
+const feedback_url = `${api_url}/feedback`
 
 export const auth_api = {
     login: `${auth_url}/login`,
@@ -106,4 +107,9 @@ export const user_level_api = {
     get_user_level: `${user_level_url}/`,
     update_level: `${user_level_url}/update_level`,
     update_completed_chapter: `${user_level_url}/update_completed`
+}
+
+export const feedback_api = {
+    create_feedback: `${feedback_url}/add`,
+    get_user_feedbacks: `${feedback_url}/user`
 }
