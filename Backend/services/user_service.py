@@ -2,13 +2,18 @@ from bson import ObjectId
 from services import DatabaseService
 from datetime import datetime
 import bcrypt
+from .image_service import ImageService
 
 class UserService(DatabaseService):
-    def __init__(self, mongo_uri):
+    def __init__(self, mongo_uri, image_service=None):
         super().__init__(mongo_uri)
         self.users = self.collections['users']
         self.purchase = self.collections['purchases']
         self.user_level = self.collections['user_levels']
+        
+        if image_service is not None and not isinstance(image_service, ImageService):
+            raise TypeError("image_service 必須是 ImageService")
+        self.image_service = image_service
         
     def get_user(self, user_id: str):
         """取得使用者資料 (find_one)
@@ -299,3 +304,42 @@ class UserService(DatabaseService):
             
         except Exception as e:
             return False, f"伺服器錯誤: {str(e)}"
+        
+    def update_profile(self, user_id: str, image_file):
+        try:
+            if not self.image_service:
+                raise ValueError("ImageService 未初始化")
+            
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            old_profile = user.get('profile')
+            if old_profile and 'public_id' in old_profile:
+                try:
+                    self.image_service.delete_image(old_profile['public_id'])
+                except Exception as e:
+                    print(f"刪除舊頭像失敗: {str(e)}")
+                    raise
+            
+            image_result = self.image_service.upload_image(
+                image_file=image_file,
+                public_id=f"{user_id}_profile",
+                folder="profiles"
+            )
+            
+            profile_url = image_result['url']
+            
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"profile": {
+                    "public_id": image_result['public_id'],
+                    "url": profile_url
+                }}}
+            )
+            
+            return result.modified_count > 0
+            
+        except Exception as e:
+            print(f"Update user profile with image error: {str(e)}")
+            raise
