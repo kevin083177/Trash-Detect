@@ -106,18 +106,7 @@ class FeedbackController:
                 return {
                     "message": "無權限訪問此反饋"
                 }, 403
-            
-            admin_id = feedback.pop('admin_id', None)
-            
-            if admin_id:
-                try:
-                    admin = user_service.get_user(admin_id)
-                    feedback['admin_name'] = admin['username'] if admin else '未知管理員'
-                except:
-                    feedback['admin_name'] = '獲取失敗'
-            else:
-                feedback['admin_name'] = '未分配'
-            
+                       
             return {
                 "message": "獲取反饋成功",
                 "body": feedback
@@ -131,13 +120,25 @@ class FeedbackController:
     @staticmethod
     def get_user_feedbacks(user_id):
         try:
-            feedback = feedback_service.get_user_feedbacks(user_id)
+            feedbacks = feedback_service.get_user_feedbacks(user_id)
+            
+            for feedback in feedbacks:
+                admin_id = feedback.pop('admin_id', None)
+                
+                if admin_id:
+                    try:
+                        admin = user_service.get_user(admin_id)
+                        feedback['admin_name'] = admin['username'] if admin else '未知管理員'
+                    except:
+                        feedback['admin_name'] = '獲取失敗'
+                else:
+                    feedback['admin_name'] = '未分配'
             
             return {
                 "message": "獲取反饋成功",
-                "body": feedback
+                "body": feedbacks
             }, 200
-            
+
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(get_user_feedbacks): {str(e)}"

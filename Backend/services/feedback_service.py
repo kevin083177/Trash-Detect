@@ -86,7 +86,6 @@ class FeedbackService(DatabaseService):
             for feedback in feedbacks_cursor:
                 feedback["_id"] = str(feedback["_id"])
                 feedback.pop("user_id", None)
-                feedback.pop("admin_id", None)
                 feedbacks.append(feedback)
             
             return feedbacks
@@ -181,7 +180,7 @@ class FeedbackService(DatabaseService):
                 {"_id": ObjectId(feedback_id)},
                 {
                     "$set": {
-                        "admin_reply": reply_content,
+                        "reply_content": reply_content,
                         "reply_at": datetime.now(),
                         "status": status,
                         "admin_id": ObjectId(admin_id)
