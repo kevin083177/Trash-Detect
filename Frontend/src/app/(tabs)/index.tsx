@@ -7,10 +7,24 @@ import Headers from '@/components/Headers';
 import { useUser } from '@/hooks/user';
 import { loadRoom, RoomData, ItemTransform } from '@/utils/roomStorage';
 import { ProductCategory } from '@/interface/Product';
+import { ImageSize } from '@/interface/Image';
 
 const { width, height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 62;
 const HEADERS_HEIGHT = 50;
+const PADDING = 4;
+const DEFAULT_SIZE = 60;
+
+const getDefaultPositions = (containerHeight: number): Record<ProductCategory, { x: number; y: number }> => ({
+  table: { x: width * 0.5, y: containerHeight * 0.5 },
+  bookshelf: { x: width * 0.3, y: containerHeight * 0.4 },
+  lamp: { x: width * 0.7, y: containerHeight * 0.3 },
+  carpet: { x: width * 0.5, y: containerHeight * 0.7 },
+  pendant: { x: width * 0.4, y: containerHeight * 0.25 },
+  calendar: { x: width * 0.6, y: containerHeight * 0.45 },
+  box: { x: width * 0.5, y: containerHeight * 0.8 },
+  wallpaper: { x: 0, y: 0 },
+});
 
 export default function Index() {
   const [notification, setNotification] = useState<{
@@ -31,6 +45,8 @@ export default function Index() {
     itemTransforms: {}
   });
 
+  const [imageSizes, setImageSizes] = useState<Partial<Record<ProductCategory, ImageSize>>>({});
+
   const { 
     fetchUserProfile, 
     getUsername, 
@@ -48,8 +64,66 @@ export default function Index() {
     }
   };
 
+  // 載入所有圖片尺寸
+  useEffect(() => {
+    const loadImageSizes = async () => {
+      const newImageSizes: Partial<Record<ProductCategory, ImageSize>> = {};
+      
+      const promises = Object.entries(roomData.selectedItems).map(([category, item]) => {
+        if (!item || category === 'wallpaper' || category === 'box' || !item.image?.url) {
+          return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve) => {
+          Image.getSize(
+            item.image!.url,
+            (imgWidth, imgHeight) => {
+              // 計算適合的顯示尺寸，保持長寬比
+              const maxSize = 80; // 最大顯示尺寸
+              const ratio = Math.min(maxSize / imgWidth, maxSize / imgHeight);
+              const displayWidth = imgWidth * ratio;
+              const displayHeight = imgHeight * ratio;
+              
+              newImageSizes[category as ProductCategory] = {
+                width: Math.round(displayWidth),
+                height: Math.round(displayHeight)
+              };
+              resolve();
+            },
+            (error) => {
+              console.log(`Failed to get image size for ${category}:`, error);
+              newImageSizes[category as ProductCategory] = {
+                width: DEFAULT_SIZE,
+                height: DEFAULT_SIZE
+              };
+              resolve();
+            }
+          );
+        });
+      });
+
+      await Promise.all(promises);
+      setImageSizes(newImageSizes);
+    };
+
+    if (Object.keys(roomData.selectedItems).length > 0) {
+      loadImageSizes();
+    }
+  }, [roomData.selectedItems]);
+
   const getItemTransform = (category: ProductCategory): ItemTransform => {
-    return roomData.itemTransforms[category] as ItemTransform;
+    const containerHeight = height - HEADERS_HEIGHT - TAB_BAR_HEIGHT;
+    const defaultPositions = getDefaultPositions(containerHeight);
+    
+    return roomData.itemTransforms[category] || {
+      position: defaultPositions[category],
+      scale: 2,
+      rotation: 0,
+    };
+  };
+
+  const getItemSize = (category: ProductCategory): ImageSize => {
+    return imageSizes[category] || { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
   };
 
   const renderRoomItems = () => {
@@ -58,6 +132,13 @@ export default function Index() {
 
       const categoryKey = category as ProductCategory;
       const transform = getItemTransform(categoryKey);
+      const imageSize = getItemSize(categoryKey);
+      const containerWidth = imageSize.width + PADDING * 2;
+      const containerHeight = imageSize.height + PADDING * 2;
+
+      if (!transform || !transform.position) {
+        return null;
+      }
 
       return (
         <View
@@ -65,20 +146,37 @@ export default function Index() {
           style={[
             styles.roomItem,
             {
-              left: transform.position.x - 30,
-              top: transform.position.y - 30,
+              left: transform.position.x - containerWidth / 2,
+              top: transform.position.y - containerHeight / 2,
+              width: containerWidth,
+              height: containerHeight,
               transform: [
-                { scale: transform.scale },
-                { rotate: `${transform.rotation}deg` }
+                { scale: transform.scale || 1 },
+                { rotate: `${transform.rotation || 0}deg` }
               ],
             }
           ]}
         >
-          <Image
-            source={{ uri: item.image?.url }}
-            style={styles.roomItemImage}
-            resizeMode="contain"
-          />
+          <View style={[
+            styles.imageWrapper,
+            {
+              padding: PADDING,
+              width: containerWidth,
+              height: containerHeight,
+            }
+          ]}>
+            <Image
+              source={{ uri: item.image?.url }}
+              style={[
+                styles.roomItemImage,
+                {
+                  width: imageSize.width,
+                  height: imageSize.height,
+                }
+              ]}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       );
     });
@@ -272,13 +370,14 @@ const styles = StyleSheet.create({
   },
   roomItem: {
     position: 'absolute',
-    width: 60,
-    height: 60,
     zIndex: 5,
   },
+  imageWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   roomItemImage: {
-    width: 60,
-    height: 60,
+    // 尺寸由動態計算決定
   },
   floatingDailySection: {
     position: 'absolute',

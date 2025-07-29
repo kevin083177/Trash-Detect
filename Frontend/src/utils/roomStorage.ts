@@ -7,6 +7,7 @@ export interface ItemTransform {
   position: { x: number; y: number };
   scale: number;
   rotation: number;
+  zIndex?: number;
 }
 
 export interface RoomData {

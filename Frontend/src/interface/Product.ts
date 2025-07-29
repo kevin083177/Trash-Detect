@@ -41,3 +41,14 @@ export type ProductCategory =
   | 'pendant' 
   | 'table' 
   | 'wallpaper';
+
+export const ITEM_Z_INDEX: Record<ProductCategory, number> = {
+  wallpaper: 0,
+  carpet: 10,
+  bookshelf: 20,
+  table: 30,
+  calendar: 40,
+  lamp: 50,
+  pendant: 60,
+  box: 70,
+};

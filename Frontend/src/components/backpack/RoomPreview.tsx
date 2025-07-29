@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -10,6 +10,8 @@ import {
 import { Product, ProductCategory } from '@/interface/Product';
 import { ItemTransform } from '@/utils/roomStorage';
 import EditableProduct from './EditableProduct';
+import { ImageSize } from '@/interface/Image';
+import { ITEM_Z_INDEX } from '@/interface/Product';
 
 interface RoomPreviewProps {
   selectedItems: Partial<Record<ProductCategory, Product>>;
@@ -17,13 +19,13 @@ interface RoomPreviewProps {
   editingCategory?: ProductCategory | null;
   onStartEdit?: (category: ProductCategory | null) => void;
   containerHeight?: number;
-  itemTransforms: Partial<Record<ProductCategory, ItemTransform>>; // 新增
-  onTransformUpdate: (category: ProductCategory, transform: ItemTransform) => void; // 新增
+  itemTransforms: Partial<Record<ProductCategory, ItemTransform>>;
+  onTransformUpdate: (category: ProductCategory, transform: ItemTransform) => void;
 }
 
 const { width, height } = Dimensions.get('window');
+const DEFAULT_SIZE = 60;
 
-// 使用相對位置，這樣可以適應不同的容器高度
 const getDefaultPositions = (containerHeight: number): Record<ProductCategory, { x: number; y: number }> => ({
   table: { x: width * 0.5, y: containerHeight * 0.5 },
   bookshelf: { x: width * 0.3, y: containerHeight * 0.4 },
@@ -41,17 +43,70 @@ export default function RoomPreview({
   editingCategory = null,
   onStartEdit,
   containerHeight,
-  itemTransforms, // 新增
-  onTransformUpdate // 新增
+  itemTransforms,
+  onTransformUpdate
 }: RoomPreviewProps) {
 
-  // 使用傳入的高度或默認高度
+  const [imageSizes, setImageSizes] = useState<Partial<Record<ProductCategory, ImageSize>>>({});
+  const [currentEditingTransform, setCurrentEditingTransform] = useState<ItemTransform | null>(null);
+
+  useEffect(() => {
+    if (editingCategory) {
+      const transform = getItemTransform(editingCategory);
+      setCurrentEditingTransform(transform);
+    } else {
+      setCurrentEditingTransform(null);
+    }
+  }, [editingCategory, itemTransforms]);
+
   const actualHeight = containerHeight || height;
   const defaultPositions = getDefaultPositions(actualHeight);
   
   const currentBackground = selectedItems.wallpaper?.image?.url;
 
-  // 獲取商品的變換信息
+  useEffect(() => {
+    const loadImageSizes = async () => {
+      const newImageSizes: Partial<Record<ProductCategory, ImageSize>> = {};
+      
+      const promises = Object.entries(selectedItems).map(([category, item]) => {
+        if (!item || category === 'wallpaper' || category === 'box' || !item.image?.url) {
+          return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve) => {
+          Image.getSize(
+            item.image!.url,
+            (imgWidth, imgHeight) => {
+              const maxSize = 80;
+              const ratio = Math.min(maxSize / imgWidth, maxSize / imgHeight);
+              const displayWidth = imgWidth * ratio;
+              const displayHeight = imgHeight * ratio;
+              
+              newImageSizes[category as ProductCategory] = {
+                width: Math.round(displayWidth),
+                height: Math.round(displayHeight)
+              };
+              resolve();
+            },
+            (error) => {
+              console.log(`Failed to get image size for ${category}:`, error);
+              newImageSizes[category as ProductCategory] = {
+                width: DEFAULT_SIZE,
+                height: DEFAULT_SIZE
+              };
+              resolve();
+            }
+          );
+        });
+      });
+
+      await Promise.all(promises);
+      setImageSizes(newImageSizes);
+    };
+
+    loadImageSizes();
+  }, [selectedItems]);
+
   const getItemTransform = (category: ProductCategory): ItemTransform => {
     return itemTransforms[category] || {
       position: defaultPositions[category],
@@ -60,7 +115,10 @@ export default function RoomPreview({
     };
   };
 
-  // 處理編輯確認 - 改為調用 onTransformUpdate 而不是直接保存
+  const getItemSize = (category: ProductCategory): ImageSize => {
+    return imageSizes[category] || { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
+  };
+
   const handleEditConfirm = (
     category: ProductCategory, 
     position: { x: number; y: number }, 
@@ -69,28 +127,40 @@ export default function RoomPreview({
   ) => {
     const transform: ItemTransform = { position, scale, rotation };
     
-    // 通過 props 回調更新變換信息
     onTransformUpdate(category, transform);
     
     if (onStartEdit) {
       onStartEdit(null);
     }
+    
+    setCurrentEditingTransform(null);
   };
 
-  // 處理編輯取消
-  const handleEditCancel = (category: ProductCategory) => {
-    if (onStartEdit) {
-      onStartEdit(null);
+  const handleEditingTransformChange = (
+    category: ProductCategory,
+    position: { x: number; y: number },
+    scale: number,
+    rotation: number
+  ) => {
+    setCurrentEditingTransform({ position, scale, rotation });
+  };
+
+  const handleBackgroundPress = () => {
+    if (editingCategory && currentEditingTransform) {
+      handleEditConfirm(
+        editingCategory,
+        currentEditingTransform.position,
+        currentEditingTransform.scale,
+        currentEditingTransform.rotation
+      );
     }
   };
 
-  // 處理商品點擊
   const handleItemPress = (category: ProductCategory) => {
     if (editingCategory) {
       return;
     }
     
-    // 開始編輯此商品
     if (onStartEdit) {
       onStartEdit(category);
     } else {
@@ -103,14 +173,22 @@ export default function RoomPreview({
     item: Product, 
     transform: ItemTransform
   ) => {
+    const imageSize = getItemSize(category);
+    const containerWidth = imageSize.width;
+    const containerHeight = imageSize.height;
+    const zIndex = transform.zIndex ?? ITEM_Z_INDEX[category];
+
     return (
       <TouchableOpacity
         key={category}
         style={[
           styles.itemContainer,
           {
-            left: transform.position.x - 30,
-            top: transform.position.y - 30,
+            left: transform.position.x - containerWidth / 2,
+            top: transform.position.y - containerHeight / 2,
+            width: containerWidth,
+            height: containerHeight,
+            zIndex: zIndex,
             transform: [
               { scale: transform.scale },
               { rotate: `${transform.rotation}deg` }
@@ -120,14 +198,26 @@ export default function RoomPreview({
         onPress={() => handleItemPress(category)}
         disabled={!!editingCategory}
       >
-        <Image
-          source={{ uri: item.image?.url }}
-          style={[
-            styles.itemImage,
-            editingCategory && editingCategory !== category && styles.dimmedItem
-          ]}
-          resizeMode="contain"
-        />
+        <View style={[
+          styles.imageWrapper,
+          {
+            width: containerWidth,
+            height: containerHeight,
+          }
+        ]}>
+          <Image
+            source={{ uri: item.image?.url }}
+            style={[
+              styles.itemImage,
+              {
+                width: imageSize.width,
+                height: imageSize.height,
+              },
+              editingCategory && editingCategory !== category && styles.dimmedItem
+            ]}
+            resizeMode="contain"
+          />
+        </View>
       </TouchableOpacity>
     );
   };
@@ -140,7 +230,14 @@ export default function RoomPreview({
           style={styles.roomBackground}
           resizeMode="cover"
         >
-          {/* 渲染所有商品 */}
+          {editingCategory && (
+            <TouchableOpacity
+              style={styles.backgroundOverlay}
+              onPress={handleBackgroundPress}
+              activeOpacity={1}
+            />
+          )}
+
           {Object.entries(selectedItems).map(([category, item]) => {
             if (!item || category === 'wallpaper' || category === 'box') return null;
             
@@ -156,8 +253,7 @@ export default function RoomPreview({
                   initialPosition={transform.position}
                   initialScale={transform.scale}
                   initialRotation={transform.rotation}
-                  onConfirm={handleEditConfirm}
-                  onCancel={handleEditCancel}
+                  onTransformChange={handleEditingTransformChange}
                 />
               );
             }
@@ -183,14 +279,22 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 500,
+  },
   itemContainer: {
     position: 'absolute',
-    width: 60,
-    height: 60,
+  },
+  imageWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemImage: {
-    width: 60,
-    height: 60,
   },
   dimmedItem: {
     opacity: 0.3,
