@@ -52,7 +52,6 @@ export function ProductProvider ({ children }: ProductProviderProps) {
         try {
             setLoading(true);
             
-            // 調用新的API路徑，獲取所有主題及其產品
             const response = await asyncGet(theme_api.get_all_themes, {
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -62,18 +61,22 @@ export function ProductProvider ({ children }: ProductProviderProps) {
             if (response && response.body) {
                 const themesWithProducts = response.body;
                 
-                // 提取主題名稱
                 const themeNames: string[] = [];
                 const productsMap: Record<string, Product[]> = {};
                 const loadingState: Record<string, boolean> = {};
                 
                 themesWithProducts.forEach((themeData: any) => {
                     const themeName = themeData.name;
+                    
+                    if (themeName === "預設") {
+                        return;
+                    }
+                    
                     themeNames.push(themeName);
                     productsMap[themeName] = themeData.products || [];
-                    loadingState[themeName] = false; // 數據已經加載完成
+                    loadingState[themeName] = false;
                 });
-                
+
                 setThemes(themeNames);
                 setThemeProducts(productsMap);
                 setThemeLoading(loadingState);

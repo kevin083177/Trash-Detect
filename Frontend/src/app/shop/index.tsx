@@ -48,12 +48,10 @@ export default function Shop(): ReactNode {
   const initiateProductPurchase = () => {
     if (!selectedProduct) return;
     
-    // 顯示確認彈窗
     setPurchaseConfirmText(`確定要購買 ${selectedProduct.name} 嗎？`);
     setConfirmModalVisible(true);
   };
   
-  // 實際執行購買的函數
   const handleBuyProduct = async () => {
     if (!selectedProduct) return;
     
@@ -101,7 +99,7 @@ export default function Shop(): ReactNode {
     const initializeShop = async () => {
       try {
         await Promise.all([
-          fetchThemes(), // 現在這個函數會同時獲取主題和產品
+          fetchThemes(),
           fetchUserProfile(),
           fetchPurchasedProducts()
         ]);
