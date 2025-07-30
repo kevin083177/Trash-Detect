@@ -1,10 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+
 const API_VERSION = '/api/v1';
 
+const ADMIN_URL = `${API_BASE_URL}${API_VERSION}/admin`;
 const AUTH_URL = `${API_BASE_URL}${API_VERSION}/auth`;
 const THEME_URL = `${API_BASE_URL}${API_VERSION}/theme`;
 const CHAPTER_URL = `${API_BASE_URL}${API_VERSION}/chapter`;
 const QUESTION_URL = `${API_BASE_URL}${API_VERSION}/question`;
+
+export const admin_api = {
+    get_all_users_info: `${ADMIN_URL}/users/all`,
+    delete_user: `${ADMIN_URL}/users/delete`,
+    get_all_trash: `${ADMIN_URL}/trash/all`,
+    get_system_info: `${ADMIN_URL}/system/info`
+}
 
 export const auth_api = {
     login: `${AUTH_URL}/login`,
