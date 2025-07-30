@@ -11,7 +11,6 @@ interface Option {
     text: string;
 };
 
-// 臨時儲存
 export interface TempQuestion extends Question {
   isTemporary?: boolean;
   tempId?: string;
