@@ -26,7 +26,7 @@ export const Layout: React.FC = () => {
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
             <button>
               <FaChartBar className="button-icon" />
-              統計資料
+              儀表板
             </button>
           </NavLink>
           <NavLink to="/feedback" className={({ isActive }) => (isActive ? 'active' : '')}>
