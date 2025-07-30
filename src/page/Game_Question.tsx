@@ -31,8 +31,6 @@ export const GameQuestion: React.FC = () => {
       
       if (response.body && Array.isArray(response.body)) {
         setQuestions(response.body);
-      } else {
-        setError('無效的 API 響應格式');
       }
     } catch (err) {
       console.error('加載題目數據時出錯:', err);
@@ -278,9 +276,9 @@ export const GameQuestion: React.FC = () => {
         </div>
 
         {/* 如果沒有題目 */}
-        {questions.length === 0 && !loading && !error && (
+        {questions.length === 0 && !loading && (
           <div className="no-questions">
-            尚無任何題目，請點擊「新增題目」開始建立或「重新載入」從 API 獲取數據
+            尚無任何題目，請點擊「新增題目」開始建立或「重新載入」獲取數據
           </div>
         )}
 
