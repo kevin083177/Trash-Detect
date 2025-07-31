@@ -37,54 +37,55 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div className="product-card">
-      <div className="product-card-container">
-        {/* 左側圖片區域 */}
-        <div className="product-card-image-section">
-          <div className="product-card-image-wrapper">
-            <img 
-              src={image} 
-              alt={name} 
-              className="product-card-image"
-            />
-          </div>
-          <div className="product-card-name">{name}</div>
-        </div>
 
-        {/* 右側資訊區域 */}
-        <div className="product-card-info-section">
-          <div className="product-card-header">
-            <span className="product-card-info-label">{ translateType(type) }</span>
-            <div className="product-card-actions">
-              {onEdit && (
-                <button 
-                  className="product-card-action-btn edit-btn" 
-                  onClick={onEdit}
-                  title="編輯"
-                >
-                  ✏️
-                </button>
-              )}
-              {onDelete && (
-                <button 
-                  className="product-card-action-btn delete-btn" 
-                  onClick={onDelete}
-                  title="刪除"
-                >
-                  🗑️
-                </button>
-              )}
+        {/* 卡片上方 */}
+        <div className="product-card-header">
+          <div className="product-card-actions">
+            {onEdit && (
+              <button
+                className="product-card-action-btn edit-btn"
+                onClick={onEdit}
+                title="編輯"
+              >
+                ✏️
+              </button>
+            )}
+            {onDelete && (
+              <button
+                className="product-card-action-btn delete-btn"
+                onClick={onDelete}
+                title="刪除"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="product-card-container-grid">
+          {/* 左側圖片區域 */}
+          <div className="product-card-image-section">
+            <div className="product-card-image-wrapper">
+              <img
+                src={image}
+                alt={name}
+                className="product-card-image"
+              />
+            </div>
+            <span className="product-card-info-label">{translateType(type)}</span>
+          </div>
+
+          {/* 右側資訊區域 */}
+          <div className="product-card-info-section">
+            <div className="product-card-name">{name}</div>
+            <div className="product-card-description">
+              {description}
+            </div>
+            <div className="product-card-price">
+              ${price}
             </div>
           </div>
-          
-          <div className="product-card-description">
-            {description}
-          </div>
-          
-          <div className="product-card-price">
-            ${price}
-          </div>
         </div>
-      </div>
+
     </div>
   );
 };

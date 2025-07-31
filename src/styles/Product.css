@@ -86,7 +86,6 @@
   flex-direction: row;
   justify-content: space-between;
   gap: 24px;
-  border: 2px solid #ccc;
   border-radius: 16px;
   padding: 24px;
 }
@@ -100,16 +99,18 @@
 }
 
 .modal-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 150px;
+  height: 150px;
+  border-radius: 10px;
+  object-fit: contain;
+  background-color: #FDF5DE;
+  border: 1px solid #ccc;
 }
 
 .modal-image-placeholder {
   width: 120px;
   height: 120px;
-  border-radius: 50%;
+  border-radius: 10px;
   background: #eee;
   color: #555;
   font-size: 14px;
@@ -135,19 +136,40 @@
   gap: 12px;
   flex: 1;
 }
-
-.modal-input,
-.modal-textarea {
+.modal-name,
+.modal-description{
   width: 100%;
   padding: 10px 12px;
   font-size: 15px;
   border-radius: 8px;
   border: 1px solid #aaa;
 }
+.modal-price {
+  width: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  background-color: #4dad52; 
+  border-radius: 5px;
+  padding: 4px 8px;
+  color: #ffffff;
+  align-self: flex-end;
+}
 
-.modal-textarea {
+.modal-description {
   height: 100px;
   resize: none;
+}
+
+.modal-type {
+  width: 66%;
+  padding: 8px 12px;
+  font-size: 15px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
 .modal-actions-centered {
