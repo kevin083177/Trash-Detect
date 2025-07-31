@@ -317,40 +317,40 @@ export const ProductPage: React.FC = () => {
                                         />
                                     </label>
                                 )}
-                                <input
-                                    className="modal-input"
-                                    placeholder="物品名稱"
-                                    value={editProduct.name}
-                                    onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
-                                />
-                                <input
-                                    className="modal-input"
-                                    placeholder="價錢"
-                                    value={editProduct.price}
-                                    onChange={(e) => setEditProduct({ ...editProduct, price: Number(e.target.value) })}
-                                />
-                            </div>
-                            <div className="modal-right">
                                 <select
-                                    className="modal-input"
+                                    className="modal-type"
                                     value={editProduct.type}
                                     onChange={e => setEditProduct({ ...editProduct, type: e.target.value as Product["type"] })}
                                 >
                                     <option value="">請選擇類別</option>
                                     <option value="bookshelf">書架</option>
                                     <option value="box">收納盒</option>
-                                    <option value="calendar">月曆</option>
+                                    <option value="calendar">日曆</option>
                                     <option value="carpet">地毯</option>
                                     <option value="lamp">燈具</option>
                                     <option value="pendant">吊飾</option>
                                     <option value="table">桌子</option>
                                     <option value="wallpaper">壁紙</option>
-                                </select>
+                                </select>                                                                
+                            </div>
+                            <div className="modal-right">
+                                <input
+                                    className="modal-name"
+                                    placeholder="物品名稱"
+                                    value={editProduct.name}
+                                    onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
+                                />
                                 <textarea
-                                    className="modal-textarea"
+                                    className="modal-description"
                                     placeholder="物品介紹"
                                     value={editProduct.description}
                                     onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
+                                />
+                                <input
+                                    className="modal-price"
+                                    placeholder="價錢"
+                                    value={editProduct.price}
+                                    onChange={(e) => setEditProduct({ ...editProduct, price: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
