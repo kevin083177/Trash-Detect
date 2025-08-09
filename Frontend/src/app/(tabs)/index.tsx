@@ -5,26 +5,15 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import Headers from '@/components/Headers';
 import { useUser } from '@/hooks/user';
-import { loadRoom, RoomData, ItemTransform } from '@/utils/roomStorage';
-import { ProductCategory } from '@/interface/Product';
+import { loadRoom, RoomData, hasRoom, ItemTransform, loadDefaultDecorations } from '@/utils/roomStorage';
+import { ITEM_Z_INDEX, ProductCategory } from '@/interface/Product';
 import { ImageSize } from '@/interface/Image';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 const { width, height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 62;
 const HEADERS_HEIGHT = 50;
-const PADDING = 4;
 const DEFAULT_SIZE = 60;
-
-const getDefaultPositions = (containerHeight: number): Record<ProductCategory, { x: number; y: number }> => ({
-  table: { x: width * 0.5, y: containerHeight * 0.5 },
-  bookshelf: { x: width * 0.3, y: containerHeight * 0.4 },
-  lamp: { x: width * 0.7, y: containerHeight * 0.3 },
-  carpet: { x: width * 0.5, y: containerHeight * 0.7 },
-  pendant: { x: width * 0.4, y: containerHeight * 0.25 },
-  calendar: { x: width * 0.6, y: containerHeight * 0.45 },
-  box: { x: width * 0.5, y: containerHeight * 0.8 },
-  wallpaper: { x: 0, y: 0 },
-});
 
 export default function Index() {
   const [notification, setNotification] = useState<{
@@ -57,14 +46,19 @@ export default function Index() {
 
   const loadRoomData = async () => {
     try {
-      const data = await loadRoom();
-      setRoomData(data);
+      const room = await hasRoom();
+      if (room) {
+        const loadedRoom = await loadRoom();
+        setRoomData(loadedRoom);
+      } else {
+        const defaultRoom = await loadDefaultDecorations(await tokenStorage.getToken() as string, width, height);
+        setRoomData(defaultRoom);
+      }
     } catch (error) {
       console.error('載入房間數據失敗:', error);
     }
   };
 
-  // 載入所有圖片尺寸
   useEffect(() => {
     const loadImageSizes = async () => {
       const newImageSizes: Partial<Record<ProductCategory, ImageSize>> = {};
@@ -78,8 +72,7 @@ export default function Index() {
           Image.getSize(
             item.image!.url,
             (imgWidth, imgHeight) => {
-              // 計算適合的顯示尺寸，保持長寬比
-              const maxSize = 80; // 最大顯示尺寸
+              const maxSize = 80;
               const ratio = Math.min(maxSize / imgWidth, maxSize / imgHeight);
               const displayWidth = imgWidth * ratio;
               const displayHeight = imgHeight * ratio;
@@ -111,17 +104,6 @@ export default function Index() {
     }
   }, [roomData.selectedItems]);
 
-  const getItemTransform = (category: ProductCategory): ItemTransform => {
-    const containerHeight = height - HEADERS_HEIGHT - TAB_BAR_HEIGHT;
-    const defaultPositions = getDefaultPositions(containerHeight);
-    
-    return roomData.itemTransforms[category] || {
-      position: defaultPositions[category],
-      scale: 2,
-      rotation: 0,
-    };
-  };
-
   const getItemSize = (category: ProductCategory): ImageSize => {
     return imageSizes[category] || { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
   };
@@ -131,11 +113,12 @@ export default function Index() {
       if (!item || category === 'wallpaper' || category === 'box') return null;
 
       const categoryKey = category as ProductCategory;
-      const transform = getItemTransform(categoryKey);
+      const transform = roomData.itemTransforms[categoryKey] as ItemTransform;
       const imageSize = getItemSize(categoryKey);
-      const containerWidth = imageSize.width + PADDING * 2;
-      const containerHeight = imageSize.height + PADDING * 2;
-
+      const containerWidth = imageSize.width;
+      const containerHeight = imageSize.height;
+      const zIndex = transform.zIndex ?? ITEM_Z_INDEX[categoryKey];
+      
       if (!transform || !transform.position) {
         return null;
       }
@@ -154,13 +137,13 @@ export default function Index() {
                 { scale: transform.scale || 1 },
                 { rotate: `${transform.rotation || 0}deg` }
               ],
+              zIndex: zIndex,
             }
           ]}
         >
           <View style={[
             styles.imageWrapper,
             {
-              padding: PADDING,
               width: containerWidth,
               height: containerHeight,
             }
@@ -168,7 +151,6 @@ export default function Index() {
             <Image
               source={{ uri: item.image?.url }}
               style={[
-                styles.roomItemImage,
                 {
                   width: imageSize.width,
                   height: imageSize.height,
@@ -301,8 +283,7 @@ export default function Index() {
   
   return (
     <View style={styles.container}>
-      <Headers router={router} username={getUsername()} money={getMoney()} />
-      
+        <Headers style={{zIndex: 2}} router={router} username={getUsername()} money={getMoney()} />
       <View style={[styles.buildingArea, { height: height - HEADERS_HEIGHT - TAB_BAR_HEIGHT }]}>
         <ImageBackground
           source={{ uri: roomData.selectedItems.wallpaper?.image?.url }}
@@ -352,6 +333,7 @@ const styles = StyleSheet.create({
     position: 'absolute', 
     zIndex: 10,
     elevation: 4,
+    left: width / 2,
     bottom: 100,
   },
   dogImage: {
@@ -362,7 +344,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    zIndex: 1,
+    zIndex: 1
   },
   backgroundImage: {
     flex: 1,
@@ -375,9 +357,6 @@ const styles = StyleSheet.create({
   imageWrapper: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  roomItemImage: {
-    // 尺寸由動態計算決定
   },
   floatingDailySection: {
     position: 'absolute',
