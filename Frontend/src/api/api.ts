@@ -64,7 +64,7 @@ export const product_api = {
 } as const;
 
 export const theme_api = {
-    get_theme: `${theme_url}/`,
+    get_theme: `${theme_url}`,
     add_theme: `${theme_url}/add_theme`,
     get_all_themes: `${theme_url}/all`,
     delete_theme: `${theme_url}/delete_theme/`, // + theme_name
