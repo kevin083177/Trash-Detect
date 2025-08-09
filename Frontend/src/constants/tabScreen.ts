@@ -2,6 +2,7 @@
 export const HIDE_TAB_BAR_PATHS = [
   'setting',
   'verification',
+  '/scanner',
   '/backpack',
   '/shop/theme',
   '/game/gameplay',

@@ -39,13 +39,12 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ detections }) => {
 const styles = StyleSheet.create({
   resultContainer: {
     position: 'absolute',
-    bottom: 50,
-    left: 20,
-    right: 20,
+    alignSelf: 'center',
+    width: 120,
+    top: 12,
     backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    borderRadius: 24,
+    padding: 16,
     alignItems: 'center',
   },
   resultText: {

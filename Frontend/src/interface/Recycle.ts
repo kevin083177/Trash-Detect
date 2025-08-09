@@ -1,6 +1,14 @@
 export type RecycleType = 'paper' | 'plastic' | 'containers' | 'bottles' | 'cans';
 export type RecycleRequirement = Partial<Record<RecycleType, number>>;
 
+export type RecycleTipsType = {
+  containers: string[];
+  cans: string[];
+  bottles: string[];
+  paper: string[];
+  plastic: string[];
+};
+
 export interface RecycleValues {
     paper: number;
     plastic: number;

@@ -2,19 +2,21 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface TimerProps {
+  detectTime: number;
   timeLeft: number;
   targetItem: string;
   isActive: boolean;
 }
 
-export const Timer: React.FC<TimerProps> = ({ 
+export const Timer: React.FC<TimerProps> = ({
+  detectTime,
   timeLeft, 
   targetItem, 
   isActive 
 }) => {
   if (!isActive) return null;
 
-  const progress = (3 - timeLeft) / 3 * 100; // 計算進度百分比
+  const progress = (detectTime - timeLeft) / detectTime * 100; // 計算進度百分比
 
   return (
     <View style={styles.container}>
@@ -22,7 +24,6 @@ export const Timer: React.FC<TimerProps> = ({
         <Text style={styles.targetText}>請維持不要移動</Text>
         <Text style={styles.countdownText}>{timeLeft}</Text>
         
-        {/* 進度條 */}
         <View style={styles.progressBar}>
           <View 
             style={[
@@ -39,11 +40,10 @@ export const Timer: React.FC<TimerProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: '50%',
+    top: '40%',
     left: 20,
     right: 20,
     alignItems: 'center',
-    transform: [{ translateY: -50 }],
   },
   timerContainer: {
     backgroundColor: 'rgba(0,0,0,0.8)',
