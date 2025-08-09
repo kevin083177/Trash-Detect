@@ -70,7 +70,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
                 setUser(userData);
             } else {
-                console.log("Invalid user data: ", response);
                 setUser(null);
             }
         } catch (error) {
@@ -237,7 +236,7 @@ export function UserProvider({ children }: UserProviderProps) {
                 },
                 body: formData,
             });
-            console.log(response);
+            
             if (response && response.body) {
                 console.log(response.body)
                 setUser(prevUser => {
