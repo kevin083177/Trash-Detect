@@ -29,18 +29,14 @@ export default function Settings() {
   const [editingType, setEditingType] = useState<SettingType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // Username 相關狀態
   const [newUsername, setNewUsername] = useState<string>('');
   
-  // Password 相關狀態
   const [oldPassword, setOldPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   
-  // Email 相關狀態
   const [newEmail, setNewEmail] = useState<string>('');
   
-  // Toast 狀態
   const [toast, setToast] = useState({
     visible: false,
     message: '',
@@ -51,7 +47,6 @@ export default function Settings() {
     setToast({ visible: true, message, type });
   };
 
-  // 重置表單
   const resetForm = () => {
     setNewUsername('');
     setOldPassword('');
@@ -61,7 +56,6 @@ export default function Settings() {
     setEditingType(null);
   };
 
-  // 更新用戶名
   const handleUpdateUsername = async () => {
     try {
       setIsLoading(true);
@@ -103,7 +97,6 @@ export default function Settings() {
     }
   };
 
-  // 更新電子郵件
   const handleUpdateEmail = async () => {
     try {
       setIsLoading(true);
@@ -264,6 +257,12 @@ export default function Settings() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={router.back} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>個人設定</Text>
+      </View>
       <LoadingModal visible={isLoading} text="處理中..." />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -305,6 +304,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E7',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 40,
   },
   scrollView: {
     flex: 1,
