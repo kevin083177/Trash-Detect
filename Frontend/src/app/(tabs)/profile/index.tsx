@@ -53,8 +53,8 @@ export default function Profile() {
 
   const handleLogout = () => {
     Alert.alert(
-      '登出確認',
-      '確定要登出嗎？',
+      '確定要登出嗎',
+      '登出將會遺失所有的布置設定',
       [
         {
           text: '取消',
@@ -62,7 +62,6 @@ export default function Profile() {
         },
         {
           text: '確定',
-          style: 'destructive',
           onPress: async () => {
             try {
               await logout();
