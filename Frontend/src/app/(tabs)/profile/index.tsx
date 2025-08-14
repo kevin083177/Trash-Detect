@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Image, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { router } from 'expo-router';
@@ -8,17 +8,24 @@ import { useUser } from '@/hooks/user';
 import { useAuth } from '@/hooks/auth';
 import MenuButton from '@/components/profile/MenuButton';
 import RecyclePieChart from '@/components/profile/RecyclePieChart';
+import PentagonChart from '@/components/profile/PentagonChart';
 import { RecycleValues } from '@/interface/Recycle';
 import { clearRoom } from '@/utils/roomStorage';
 import { asyncGet } from '@/utils/fetch';
-import { feedback_api } from '@/api/api';
+import { feedback_api, user_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
+import { QuestionStats } from '@/interface/Question';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function Profile() {
   const [recyclingData, setRecyclingData] = useState<RecycleValues>();
+  const [questionStats, setQuestionStats] = useState<QuestionStats>();
   const [token, setToken] = useState<string | null>(null);
   const [isCheckingFeedback, setIsCheckingFeedback] = useState<boolean>(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const { 
     user, 
@@ -51,10 +58,38 @@ export default function Profile() {
     setRecyclingData(trashStats);
   }, [getTrashStats]);
 
+  const fetchQuestionStats = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const response = await asyncGet(user_api.get_question_stats, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (response && response.body) {
+        const apiData = response.body;
+        
+        const transformedData: QuestionStats = {
+          bottles: apiData.bottles || { correct: 0, total: 0 },
+          cans: apiData.cans || { correct: 0, total: 0 },
+          containers: apiData.container || { correct: 0, total: 0 },
+          paper: apiData.paper || { correct: 0, total: 0 },
+          plastic: apiData.plastic || { correct: 0, total: 0 }
+        };
+        
+        setQuestionStats(transformedData);
+      }
+    } catch (error) {
+      console.error('Error fetching question stats:', error);
+    }
+  }, [token]);
+
   const handleLogout = () => {
     Alert.alert(
-      '確定要登出嗎',
-      '登出將會遺失所有的布置設定',
+      '確定要登出嗎？',
+      '登出將會遺失所有的佈置設定',
       [
         {
           text: '取消',
@@ -166,11 +201,18 @@ export default function Profile() {
     }
   };
 
+  const handleScrollEnd = (event: any) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const page = Math.round(contentOffsetX / screenWidth);
+    setCurrentPage(page);
+  };
+
   useEffect(() => {
     if (user) {
       transformTrashStats();
+      fetchQuestionStats();
     }
-  }, [user, transformTrashStats]);
+  }, [user, transformTrashStats, fetchQuestionStats]);
 
   const getListData = () => {
     return [
@@ -239,12 +281,67 @@ export default function Profile() {
         );
       
       case 'stats':
-        return recyclingData ? (
+        return (
           <View style={styles.statsContainer}>
-            <Text style={styles.statsTitle}>回收統計</Text>
-            <RecyclePieChart data={recyclingData} size={220} />
+            <View style={styles.chartHeader}>
+              <Text style={styles.statsTitle}>
+                {currentPage === 0 ? '回收統計' : '答題統計'}
+              </Text>
+            </View>
+
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleScrollEnd}
+              scrollEventThrottle={16}
+            >
+              <View style={[styles.chartPage, { width: screenWidth - 64}]}>
+                {recyclingData ? (
+                  <RecyclePieChart 
+                    data={recyclingData} 
+                    size={200} 
+                    containerWidth={screenWidth - 64}
+                  />
+                
+                ) : (
+                  <View style={styles.emptyChart}>
+                    <Text style={styles.emptyText}>暫無數據</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={[styles.chartPage, { width: screenWidth - 64}]}>
+                {questionStats ? (
+                  <PentagonChart 
+                    data={questionStats} 
+                    containerWidth={screenWidth - 64}
+                  />
+                ) : (
+                  <View style={styles.emptyChart}>
+                    <Text style={styles.emptyText}>暫無數據</Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            <View style={styles.indicatorContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.indicator,
+                  currentPage === 0 && styles.activeIndicator
+                ]}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.indicator,
+                  currentPage === 1 && styles.activeIndicator
+                ]}
+              />
+            </View>
           </View>
-        ) : null;
+        );
       
       case 'menu':
         return (
@@ -265,8 +362,9 @@ export default function Profile() {
     useCallback(() => {
       if (token) {
         fetchUserProfile();
+        fetchQuestionStats();
       }
-    }, [token, fetchUserProfile])
+    }, [token, fetchUserProfile, fetchQuestionStats])
   );
 
   return (
@@ -289,14 +387,13 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 6,
   },
   userContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
-    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
@@ -354,13 +451,57 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    margin: 16,
+    marginBottom: 6,
+    paddingTop: 8,
+    borderRadius: 12,
+    backgroundColor: "white",
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  indicatorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+  },
+  activeIndicator: {
+    backgroundColor: '#000000',
+  },
+  chartPage: {
+    elevation: 5,
+  },
+  emptyChart: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#999',
+    fontSize: 14,
   },
 });
