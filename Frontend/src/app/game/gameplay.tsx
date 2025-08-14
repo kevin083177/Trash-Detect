@@ -2,13 +2,16 @@ import React, { useEffect, useState, useRef, useMemo, useLayoutEffect, useCallba
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, SafeAreaView, Easing, ImageBackground, BackHandler, Alert } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, router } from 'expo-router';
 import { Question } from '@/interface/Question';
-import { Timer } from '@/components/game/Timer';
-import { WaterScore } from '@/components/game/WaterScore';
+import { convertRecycleType } from '@/interface/Recycle';
+import { TimerScore } from '@/components/game/TimerScore';
 import { ResultModal } from '@/components/game/ResultModal';
 import { useUserLevel } from '@/hooks/userLevel';
 import { asyncGet } from "@/utils/fetch";
 import { question_api } from "@/api/api";
 import { tokenStorage } from "@/utils/tokenStorage";
+import LinearGradient from 'react-native-linear-gradient';
+import { Cloud } from '@/components/game/Cloud';
+import { useUser } from '@/hooks/user';
 
 type Phase = 'show-info' | 'show-question' | 'show-options' | 'transitioning' | 'game-ended';
 
@@ -51,6 +54,7 @@ function shuffleOptions(questions: Question[]): Question[] {
 export default function Gameplay() {
   const params = useLocalSearchParams();
   const { updateLevelProgress, updateCompletedChapter } = useUserLevel();
+  const { updateQuestionStats } = useUser();
 
   const levelId = Number(params.levelId);
   const initialQuestions = useMemo(() => {
@@ -66,14 +70,6 @@ export default function Gameplay() {
   const chapterName = params.chapterName as string;
   const levelBackground = params.levelBackground as string;
   
-  const categoryName = useMemo(() => {
-    if (chapterName) return chapterName;
-    if (initialQuestions.length > 0) {
-      return initialQuestions[0].category + '篇';
-    }
-    return '';
-  }, [chapterName, initialQuestions]);
-
   const isFirstLoad = useRef<boolean>(true);
   const isGameEnd = useRef<boolean>(false);
   
@@ -96,7 +92,7 @@ export default function Gameplay() {
   const questionFade = useRef(new Animated.Value(0)).current;
   const optionsFade = useRef(new Animated.Value(0)).current;
   const scoreAnimRef = useRef(new Animated.Value(0)).current;
-  const waterScoreVisible = useRef(new Animated.Value(0)).current;
+  const TimerScoreVisible = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
@@ -139,7 +135,7 @@ export default function Gameplay() {
 
   useEffect(() => {
     if (isFirstLoad.current === false && questions.length > 0) {
-      Animated.timing(waterScoreVisible, {
+      Animated.timing(TimerScoreVisible, {
         toValue: 1,
         duration: 800,
         delay: 500,
@@ -173,13 +169,13 @@ export default function Gameplay() {
     questionFade.setValue(0);
     optionsFade.setValue(0);
     scoreAnimRef.setValue(0);
-    waterScoreVisible.setValue(0);
+    TimerScoreVisible.setValue(0);
     
     clearTimers();
     clearAllTimeouts();
     
     setTimeout(() => {
-      Animated.timing(waterScoreVisible, {
+      Animated.timing(TimerScoreVisible, {
         toValue: 1,
         duration: 800,
         delay: 500,
@@ -246,19 +242,23 @@ export default function Gameplay() {
     if (!questions.length || currentIndex >= questions.length) return;
     
     startNewQuestion();
-    
   }, [currentIndex, questions]);
 
   const startNewQuestion = () => {
-    resetPhase();
-    setPhase('show-info');
+    clearTimers();
+    setTimer(8);
+    setDisplayTimer(8)
+    setIsAnswered(false);
     
-    const t1 = setPhaseTimeout(() => {
+    setPhase('show-info');
+    setIsTimerRunning(false);
+    
+    setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-question');
     }, 1500);
     
-    const t2 = setPhaseTimeout(() => {
+    setPhaseTimeout(() => {
       if (isGameEnd.current) return;
       setPhase('show-options');
       setPhaseTimeout(() => {
@@ -266,15 +266,6 @@ export default function Gameplay() {
         startCountdown(); 
       }, 100);
     }, 2500);
-  };
-
-  const resetPhase = () => {
-    clearTimers();
-    
-    setTimer(8);
-    setDisplayTimer(8);
-    setIsAnswered(false);
-    setIsTimerRunning(false);
   };
 
   const clearTimers = () => {
@@ -290,7 +281,6 @@ export default function Gameplay() {
     if (isGameEnd.current) return;
     setTimer(8);
     setDisplayTimer(8);
-    
     setIsTimerRunning(true);
     
     timerRef.current = setInterval(() => {
@@ -324,7 +314,6 @@ export default function Gameplay() {
   // 時間到自動答錯
   useEffect(() => {
     if (isGameEnd.current) return;
-    console.log(currentQuestion?.correctOptionIndex);
     if (phase === 'show-options' && displayTimer === 0 && !isAnswered) {
       handleAnswer(-1);
     }
@@ -402,10 +391,15 @@ export default function Gameplay() {
       const stars = gameScore >= 1600 ? 3 : gameScore >= 1000 ? 2 : gameScore >= 600 ? 1 : 0;
       const money = caculateMoney(gameScore);
 
+      const correctCount = questions.reduce((count, q, index) => {
+        return count + (selectedOptions[index] === q.correctOptionIndex ? 1 : 0);
+      }, 0);
+
       await (isChallenge 
         ? updateCompletedChapter(chapterSequence, gameScore, money)
         : updateLevelProgress(levelId, gameScore)
       );
+      await updateQuestionStats(convertRecycleType(chapterName.slice(0, -2)), questions.length, correctCount);
 
       setFinalScore(gameScore);
       setFinalStars(stars);
@@ -430,7 +424,7 @@ export default function Gameplay() {
     
     if (isChallenge) {
       try {
-        const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+        const response = await asyncGet(`${question_api.get_question_by_category}${chapterName.slice(0, -2)}`, {
           headers: {
             "Authorization": `Bearer ${await tokenStorage.getToken()}`
           }
@@ -466,7 +460,7 @@ export default function Gameplay() {
       }
     } else {
       try {
-        const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+        const response = await asyncGet(`${question_api.get_question_by_category}${chapterName.slice(0, -2)}`, {
           headers: {
             "Authorization": `Bearer ${await tokenStorage.getToken()}`
           }
@@ -487,7 +481,14 @@ export default function Gameplay() {
     }
   };
 
-  // 提取關卡問題的函數
+  const getOptionStyle = (i: number) => {
+    const selected = selectedOptions[currentIndex];
+    if (phase !== 'show-options' || !isAnswered) return styles.option;
+    if (i === currentQuestion?.correctOptionIndex) return [styles.option, styles.correctOption];
+    if (i === selected) return [styles.option, styles.incorrectOption];
+    return styles.option;
+  };
+
   const extractQuestions = (questions: any[], levelSequence: number): Question[] => {
     const normalizedSequence = ((levelSequence - 1) % 5) + 1;
     const startIndex = (normalizedSequence - 1) * 20;
@@ -519,13 +520,13 @@ export default function Gameplay() {
     try {
       const nextLevelId = levelId + 1;
       
-      if (!categoryName) {
+      if (!chapterName) {
         console.error("無法獲取章節名稱");
         Alert.alert("錯誤", "無法獲取章節信息，請返回重新選擇關卡。");
         return;
       }
 
-      const response = await asyncGet(`${question_api.get_question_by_category}${categoryName.slice(0, -2)}`, {
+      const response = await asyncGet(`${question_api.get_question_by_category}${chapterName.slice(0, -2)}`, {
         headers: {
           "Authorization": `Bearer ${await tokenStorage.getToken()}`
         }
@@ -543,7 +544,7 @@ export default function Gameplay() {
           params: {
             isChallenge: 'false',
             levelId: nextLevelId,
-            chapterName: categoryName,
+            chapterName: chapterName,
             levelBackground: levelBackground,
             questions: JSON.stringify(gameQuestions),
           }
@@ -596,7 +597,7 @@ export default function Gameplay() {
       questionFade.stopAnimation();
       optionsFade.stopAnimation();
       scoreAnimRef.stopAnimation();
-      waterScoreVisible.stopAnimation();
+      TimerScoreVisible.stopAnimation();
     };
   }, []);
 
@@ -610,146 +611,141 @@ export default function Gameplay() {
     questionFade.stopAnimation();
     optionsFade.stopAnimation();
     scoreAnimRef.stopAnimation();
-    waterScoreVisible.stopAnimation();
+    TimerScoreVisible.stopAnimation();
     
     router.replace('/game');
   };
 
-  const getOptionStyle = (i: number) => {
-    const selected = selectedOptions[currentIndex];
-    if (phase !== 'show-options' || !isAnswered) return styles.option;
-    if (i === currentQuestion?.correctOptionIndex) return [styles.option, styles.correctOption];
-    if (i === selected) return [styles.option, styles.incorrectOption];
-    return styles.option;
-  };
-
-  if (!questions.length || currentIndex >= questions.length) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.errorText}>目前無更多題目</Text>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={handleExit}
-          >
-            <Text style={styles.backButtonText}>返回</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View 
-        style={[
-          styles.waterScoreContainer,
-          {
-            opacity: waterScoreVisible,
-            transform: [{
-              scale: waterScoreVisible.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.5, 1],
-              })
-            }]
-          }
-        ]}
-      >
-        <WaterScore 
-          score={score} 
-          maxScore={2000} 
-          size={100}
-          showAnimation={true}
-        />
-      </Animated.View>
+    <LinearGradient
+      colors={['#87CEEB', '#6CAFF5', '#4A90E2']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.cloudsContainer}>
+          <View style={[styles.cloudPosition, { top: 30, right: 20 }]}>
+            <Cloud width={100} height={50}/>
+          </View>
+          <View style={[styles.cloudPosition, { top: 100, left: -180 }]}>
+            <Cloud width={300} height={150}/>
+          </View>
+          <View style={[styles.cloudPosition, { bottom: 500, right: -100 }]}>
+            <Cloud width={250} height={125}/>
+          </View>
+          <View style={[styles.cloudPosition, { bottom: 120, right: 150 }]}>
+            <Cloud width={500} height={250}/>
+          </View>
+        </View>
 
-      {phase === 'show-options' && (
         <Animated.View 
           style={[
-            styles.timerWrapper, 
-            { opacity: optionsFade }
+            styles.timerScoreContainer,
+            {
+              opacity: TimerScoreVisible,
+              transform: [{
+                scale: TimerScoreVisible.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.5, 1],
+                })
+              }]
+            }
           ]}
         >
-          <Timer
+          <TimerScore 
             duration={8}
             currentTime={displayTimer}
-            isRunning={isTimerRunning}
-            style={{paddingVertical: 20}}
+            isRunning={isTimerRunning && phase === 'show-options'}
+            score={score} 
+            maxScore={2000} 
+            size={width * 0.4}
+            showAnimation={true}
           />
         </Animated.View>
-      )}
 
-      {phase === 'show-info' && currentQuestion && (
-        <Animated.View style={[styles.infoContainer, { opacity: infoFade }]}>
-          <Text style={styles.infoText}>
-            {currentIndex === questions.length - 1 
-              ? "最後一題" 
-              : `第 ${currentIndex + 1} 題`}
-          </Text>
-          <Text style={styles.categoryText}>{currentQuestion.category}</Text>
-        </Animated.View>
-      )}
+        <View style={styles.mainContent}>
+          <View style={styles.questionSection}>
+            {(phase === 'show-question' || phase === 'show-options') && currentQuestion && (
+              <Animated.View style={[styles.questionContainer, { opacity: questionFade }]}>
+                <Text style={styles.questionText}>{currentQuestion.content}</Text>
+              </Animated.View>
+            )}
+          </View>
 
-      {(phase === 'show-question' || phase === 'show-options') && currentQuestion && (
-        <Animated.View style={[styles.questionContainer, { opacity: questionFade }]}>
-          <Text style={styles.questionText}>{currentQuestion.content}</Text>
-        </Animated.View>
-      )}
+          <View style={styles.optionsSection}>
+            {phase === 'show-options' && currentQuestion && (
+               <Animated.View style={[styles.optionsContainer, { opacity: optionsFade }]}>
+                {currentQuestion.options.map((opt, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={getOptionStyle(idx)}
+                    onPress={() => handleAnswer(idx)}
+                    disabled={isAnswered}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        isAnswered &&
+                          (idx === currentQuestion.correctOptionIndex || idx === selectedOptions[currentIndex])
+                          ? styles.whiteText
+                          : null
+                      ]}
+                    >
+                      {opt.text}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </Animated.View>
+            )}
+          </View>
 
-      {phase === 'show-options' && currentQuestion && (
-        <Animated.View style={[styles.optionsContainer, { opacity: optionsFade }]}>
-          {currentQuestion.options.map((opt, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={getOptionStyle(idx)}
-              onPress={() => handleAnswer(idx)}
-              disabled={isAnswered}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  isAnswered &&
-                    (idx === currentQuestion.correctOptionIndex || idx === selectedOptions[currentIndex])
-                    ? styles.whiteText
-                    : null
-                ]}
-              >
-                {opt.text}
+          {phase === 'show-info' && currentQuestion && (
+            <Animated.View style={[styles.infoSection, { opacity: infoFade }]}>
+              <Text style={styles.infoText}>
+                {currentIndex === questions.length - 1 
+                  ? "最後一題" 
+                  : `第 ${currentIndex + 1} 題`}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-      )}
+              <View style={styles.categoryContainer}>
+                <Text style={styles.categoryText}>{currentQuestion.category}</Text>
+              </View>
+            </Animated.View>
+          )}
+        </View>
 
-      <ResultModal
-        visible={showResultModal}
-        isChallenge={isChallenge}
-        score={finalScore}
-        stars={finalStars}
-        money={finalMoney}
-        currentLevelId={levelId}
-        hasNextLevel={hasNextLevel}
-        onPlayAgain={handlePlayAgain}
-        onBackToMenu={handleBackToMenu}
-        onNextLevel={handleNextLevel}
-      />
-    </SafeAreaView>
+        <ResultModal
+          visible={showResultModal}
+          isChallenge={isChallenge}
+          score={finalScore}
+          stars={finalStars}
+          money={finalMoney}
+          currentLevelId={levelId}
+          hasNextLevel={hasNextLevel}
+          onPlayAgain={handlePlayAgain}
+          onBackToMenu={handleBackToMenu}
+          onNextLevel={handleNextLevel}
+        />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const { height, width } = Dimensions.get('window');
+const SPACING = Math.max(10, (height * 0.5 - 320) / 5);
 
 const styles = StyleSheet.create({
   container: { 
-    flex: 1, 
-  },
-  backgroundImage: {
     flex: 1,
-    width: width,
-    height: height,
   },
-  scoreBar: { 
-    padding: 20
+  cloudsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  cloudPosition: {
+    position: 'absolute',
   },
   centerContent: { 
     flex: 1, 
@@ -761,104 +757,113 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 20
   },
-  loadingText: {
-    fontSize: 18,
-    color: '#555',
-  },
-  backButton: {
-    backgroundColor: '#4A6CFA',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  waterScoreContainer: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
+  timerScoreContainer: {
+    alignItems: 'center',
     zIndex: 10,
   },
-  timerWrapper: { 
-    position: 'absolute', 
-    top: 0, 
-    alignSelf: 'center', 
-    width: '100%'
-  },
-  infoContainer: { 
-    position: 'absolute', 
-    top: height / 2 - 40, 
-    width: '100%', 
-    alignItems: 'center'
-  },
-  infoText: { 
-    fontSize: 32, 
-    fontWeight: 'bold', 
-    color: 'white'
-  },
-  categoryText: { 
-    width: 100, 
-    height: 30, 
-    fontSize: 18, 
-    backgroundColor: '#a83432', 
-    borderRadius: 10, 
-    color: 'white', 
-    marginTop: 5, 
-    textAlign: 'center'
-  },
-  questionContainer: { 
-    position: 'absolute', 
-    top: 160, 
-    width: '90%', 
-    alignSelf: 'center', 
-    height: 120, 
+  mainContent: {
+    flex: 1,
+    position: 'relative',
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    padding: 10,
+    zIndex: 5,
+  },
+  questionSection: {
+    width: width * 0.9,
+    height: height * 0.15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  questionContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   questionText: { 
     fontSize: 20, 
-    fontWeight: '500', 
+    fontWeight: '600', 
     textAlign: 'center', 
-    color: 'white', 
-    textShadowColor: 'rgba(0, 0, 0, 0.75)', 
-    textShadowOffset: { width: 1, height: 1 }, 
-    textShadowRadius: 3
+    color: '#1890FF',
+    lineHeight: 28,
   },
-  optionsContainer: { 
-    position: 'absolute', 
-    top: 400, 
-    width: '75%', 
-    alignSelf: 'center'
+  optionsSection: {
+    flex: 1,
+    width: width * 0.85,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
   },
-  option: { 
+  optionsContainer: {
+    width: "100%",
+    alignItems: 'center',
+    paddingVertical: SPACING,
+    flexGrow: 1,
+    justifyContent: 'space-around',
+  },
+  option: {
+    width: '80%',
     height: 80,
-    backgroundColor: 'rgba(255, 255, 255, 1)',
-    padding: 16, 
-    borderRadius: 12, 
-    borderColor: '#',
-    marginBottom: 12, 
-    flexDirection: 'row',
+    borderRadius: 16,
+    marginBottom: 12,
+    backgroundColor: '#ffffff',
     alignItems: 'center', 
-    justifyContent: 'space-between', 
+    justifyContent: 'center',
   },
   correctOption: { 
-    borderColor: '#70AA42', 
     backgroundColor: '#70AA42'
   },
   incorrectOption: { 
-    borderColor: '#E74C3C', 
     backgroundColor: '#E74C3C'
   },
   optionText: { 
-    fontSize: 20, 
-    flex: 1, 
-    textAlign: 'center'
+    fontSize: 18, 
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#1890FF',
   },
   whiteText: { 
-    color: 'white' 
+    color: 'white',
+    fontWeight: '700',
+  },
+  infoSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  infoText: { 
+    fontSize: 36, 
+    fontWeight: 'bold', 
+    color: 'white',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)', 
+    textShadowOffset: { width: 2, height: 2 }, 
+    textShadowRadius: 4,
+    marginBottom: 15,
+  },
+  categoryContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  categoryText: { 
+    fontSize: 18, 
+    color: '#1890FF', 
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
