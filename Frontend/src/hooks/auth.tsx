@@ -3,6 +3,8 @@ import { useRouter, useSegments } from 'expo-router';
 import { asyncGet, asyncPost } from '@/utils/fetch';
 import { auth_api, user_api } from '@/api/api';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { loadDefaultDecorations } from '@/utils/roomStorage';
+import { Dimensions } from 'react-native';
 
 interface AuthContextType {
   isLoading: boolean;
@@ -71,7 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any }> => {
     try {
       setIsLoading(true);
-      
+      const { width, height } = Dimensions.get("window");
+
       const response = await asyncPost(auth_api.login, {
         body: {
           email,
@@ -83,6 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = response.body.token;
         await tokenStorage.setToken(token);
         setIsAuthenticated(true);
+        
+        await loadDefaultDecorations(token, width, height);
         
         return { success: true, message: '登入成功' };
       } else {
@@ -163,7 +168,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = await tokenStorage.getToken();
       
       if (token) {
-        // 嘗試告知伺服器登出，但不等待結果
         asyncPost(auth_api.logout, {
           headers: {
             'Authorization': `Bearer ${token}`

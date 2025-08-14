@@ -343,3 +343,67 @@ class UserService(DatabaseService):
         except Exception as e:
             print(f"Update user profile with image error: {str(e)}")
             raise
+    
+    def get_question_stats(self, user_id: str):
+        try:
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            if 'question_stats' not in user or not user['question_stats']:
+                default_stats = self.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"question_stats": {
+                        "plastic": {"total": 0, "correct": 0},
+                        "paper_container": {"total": 0, "correct": 0},
+                        "bottles": {"total": 0, "correct": 0},
+                        "cans": {"total": 0, "correct": 0},
+                        "paper": {"total": 0, "correct": 0}
+                    }}}
+                )
+                
+                user['question_stats'] = default_stats
+                
+            return user['question_stats']
+        
+        except Exception as e:
+            print(f"Get user question stats Error: {str(e)}")
+            raise
+        
+    def update_question_stats(self, user_id: str, category: str, total: int, correct: int):
+        try:
+            valid_categories = ['plastic', 'container', 'bottles', 'cans', 'paper']
+            if category not in valid_categories:
+                raise ValueError(f"無效的類別: {category}")
+                
+            if not isinstance(total, int) or total <= 0:
+                raise ValueError("total 必須為正整數")
+                
+            if not isinstance(correct, int) or correct < 0:
+                raise ValueError("correct 必須為非負整數")
+                
+            if correct > total:
+                raise ValueError("答對數不能大於總題數")
+            
+            user = self.get_user(user_id)
+            if not user:
+                return None
+            
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {
+                    "$inc": {
+                        f"question_stats.{category}.total": total,
+                        f"question_stats.{category}.correct": correct
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                return self.get_question_stats(user_id)
+            
+            return None
+        
+        except Exception as e:
+            print(f"Update user question stats Error: {str(e)}")
+            raise

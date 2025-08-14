@@ -75,3 +75,15 @@ def daily_check_in_status(user):
 @token_required
 def update_profile(user):
     return UserController.update_profile(user['_id'])
+
+@user_blueprint.route('/question', methods=['GET'])
+@log_request
+@token_required
+def get_question_stats(user):
+    return UserController.get_question_stats(user['_id'])
+
+@user_blueprint.route('/question/add', methods=["PUT"])
+@log_request
+@token_required
+def update_question_stats(user):
+    return UserController.update_question_stats(user['_id'])

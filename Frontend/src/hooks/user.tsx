@@ -1,5 +1,6 @@
 import { user_api } from "@/api/api";
-import { RecycleValues } from "@/interface/Recycle";
+import { QuestionStats } from "@/interface/Question";
+import { RecycleType, RecycleValues } from "@/interface/Recycle";
 import { User } from "@/interface/User";
 import { asyncGet, asyncPost, asyncPut } from "@/utils/fetch";
 import { tokenStorage } from "@/utils/tokenStorage";
@@ -26,6 +27,9 @@ interface UserContextType {
     addTrashStat: (type: keyof RecycleValues) => Promise<number>;
     getTotalTrash: () => number;
     
+    updateQuestionStats: (category: RecycleType, total: number, correct: number) => Promise<boolean>;
+    getQuestionStats: () => Promise<{ success: boolean; data?: QuestionStats; message: string}>;
+
     getUsername: () => string;
     getMoney: () => number;
     getTrashStats: () => RecycleValues;
@@ -70,7 +74,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
                 setUser(userData);
             } else {
-                console.log("Invalid user data: ", response);
                 setUser(null);
             }
         } catch (error) {
@@ -237,7 +240,7 @@ export function UserProvider({ children }: UserProviderProps) {
                 },
                 body: formData,
             });
-            console.log(response);
+            
             if (response && response.body) {
                 console.log(response.body)
                 setUser(prevUser => {
@@ -432,6 +435,61 @@ export function UserProvider({ children }: UserProviderProps) {
         }
     }, []);
 
+    const getQuestionStats = useCallback(async (): Promise<{ success: boolean; data?: QuestionStats; message: string }> => {
+        try {
+            const token = await tokenStorage.getToken();
+            if (!token) return { success: false, message: "未登入" }
+
+            const response = await asyncGet(user_api.get_question_stats, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response && response.body) {
+                return { 
+                    success: true,
+                    message: "成功獲取答題統計", 
+                    data: response.body
+                }
+            }
+            else {
+                return {
+                    success: false,
+                    message: response.message
+                }
+            }
+        } catch (error) {
+            console.error('Failed to get question stats:', error);
+            return {
+                success: false,
+                message: "網路錯誤，請稍後再試"
+            }
+        }
+    }, [])
+
+    const updateQuestionStats = useCallback(async (category: RecycleType, total: number, correct: number): Promise<boolean> => {
+        try {
+            const token = await tokenStorage.getToken();
+            if (!token) return false;
+
+            const response = await asyncPut(user_api.update_question_stats, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: {
+                    category: category,
+                    total: total,
+                    correct: correct
+                }
+            });
+            return (!response.body);
+        } catch (error) {
+            console.error('Failed to update question stats:', error);
+            return false;
+        }
+    }, [])
+
     const getUsername = useCallback((): string => {
         return user?.username || '';
     }, [user]);
@@ -482,6 +540,9 @@ export function UserProvider({ children }: UserProviderProps) {
     getTotalTrash,
     getTrashStats,
     addTrashStat,
+
+    getQuestionStats,
+    updateQuestionStats,
 
     getUsername,
     getMoney,

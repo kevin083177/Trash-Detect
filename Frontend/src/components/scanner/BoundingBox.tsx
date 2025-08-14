@@ -33,7 +33,7 @@ export const BoundingBox = ({
     
     return {
       left: x1 * widthRatio,
-      top: y1 * heightRatio - 30,
+      top: y1 * heightRatio,
       width: (x2 - x1) * widthRatio,
       height: (y2 - y1) * heightRatio,
     };
@@ -53,7 +53,7 @@ export const BoundingBox = ({
         }
       ]}
     >
-      <Text style={[styles.boundingBoxLabel, { top: -25 }]}>
+      <Text style={styles.boundingBoxLabel}>
         {translateCategory(detection.category)} {/* ({(detection.confidence * 100).toFixed(1)}%) */}
       </Text>
     </View>
@@ -64,17 +64,21 @@ const styles = StyleSheet.create({
   boundingBox: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: '#00FF00',
+    borderColor: '#ffffffff',
     backgroundColor: 'transparent',
+    borderRadius: 12,
   },
   boundingBoxLabel: {
     position: 'absolute',
-    backgroundColor: '#00FF00',
+    top: 0,
+    left: -2,
+    backgroundColor: '#fff',
     color: '#000',
     fontSize: 12,
     fontWeight: 'bold',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
+    padding: 6,
+    borderRadius: 12,
+    overflow: 'hidden',
+    textAlign: 'center'
   },
 });

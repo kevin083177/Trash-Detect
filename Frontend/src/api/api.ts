@@ -41,6 +41,8 @@ export const user_api = {
     get_user_trash_stats: `${user_url}/trash`,
     add_trash_stats: `${user_url}/trash/add_trash`,
     add_money: `${user_url}/money/add`,
+    get_question_stats: `${user_url}/question`,
+    update_question_stats: `${user_url}/question/add`,
     subtract_money: `${user_url}/money/subtract`,
     daily_check_in: `${user_url}/checkIn`,
     daily_check_in_status: `${user_url}/checkIn/status`,
@@ -64,7 +66,7 @@ export const product_api = {
 } as const;
 
 export const theme_api = {
-    get_theme: `${theme_url}/`,
+    get_theme: `${theme_url}`,
     add_theme: `${theme_url}/add_theme`,
     get_all_themes: `${theme_url}/all`,
     delete_theme: `${theme_url}/delete_theme/`, // + theme_name

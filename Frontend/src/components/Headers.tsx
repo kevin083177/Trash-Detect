@@ -1,36 +1,54 @@
 import React, { ReactNode } from "react"
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Router } from "expo-router";
 
-export default function Headers({ router, username, money, showBackpack=true ,showShop=true, showBackButton=false }: { router: Router, username: string, money: number, showBackpack?: boolean, showShop?: boolean, showBackButton?: boolean }): ReactNode {
+interface HeadersProps {
+  router: Router;
+  username: string;
+  money: number;
+  showBackpack?: boolean;
+  showShop?: boolean;
+  showBackButton?: boolean;
+  style?: ViewStyle;
+}
+
+export default function Headers({ 
+  router, 
+  username, 
+  money, 
+  showBackpack = true,
+  showShop = true, 
+  showBackButton = false,
+  style
+}: HeadersProps): ReactNode {
     return (
-        <View style={styles.header}>
-            { showBackButton &&
-              <TouchableOpacity onPress={() => router.replace('/')}>
-                <Ionicons name="arrow-back" size={24}></Ionicons>
-              </TouchableOpacity>
-            }
-            <TouchableOpacity style={styles.userSection} onPress={() => router.push('/profile')}>
-                <View style={styles.coinContainer}>
-                  <Ionicons name="logo-usd" size={20} color="#FFD700" />
-                  <Text style={styles.coinText}>{money}</Text>
-              </View>
-            </TouchableOpacity>
-            <View style={{ flexDirection: 'row'}}>
-              { showBackpack &&
-                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/backpack' as any)}>
-                  <Ionicons name="bed-outline" size={24} color="black" />
-                </TouchableOpacity>
-              }
-              { showShop &&
-                <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/shop')}>
-                    <Ionicons name="storefront-outline" size={24} color="black" />
-                </TouchableOpacity>
-              }
-            </View>
+      <View style={[styles.header, style]}>
+        { showBackButton &&
+          <TouchableOpacity onPress={() => router.replace('/')}>
+            <Ionicons name="arrow-back" size={24}></Ionicons>
+          </TouchableOpacity>
+        }
+        <TouchableOpacity style={styles.userSection} onPress={() => router.push('/profile')}>
+            <View style={styles.coinContainer}>
+              <Ionicons name="logo-usd" size={20} color="#FFD700" />
+              <Text style={styles.coinText}>{money}</Text>
+          </View>
+        </TouchableOpacity>
+      <View style={{ flexDirection: 'row'}}>
+        { showBackpack &&
+          <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/backpack' as any)}>
+            <Ionicons name="bed-outline" size={24} color="black" />
+          </TouchableOpacity>
+        }
+        { showShop &&
+          <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/shop')}>
+              <Ionicons name="storefront-outline" size={24} color="black" />
+          </TouchableOpacity>
+        }
       </View>
-    )
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -40,15 +58,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
     elevation: 3,
-    height: 50
+    height: 50,
   },
   userSection: {
     flexDirection: 'row',
@@ -75,7 +86,7 @@ const styles = StyleSheet.create({
   coinText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#B7791F', // 金幣數字顏色
+    color: '#B7791F',
   },
   shopIcon: {
     alignItems: 'center',

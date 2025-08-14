@@ -421,3 +421,59 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(upload_profile_image) {str(e)}"
             }, 500
+            
+    def get_question_stats(user_id):
+        try:
+            question_stats = user_service.get_question_stats(user_id)
+            if question_stats is not None:
+                return {
+                "message": "成功獲取答題統計",
+                "body": question_stats,
+            }, 200
+                
+            return {
+                "message": "無法找到使用者"
+            }, 404
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_question_stats): {str(e)}"
+            }, 500
+            
+    def update_question_stats(user_id):
+        try:
+            data = request.get_json()
+            
+            required_fields = ['category', 'total', 'correct']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                return {
+                    "message": f"缺少: {', '.join(missing_fields)}",
+                }, 400
+            
+            category = data['category']
+            total = data['total']
+            correct = data['correct']
+            
+            result = user_service.update_question_stats(user_id, category, total, correct)
+            
+            if result:
+                return {
+                    "message": "成功更新答題統計",
+                    "body": result
+                }, 200
+            
+            return {
+                "message": "無法找到使用者"
+            }, 404
+            
+        except ValueError as e:
+            return {
+                "message": str(e)
+            }, 400
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(update_question_stats): {str(e)}"
+            }, 500

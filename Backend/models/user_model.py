@@ -17,6 +17,13 @@ class User:
             "paper": 0,
             "plastic": 0,
         }
+        self.question_stats = {
+            "bottles": {"total": 0, "correct": 0},
+            "containers": {"total": 0, "correct": 0},
+            "cans": {"total": 0, "correct": 0},
+            "paper": {"total": 0, "correct": 0},
+            "plastic": {"total": 0, "correct": 0},
+        }
         self.last_check_in = None
         self.created_at = datetime.now()
 
@@ -29,6 +36,7 @@ class User:
             "money": self.money,
             "profile": self.profile,
             "trash_stats": self.trash_stats,
+            "question_stats": self.question_stats,
             "verification": self.verification,
             "last_check_in": self.last_check_in,
             "created_at": self.created_at

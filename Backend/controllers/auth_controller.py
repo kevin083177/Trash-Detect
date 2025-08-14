@@ -1,11 +1,12 @@
 from flask import request
-from services import AuthService, PurchaseService, UserService, UserLevelService, VerificationService
+from services import AuthService, PurchaseService, UserService, UserLevelService, VerificationService, ThemeService
 from config import Config
 from utils import verify_token
 
 auth_service = AuthService(Config.MONGO_URI)
 user_service = UserService(Config.MONGO_URI)
 user_level_service = UserLevelService(Config.MONGO_URI)
+theme_service = ThemeService(Config.MONGO_URI)
 purchase_service = PurchaseService(Config.MONGO_URI)
 verification_service = VerificationService(Config.MONGO_URI)
 
@@ -122,6 +123,13 @@ class AuthController:
                     verification_service.verifications.delete_one({"email": data['email']})
                     user_service._set_email_verified(result)
 
+                    # 新增預設商品
+                    success = theme_service._add_default_theme_products(result)
+                    if not success:
+                        return {
+                            "message": "新增預設商品失敗"
+                        }, 500
+                    
                     created_user.pop('password', None)
                     created_user['_id'] = str(created_user['_id'])
                 

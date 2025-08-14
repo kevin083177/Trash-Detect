@@ -72,6 +72,13 @@ class ThemeController:
         try:
             theme = theme_service.get_theme(theme_name)
             if theme:
+                products_detail = []
+                for product_id in theme['products']:
+                    product = product_service.get_product(product_id)
+                    products_detail.append(product)
+                
+                theme['products'] = products_detail
+                
                 return {
                     "message": "成功取得主題資訊",
                     "body": theme

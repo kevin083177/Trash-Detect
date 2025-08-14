@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Text, View, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+import { Modal, Text, View, StyleSheet, TouchableOpacity, Image, Dimensions, TouchableWithoutFeedback } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 interface LevelDetailProps {
@@ -32,105 +32,107 @@ export function LevelDetail({
           animationType="fade"
           onRequestClose={onClose}
         >
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <View style={styles.innerBorder} />
-                    
-                    <View style={styles.backgroundDecorations}>
-                        <View style={styles.decoration1} />
-                        <View style={styles.decoration2} />
-                        <View style={styles.decoration3} />
-                        <View style={styles.decoration4} />
-                        <View style={styles.decoration5} />
-                        <View style={styles.decoration6} />
-                        <View style={styles.decoration7} />
-                        <View style={styles.decoration8} />
-                    </View>
-
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Ionicons name="close" size={24} color="#8B5A3C" />
-                    </TouchableOpacity>
-                    
-                    <View style={styles.contentWrapper}>
-                        <View style={styles.levelTitleContainer}>
-                            <Text style={styles.levelTitle}>{level_name}</Text>
-                        </View>
+            <TouchableWithoutFeedback onPress={onClose}>
+                <View style={styles.overlay}>
+                    <View style={styles.container}>
+                        <View style={styles.innerBorder} />
                         
-                        <View style={styles.starsSection}>
-                            <View style={styles.starsContainer}>
-                                {[1, 2, 3].map((star) => {
-                                    const isStarActive = () => {
-                                        if (user_stars === 1) return star === 1; // 只亮左邊
-                                        if (user_stars === 2) return star === 1 || star === 3; // 亮左右邊
-                                        if (user_stars >= 3) return true; // 全亮
-                                        return false;
-                                    };
-                                    
-                                    const getStarRequirement = (starNumber: number) => {
-                                        switch(starNumber) {
-                                            case 1: return 600;
-                                            case 2: return 1600;
-                                            case 3: return 1000;
-                                            default: return 0;
-                                        }
-                                    };
-                                    
-                                    const starRequirement = getStarRequirement(star);
-                                    const isActive = isStarActive();
-                                    
-                                    return (
-                                        <View 
-                                            key={star}
-                                            style={[
-                                                styles.starWrapper,
-                                                star === 2 && styles.starCenter,
-                                            ]}
-                                        >
-                                            <Image 
-                                                source={
-                                                    isActive
-                                                        ? require('@/assets/images/Star.png')
-                                                        : require('@/assets/images/Star_Disable.png')
-                                                }
-                                                style={[
-                                                    styles.starImage,
-                                                    star === 2 && styles.centerStarImage
-                                                ]}
-                                                resizeMode="contain"
-                                            />
-                                            
-                                            {!isActive && (
-                                                <Text style={styles.scoreRequirementText}>
-                                                    {starRequirement}
-                                                </Text>
-                                            )}
-                                        </View>
-                                    );
-                                })}
+                        <View style={styles.backgroundDecorations}>
+                            <View style={styles.decoration1} />
+                            <View style={styles.decoration2} />
+                            <View style={styles.decoration3} />
+                            <View style={styles.decoration4} />
+                            <View style={styles.decoration5} />
+                            <View style={styles.decoration6} />
+                            <View style={styles.decoration7} />
+                            <View style={styles.decoration8} />
+                        </View>
+
+                        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                            <Ionicons name="close" size={24} color="#8B5A3C" />
+                        </TouchableOpacity>
+                        
+                        <View style={styles.contentWrapper}>
+                            <View style={styles.levelTitleContainer}>
+                                <Text style={styles.levelTitle}>{level_name}</Text>
                             </View>
-                        </View>
-                                           
-                        <View style={styles.scoreSection}>
-                            <Text style={styles.scoreTitle}>最高得分</Text>
-                            <Text style={styles.scoreText}>{user_scores}</Text>
-                        </View>
-                        
-                        <View style={styles.divider} />
-
-                        <View style={styles.descriptionSection}>
-                            <Text style={styles.descriptionText}>{formatDescription(level_description)}</Text>
-                        </View>
-                        
-                        <View style={styles.footer}>
-                            <TouchableOpacity style={styles.startButton} onPress={onStart}>
-                                <View style={styles.buttonGradient}>
-                                    <Text style={styles.startButtonText}>開始遊戲</Text>
+                            
+                            <View style={styles.starsSection}>
+                                <View style={styles.starsContainer}>
+                                    {[1, 2, 3].map((star) => {
+                                        const isStarActive = () => {
+                                            if (user_stars === 1) return star === 1; // 只亮左邊
+                                            if (user_stars === 2) return star === 1 || star === 3; // 亮左右邊
+                                            if (user_stars >= 3) return true; // 全亮
+                                            return false;
+                                        };
+                                        
+                                        const getStarRequirement = (starNumber: number) => {
+                                            switch(starNumber) {
+                                                case 1: return 600;
+                                                case 2: return 1600;
+                                                case 3: return 1000;
+                                                default: return 0;
+                                            }
+                                        };
+                                        
+                                        const starRequirement = getStarRequirement(star);
+                                        const isActive = isStarActive();
+                                        
+                                        return (
+                                            <View 
+                                                key={star}
+                                                style={[
+                                                    styles.starWrapper,
+                                                    star === 2 && styles.starCenter,
+                                                ]}
+                                            >
+                                                <Image 
+                                                    source={
+                                                        isActive
+                                                            ? require('@/assets/images/Star.png')
+                                                            : require('@/assets/images/Star_Disable.png')
+                                                    }
+                                                    style={[
+                                                        styles.starImage,
+                                                        star === 2 && styles.centerStarImage
+                                                    ]}
+                                                    resizeMode="contain"
+                                                />
+                                                
+                                                {!isActive && (
+                                                    <Text style={styles.scoreRequirementText}>
+                                                        {starRequirement}
+                                                    </Text>
+                                                )}
+                                            </View>
+                                        );
+                                    })}
                                 </View>
-                            </TouchableOpacity>
+                            </View>
+                                            
+                            <View style={styles.scoreSection}>
+                                <Text style={styles.scoreTitle}>最高得分</Text>
+                                <Text style={styles.scoreText}>{user_scores}</Text>
+                            </View>
+                            
+                            <View style={styles.divider} />
+
+                            <View style={styles.descriptionSection}>
+                                <Text style={styles.descriptionText}>{formatDescription(level_description)}</Text>
+                            </View>
+                            
+                            <View style={styles.footer}>
+                                <TouchableOpacity style={styles.startButton} onPress={onStart}>
+                                    <View style={styles.buttonGradient}>
+                                        <Text style={styles.startButtonText}>開始遊戲</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
-            </View>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 }
@@ -257,6 +259,7 @@ const styles = StyleSheet.create({
         transform: [{ rotate: '-25deg' }],
     },
     contentWrapper: {
+        alignItems: 'center',
         zIndex: 10,
     },
     closeButton: {
@@ -318,6 +321,8 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 3,
+        width: 150,
+        alignItems: 'center',
         borderColor: '#5e4436d8',
         marginHorizontal: 60,
         marginBottom: 25,
@@ -361,7 +366,6 @@ const styles = StyleSheet.create({
         marginTop: 15,
     },
     startButton: {
-        width: "60%",
         alignSelf: 'center',
         borderRadius: 25,
         overflow: 'hidden',
@@ -370,6 +374,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     buttonGradient: {
+        width: 150,
         backgroundColor: '#72bf6a',
         paddingVertical: 12,
         alignItems: 'center',

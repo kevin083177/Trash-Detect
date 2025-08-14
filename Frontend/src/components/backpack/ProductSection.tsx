@@ -6,11 +6,22 @@ interface ProductSectionProps {
   products: Product[];
   onProductPress?: (product: Product) => void;
   selectedProduct?: Product | null;
+  onConfirmSelection?: () => void;
 }
 
-const { width } = Dimensions.get('window');
+export default function ProductSection({ 
+  products, 
+  onProductPress, 
+  selectedProduct,
+  onConfirmSelection
+}: ProductSectionProps) {
+  
+  const handleBackgroundPress = () => {
+    if (selectedProduct && onConfirmSelection) {
+      onConfirmSelection();
+    }
+  };
 
-export default function ProductSection({ products, onProductPress, selectedProduct }: ProductSectionProps) {
   const renderProduct = (item: Product) => {
     const isSelected = selectedProduct?._id === item._id;
     
@@ -25,7 +36,7 @@ export default function ProductSection({ products, onProductPress, selectedProdu
       >
         {isSelected && (
             <View style={styles.selectedOverlay}>
-              <Text style={styles.selectedText}>已放置</Text>
+              <Text style={styles.selectedText}>已選取</Text>
             </View>
         )}
         <View style={styles.imageContainer}>
@@ -46,17 +57,40 @@ export default function ProductSection({ products, onProductPress, selectedProdu
   };
 
   return (
-    <ScrollView style={styles.scrollView} horizontal>
-      <View style={styles.container}>
-        {products.map(renderProduct)}
-      </View>
-    </ScrollView>
+    <View style={styles.outerContainer}>
+      {selectedProduct && onConfirmSelection && (
+        <TouchableOpacity
+          style={styles.backgroundOverlay}
+          onPress={handleBackgroundPress}
+          activeOpacity={1}
+        />
+      )}
+      
+      <ScrollView style={styles.scrollView} horizontal>
+        <View style={styles.container}>
+          {products.map(renderProduct)}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
   scrollView: {
     flex: 1,
+    zIndex: 2,
   },
   container: {
     flexDirection: 'row',
@@ -74,6 +108,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     elevation: 2,
+    zIndex: 3,
   },
   selectedProductItem: {
     borderWidth: 2,
@@ -103,7 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 3,
+    zIndex: 4,
   },
   selectedText: {
     color: 'white',

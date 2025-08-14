@@ -20,6 +20,8 @@ export default function Shop(): ReactNode {
   const [purchaseConfirmText, setPurchaseConfirmText] = useState('');
   
   const [refreshing, setRefreshing] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState<'virtual' | 'physical'>('virtual');
 
   const {
     themes,
@@ -48,12 +50,10 @@ export default function Shop(): ReactNode {
   const initiateProductPurchase = () => {
     if (!selectedProduct) return;
     
-    // 顯示確認彈窗
     setPurchaseConfirmText(`確定要購買 ${selectedProduct.name} 嗎？`);
     setConfirmModalVisible(true);
   };
   
-  // 實際執行購買的函數
   const handleBuyProduct = async () => {
     if (!selectedProduct) return;
     
@@ -101,7 +101,7 @@ export default function Shop(): ReactNode {
     const initializeShop = async () => {
       try {
         await Promise.all([
-          fetchThemes(), // 現在這個函數會同時獲取主題和產品
+          fetchThemes(),
           fetchUserProfile(),
           fetchPurchasedProducts()
         ]);
@@ -189,7 +189,7 @@ export default function Shop(): ReactNode {
         
         {isThemeLoading ? (
           <View style={styles.noProductsContainer}>
-            <ActivityIndicator size="small" color="#2196F3" />
+            <ActivityIndicator size="small" color="#007AFF" />
           </View>
         ) : products.length === 0 ? (
           <View style={styles.noProductsContainer}>
@@ -209,6 +209,58 @@ export default function Shop(): ReactNode {
     );
   };
 
+  const renderTabBar = () => (
+    <View style={styles.tabContainer}>
+      <TouchableOpacity
+        style={styles.tab}
+        onPress={() => setActiveTab('virtual')}
+      >
+        <Text style={[styles.tabText, activeTab === 'virtual' && styles.activeTabText]}>
+          虛擬商品
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.tab}
+        onPress={() => setActiveTab('physical')}
+      >
+        <Text style={[styles.tabText, activeTab === 'physical' && styles.activeTabText]}>
+          實體兌換
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderVirtualContent = () => (
+    <FlatList
+      data={themes}
+      renderItem={renderThemeSection}
+      keyExtractor={(item, index) => `theme-${index}`}
+      contentContainerStyle={styles.mainContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        /> 
+      }
+    />
+  );
+
+  const renderPhysicalContent = () => (
+    <View style={styles.physicalContainer}>
+      <View style={styles.physicalContent}>
+        <Ionicons name="gift-outline" size={80} color="#999" style={styles.physicalIcon} />
+        <Text style={styles.physicalTitle}>實體兌換</Text>
+        <Text style={styles.physicalDescription}>
+          使用您的金幣兌換實體商品{'\n'}
+          更多商品即將上線
+        </Text>
+        <View style={styles.comingSoonContainer}>
+          <Text style={styles.comingSoonText}>敬請期待</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   if (productLoading) {
     return (
       <LoadingModal visible={productLoading} text='商店讀取中' />
@@ -226,18 +278,9 @@ export default function Shop(): ReactNode {
         showBackButton={true}
       />
       
-      <FlatList
-        data={themes}
-        renderItem={renderThemeSection}
-        keyExtractor={(item, index) => `theme-${index}`}
-        contentContainerStyle={styles.mainContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          /> 
-        }
-      />
+      {renderTabBar()}
+      
+      {activeTab === 'virtual' ? renderVirtualContent() : renderPhysicalContent()}
       
       {selectedProduct && (
         <ProductDetail
@@ -250,7 +293,6 @@ export default function Shop(): ReactNode {
         />
       )}
       
-      {/* 確認購買的彈窗 */}
       <ConfirmModal
         visible={confirmModalVisible}
         text={purchaseConfirmText}
@@ -265,6 +307,68 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    paddingBottom: 4,
+  },
+  activeTabText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    borderBottomColor: '#007AFF',
+    borderBottomWidth: 2,
+  },
+  physicalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  physicalContent: {
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  physicalIcon: {
+    marginBottom: 20,
+  },
+  physicalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  physicalDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  comingSoonContainer: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  comingSoonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   mainContent: {
     paddingTop: 10,

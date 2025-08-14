@@ -9,6 +9,7 @@ class ThemeService(DatabaseService):
     def __init__(self, mongo_uri, image_service = None):
         super().__init__(mongo_uri)
         self.themes = self.collections['themes']
+        self.purchase = self.collections['purchases']
         
         if image_service is not None and not isinstance(image_service, ImageService):
             raise TypeError("image_service 必須是 ImageService")
@@ -27,21 +28,17 @@ class ThemeService(DatabaseService):
             dict: 新建的主題資料，如果主題已存在則返回 None
         """
         try:
-            # 檢查是否有 image_service
             if not self.image_service:
                 raise ValueError("ImageService 沒有初始化")
                 
-            # 檢查主題是否已存在
             existing_theme = self.themes.find_one({"name": name})
             if existing_theme:
                 raise ValueError("主題已存在")
             
-            # 檢查是否有上傳圖片
             if not image_file:
                 raise ValueError("必須上傳主題圖片")
             
-            # 上傳圖片到 Cloudinary
-            folder = name  # 存放在 主題名稱 的資料夾內
+            folder = name 
             
             image_result = self.image_service.upload_image(
                 image_file=image_file,
@@ -49,35 +46,30 @@ class ThemeService(DatabaseService):
                 folder=folder
             )
             
-            # 創建主題圖片對象
             theme_image = {
                 'public_id': image_result['public_id'],
                 'url': image_result['url'],
             }
             
-            # 創建主題對象
             theme = Theme(
                 name=name,
                 description=description,
-                products=[],  # 初始化空的商品陣列
+                products=[],
                 created_at=datetime.now(),
-                image=theme_image  # 添加主題圖片
+                image=theme_image
             )
             
-            # 寫入資料庫
             result = self.themes.insert_one(theme.to_dict())
             
-            # 返回新建的主題資料
             if result.inserted_id:
                 created_theme = self.themes.find_one({"_id": result.inserted_id})
                 if created_theme:
-                    created_theme['_id'] = str(created_theme['_id'])  # 將ObjectId轉為字串
+                    created_theme['_id'] = str(created_theme['_id'])
                 return created_theme
             
             return None
             
         except Exception as e:
-            # 如果在新增主題過程中發生錯誤，且圖片已上傳，則刪除已上傳的圖片
             if 'image_result' in locals() and self.image_service:
                 try:
                     self.image_service.delete_image(image_result['public_id'])
@@ -100,7 +92,7 @@ class ThemeService(DatabaseService):
         try:
             result = self.themes.update_one(
                 {"name": theme},
-                {"$addToSet": {"products": product_id}}  # 使用 $addToSet 避免重複
+                {"$addToSet": {"products": product_id}}
             )
             
             return result.modified_count > 0
@@ -111,19 +103,28 @@ class ThemeService(DatabaseService):
         
     def get_theme(self, theme_name):
         try:
-            if theme_name in self.get_all_themes():            
-                theme = self.themes.find_one({"name": theme_name})
-                if theme:
-                    theme.pop("_id", None)
-                    theme.pop("products", None)
-                    return theme
-                return None
-            else:
-                return None
+            theme = self.themes.find_one({"name": theme_name})
+            if theme:
+                theme['products'] = [str(product_id) for product_id in theme['products']]
+                
+                theme.pop("_id", None)
+                return theme
+            return None
         except Exception as e:
             print(f"Error getting {theme_name} theme: {str(e)}")
             raise
-        
+    
+    def _get_all_themes(self):
+        try:
+            themes = self.themes.find({}, {"name": 1, "_id": 0})
+            theme_names = [theme['name'] for theme in themes]
+            
+            return theme_names
+        except Exception as e:
+            print(f"Error getting all themes: {str(e)}")
+            raise
+            
+    
     def get_all_themes_with_products(self):
         try:
             themes = list(self.themes.find())
@@ -175,7 +176,6 @@ class ThemeService(DatabaseService):
                 }
         """
         try:
-            # 檢查參數
             if not theme_name:
                 return {'success': False, 'error': '主題名稱不能為空'}
                 
@@ -185,16 +185,13 @@ class ThemeService(DatabaseService):
             if not isinstance(product_service, ProductService):
                 raise TypeError("product_service 必須是 ProductService")
             
-            # 檢查主題是否存在
             theme = self.themes.find_one({"name": theme_name})
             if not theme:
                 return {'success': False, 'error': f'主題 {theme_name} 不存在'}
             
-            # 獲取主題中的所有商品
             products = theme.get('products', [])
             deleted_products_count = 0
             
-            # 刪除每個商品
             for product_id in products:
                 try:
                     deleted_count, _ = product_service.delete_product_by_id(str(product_id))
@@ -202,16 +199,13 @@ class ThemeService(DatabaseService):
                         deleted_products_count += 1
                 except Exception as e:
                     print(f"刪除商品 {product_id} 時出錯: {str(e)}")
-                    # 繼續處理其他商品
             
-            # 刪除主題預覽圖片
             if 'image' in theme and 'public_id' in theme['image']:
                 try:
                     self.image_service.delete_image(theme['image']['public_id'])
                 except Exception as e:
                     print(f"刪除主題 {theme_name} 預覽圖片時出錯: {str(e)}")
             
-            # 從數據庫中刪除主題
             result = self.themes.delete_one({"name": theme_name})
             
             return {
@@ -248,4 +242,30 @@ class ThemeService(DatabaseService):
             
         except Exception as e:
             print(f"Error removing product {product_id} from themes: {str(e)}")
+            raise
+        
+    def _add_default_theme_products(self, user_id: str, theme_name = "預設"):
+        try:
+            theme = self.get_theme(theme_name)
+            product_ids = theme['products']
+            product_ids = [ObjectId(pid) for pid in product_ids]
+            
+            if not product_ids:
+                print(f"No products found in theme '{theme_name}'")
+            
+            
+            user_purchase = self.purchase.find_one({"user_id": ObjectId(user_id)})
+            
+            if not user_purchase:
+                return False
+            
+            result = self.purchase.update_one(
+                {"user_id": ObjectId(user_id)},
+                {"$addToSet": {"product": {"$each": product_ids}}}
+            )
+
+            return result.modified_count > 0
+        
+        except Exception as e:
+            print(f"Error add default theme products: {str(e)}")
             raise

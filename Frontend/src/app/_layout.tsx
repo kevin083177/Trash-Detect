@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '@/hooks/auth';
 import React, { useEffect } from 'react';
+import { StatusBar, useColorScheme } from 'react-native';
 import { ProductProvider } from '@/hooks/product';
 import { UserProvider } from '@/hooks/user';
 import { UserLevelProvider } from '@/hooks/userLevel';
@@ -17,22 +18,31 @@ function AppWithAuthCallback({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const isDarkMode = useColorScheme() === 'dark'
+
   return (
-    <AuthProvider>
-      <UserProvider>
-        <UserLevelProvider>
-          <ProductProvider>
-            <AppWithAuthCallback>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="shop" />
-                <Stack.Screen name="game" />
-              </Stack>
-            </AppWithAuthCallback>
-          </ProductProvider>
-        </UserLevelProvider>
-      </UserProvider>
-    </AuthProvider>
+    <>
+      <StatusBar 
+        translucent={false} 
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={isDarkMode ? "black" : "white"}
+      />
+      <AuthProvider>
+        <UserProvider>
+          <UserLevelProvider>
+            <ProductProvider>
+              <AppWithAuthCallback>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="shop" />
+                  <Stack.Screen name="game" />
+                </Stack>
+              </AppWithAuthCallback>
+            </ProductProvider>
+          </UserLevelProvider>
+        </UserProvider>
+      </AuthProvider>
+    </>
   );
 }
