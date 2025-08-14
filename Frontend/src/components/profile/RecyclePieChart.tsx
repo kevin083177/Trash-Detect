@@ -6,6 +6,7 @@ import { RecycleValues, RECYCLE_TYPE_LABELS } from '@/interface/Recycle';
 interface RecyclePieChartProps {
   data: RecycleValues;
   size?: number;
+  containerWidth: number;
 }
 
 interface ChartData {
@@ -23,7 +24,11 @@ const COLORS = {
   cans: '#00B4D8',
 };
 
-export default function RecyclePieChart({ data, size = 200 }: RecyclePieChartProps) {
+export default function RecyclePieChart({ 
+  data, 
+  size = 200, 
+  containerWidth 
+}: RecyclePieChartProps) {
   const total = Object.values(data).reduce((sum, value) => sum + value, 0);
   
   if (total === 0) {
@@ -154,11 +159,12 @@ export default function RecyclePieChart({ data, size = 200 }: RecyclePieChartPro
           {renderSingleCategory()}
         </View>
         
-        <View style={styles.legendContainer}>
+        <View style={[
+          styles.legendContainer, { width: containerWidth }]}>
           {chartData.map((item, index) => (
             <View key={index} style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-              <Text style={styles.legendText}>
+              <Text style={styles.legendText} numberOfLines={1} ellipsizeMode="tail">
                 {item.label} ({item.value})
               </Text>
               <Text style={styles.legendPercentage}>
@@ -213,14 +219,23 @@ export default function RecyclePieChart({ data, size = 200 }: RecyclePieChartPro
         </Svg>
       </View>
       
-      <View style={styles.legendContainer}>
+      <View style={[
+        styles.legendContainer, { width: containerWidth }]}>
+        <View style={styles.legendHeader}>
+            <Text style={[styles.legendHeaderText, styles.legendCol]}>回收類別</Text>
+            <Text style={[styles.legendHeaderText, styles.legendCol]}>回收量</Text>
+            <Text style={[styles.legendHeaderText, styles.legendCol]}>比例</Text>
+        </View>
         {chartData.map((item, index) => (
           <View key={index} style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-            <Text style={styles.legendText}>
-              {item.label} ({item.value})
-            </Text>
-            <Text style={styles.legendPercentage}>
+            <View style={[styles.legendCol, styles.legendCell]}>
+              <View style={styles.legendLabelContainer}>
+                <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+                <Text style={styles.legendText}>{item.label}</Text>
+              </View>
+            </View>
+            <Text style={[styles.legendCount, styles.legendCol]}>{item.value}</Text>
+            <Text style={[styles.legendPercentage, styles.legendCol]}>
               {item.percentage.toFixed(1)}%
             </Text>
           </View>
@@ -256,28 +271,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   legendContainer: {
-    width: '90%',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  legendHeader: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  legendHeaderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+  },
+  legendCol: {
+    flex: 1,
+  },
+  legendCell: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legendLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+    paddingLeft: 16,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
   legendColor: {
     width: 16,
     height: 16,
     borderRadius: 8,
     marginRight: 12,
+    flexShrink: 0,
   },
   legendText: {
-    flex: 1,
     fontSize: 14,
     color: '#333',
+    textAlign: 'left',
+    flex: 1,
+  },
+  legendCount: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    flex: 1,
   },
   legendPercentage: {
     fontSize: 12,
     color: '#666',
     fontWeight: '500',
+    textAlign: 'center',
   },
 });
