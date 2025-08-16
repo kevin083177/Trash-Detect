@@ -355,7 +355,7 @@ class UserService(DatabaseService):
                     {"_id": ObjectId(user_id)},
                     {"$set": {"question_stats": {
                         "plastic": {"total": 0, "correct": 0},
-                        "paper_container": {"total": 0, "correct": 0},
+                        "containers": {"total": 0, "correct": 0},
                         "bottles": {"total": 0, "correct": 0},
                         "cans": {"total": 0, "correct": 0},
                         "paper": {"total": 0, "correct": 0}
