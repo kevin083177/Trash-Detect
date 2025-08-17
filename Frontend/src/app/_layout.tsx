@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '@/hooks/auth';
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar } from 'react-native';
 import { ProductProvider } from '@/hooks/product';
 import { UserProvider } from '@/hooks/user';
 import { UserLevelProvider } from '@/hooks/userLevel';
+import { ThemeProvider, useTheme } from '@/hooks/theme';
 import { setAuthErrorCallback } from '@/utils/fetch';
 
 function AppWithAuthCallback({ children }: { children: React.ReactNode }) {
@@ -17,16 +18,22 @@ function AppWithAuthCallback({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function RootLayout() {
-  const isDarkMode = useColorScheme() === 'dark'
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
 
   return (
-    <>
-      <StatusBar 
-        translucent={false} 
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={isDarkMode ? "black" : "white"}
-      />
+    <StatusBar 
+      translucent={false} 
+      barStyle={isDark ? 'light-content' : 'dark-content'}
+      backgroundColor={isDark ? '#000000' : '#ffffff'}
+    />
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedStatusBar />
       <AuthProvider>
         <UserProvider>
           <UserLevelProvider>
@@ -35,14 +42,12 @@ export default function RootLayout() {
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="shop" />
-                  <Stack.Screen name="game" />
                 </Stack>
               </AppWithAuthCallback>
             </ProductProvider>
           </UserLevelProvider>
         </UserProvider>
       </AuthProvider>
-    </>
+    </ThemeProvider>
   );
 }
