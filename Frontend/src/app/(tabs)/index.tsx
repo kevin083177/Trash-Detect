@@ -1,19 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Dimensions } from 'react-native';
-import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import Headers from '@/components/Headers';
 import { useUser } from '@/hooks/user';
 import { loadRoom, RoomData, hasRoom, ItemTransform, loadDefaultDecorations } from '@/utils/roomStorage';
 import { ITEM_Z_INDEX, ProductCategory } from '@/interface/Product';
 import { ImageSize } from '@/interface/Image';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { useTheme } from '@/hooks/theme';
+import { router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
-const TAB_BAR_HEIGHT = 62;
-const HEADERS_HEIGHT = 50;
-const DEFAULT_SIZE = 60;
+const TAB_BAR_HEIGHT = 50;
 
 export default function Index() {
   const [notification, setNotification] = useState<{
@@ -38,11 +36,11 @@ export default function Index() {
 
   const { 
     fetchUserProfile, 
-    getUsername, 
-    getMoney, 
     dailyCheckIn, 
     checkDailyCheckInStatus 
   } = useUser();
+
+  const { isDark } = useTheme();
 
   const loadRoomData = async () => {
     try {
@@ -86,8 +84,8 @@ export default function Index() {
             (error) => {
               console.log(`Failed to get image size for ${category}:`, error);
               newImageSizes[category as ProductCategory] = {
-                width: DEFAULT_SIZE,
-                height: DEFAULT_SIZE
+                width: 60,
+                height: 60
               };
               resolve();
             }
@@ -105,7 +103,7 @@ export default function Index() {
   }, [roomData.selectedItems]);
 
   const getItemSize = (category: ProductCategory): ImageSize => {
-    return imageSizes[category] || { width: DEFAULT_SIZE, height: DEFAULT_SIZE };
+    return imageSizes[category] || { width: 60, height: 60 };
   };
 
   const renderRoomItems = () => {
@@ -282,9 +280,19 @@ export default function Index() {
   };
   
   return (
-    <View style={styles.container}>
-        <Headers style={{zIndex: 2}} router={router} username={getUsername()} money={getMoney()} />
-      <View style={[styles.buildingArea, { height: height - HEADERS_HEIGHT - TAB_BAR_HEIGHT }]}>
+    <View style={[
+      styles.container,
+      isDark ? { backgroundColor: '#1C1C1E' } : { backgroundColor: '#fffcf6' }
+    ]}>
+      <TouchableOpacity style={[styles.iconContainer, {top: 20, right: 20}]} onPress={() => router.push('/backpack')}>
+        <Image
+          style={styles.icon}
+          source={require("@/assets/icons/room.png")}
+          resizeMode='contain'
+        />
+        <Text style={styles.iconText}>家具布置</Text>
+      </TouchableOpacity>
+      <View style={[styles.buildingArea, { height: height - TAB_BAR_HEIGHT }]}>
         <ImageBackground
           source={{ uri: roomData.selectedItems.wallpaper?.image?.url }}
           style={styles.backgroundImage}
@@ -294,27 +302,24 @@ export default function Index() {
         </ImageBackground>
       </View>
 
-      <TouchableOpacity style={styles.dogButton} onPress={() => router.replace('/game')}>
+      <TouchableOpacity style={styles.dogButton} onPress={() => null}>
         <Image source={require("@/assets/images/dog.png")} style={styles.dogImage} />
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={styles.floatingDailySection}
+        style={[styles.iconContainer, { top: 120, right: 20 }]}
         onPress={fetchDailyCheckIn}
       >
-        <View style={styles.checkInContainer}>
-          <Ionicons 
-            name={checkInStatus === 'already' ? "checkmark-circle" : "checkmark-circle-outline"} 
-            size={32} 
-            color={checkInStatus === 'already' ? "#4CAF50" : "black"} 
-          />
-          <View>
-            <Text style={styles.checkInText}>每日簽到</Text>
-            {checkInStatus === 'already' && countdown && (
-              <Text style={styles.countdownText}>{countdown}</Text>
-            )}
-          </View>
-        </View>
+        <Image
+          style={styles.icon}
+          source={require("@/assets/icons/checkIn.png")}
+          resizeMode="contain"
+        />
+        {checkInStatus === 'already' && countdown ? (
+          <Text style={styles.iconText}>{countdown}</Text>
+        ) : (
+          <Text style={styles.iconText}>可簽到</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -323,11 +328,26 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
-  headersContainer: {
-    backgroundColor: 'white',
-    zIndex: 100,
+  iconContainer: {
+    position: 'absolute',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    width: 80,
+    height: 80,
+    borderRadius: 70,
+    zIndex: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 35,
+    height: 35,
+  },
+  iconText: {
+    color: '#ffffff',
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '500',
   },
   dogButton: {
     position: 'absolute', 

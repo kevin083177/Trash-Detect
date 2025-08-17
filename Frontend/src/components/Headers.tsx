@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, Image } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Router } from "expo-router";
 
@@ -37,13 +37,19 @@ export default function Headers({
         </TouchableOpacity>
       <View style={{ flexDirection: 'row'}}>
         { showBackpack &&
-          <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/backpack' as any)}>
-            <Ionicons name="bed-outline" size={24} color="black" />
+          <TouchableOpacity style={styles.iconContainer} onPress={() => router.push('/backpack' as any)}>
+            <Image
+              source={require('@/assets/icons/room.png')}
+              style={styles.icon}
+            />
           </TouchableOpacity>
         }
         { showShop &&
-          <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/shop')}>
-              <Ionicons name="storefront-outline" size={24} color="black" />
+          <TouchableOpacity style={styles.iconContainer} onPress={() => router.push('/(tabs)/shop')}>
+            <Image
+              source={require('@/assets/icons/shop.png')}
+              style={styles.icon}
+            />
           </TouchableOpacity>
         }
       </View>
@@ -83,15 +89,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
   },
+  icon: {
+    width: 50,
+    height: 50,
+  },
   coinText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#B7791F',
   },
-  shopIcon: {
+  iconContainer: {
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 4,
     borderRadius: 16,
   },
   smallText: {
