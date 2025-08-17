@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/auth';
 import MenuButton from '@/components/profile/MenuButton';
 import RecyclePieChart from '@/components/profile/RecyclePieChart';
 import PentagonChart from '@/components/profile/PentagonChart';
+import { HelpModal } from '@/components/profile/HelpModal';
 import { RecycleValues } from '@/interface/Recycle';
 import { clearRoom } from '@/utils/roomStorage';
 import { asyncGet } from '@/utils/fetch';
@@ -25,6 +26,7 @@ export default function Profile() {
   const [isCheckingFeedback, setIsCheckingFeedback] = useState<boolean>(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const { 
@@ -85,6 +87,10 @@ export default function Profile() {
       console.error('Error fetching question stats:', error);
     }
   }, [token]);
+
+  const getCurrentModalType = (): 'recycle' | 'question' => {
+    return currentPage === 0 ? 'recycle' : 'question';
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -283,6 +289,12 @@ export default function Profile() {
       case 'stats':
         return (
           <View style={styles.statsContainer}>
+            <TouchableOpacity 
+              style={styles.helpContainer}
+              onPress={() => setShowHelpModal(!showHelpModal)}
+            >
+              <Ionicons name='information-circle-outline' size={26} color={"#888"}></Ionicons>
+            </TouchableOpacity>
             <View style={styles.chartHeader}>
               <Text style={styles.statsTitle}>
                 {currentPage === 0 ? '回收統計' : '答題統計'}
@@ -376,6 +388,12 @@ export default function Profile() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
       />
+      
+      <HelpModal 
+        visible={showHelpModal}
+        onClose={() => setShowHelpModal(!showHelpModal)}
+        type={getCurrentModalType()}
+      />
     </View>
   );
 }
@@ -387,7 +405,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flexGrow: 1,
-    paddingBottom: 6,
+    paddingBottom: 6 + 65 + 30, // default padding + bar height + camera y offset
   },
   userContainer: {
     flexDirection: 'column',
@@ -448,6 +466,12 @@ const styles = StyleSheet.create({
   userName: {
     flex: 1,
     fontSize: 16,
+    marginBottom: 12,
+  },
+  helpContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12
   },
   statsContainer: {
     padding: 16,
