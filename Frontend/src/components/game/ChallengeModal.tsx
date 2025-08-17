@@ -107,7 +107,7 @@ export function ChallengeModal({
         onClose();
         
         router.replace({
-          pathname: '/game/gameplay',
+          pathname: '/(tabs)/game/gameplay',
           params: {
             isChallenge: 'true',
             chapterSequence: chapterSequence,

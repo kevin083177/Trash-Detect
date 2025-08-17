@@ -181,7 +181,7 @@ export function LevelSelector({
           onClose();
           
           router.replace({
-            pathname: '/game/gameplay',
+            pathname: '/(tabs)/game/gameplay',
             params: {
               isChallenge: 'false',
               levelId: selectedLevel.sequence,
