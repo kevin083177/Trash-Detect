@@ -1,9 +1,8 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TouchableWithoutFeedback, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
-import Headers from '@/components/Headers';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import LoadingModal from '@/components/LoadingModal';
-import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/interface/Product';
 import { VoucherType } from '@/interface/Voucher';
 import ProductDetail from '@/components/shop/ProductDetail';
@@ -12,6 +11,7 @@ import ConfirmModal from '@/components/shop/ConfirmModal';
 import { useProduct } from '@/hooks/product';
 import { useUser } from '@/hooks/user';
 import { useVoucher } from '@/hooks/voucher';
+import { Coin } from '@/components/Coin';
 
 const { width } = Dimensions.get('window');
 
@@ -196,8 +196,7 @@ export default function Shop(): ReactNode {
           </View>
         ) : (
           <View style={styles.coinContainer}>
-            <Ionicons name="logo-usd" size={20} color="#FFD700" />
-            <Text style={styles.coinText}>{item.price}</Text>
+            <Coin size="small" value={item.price} />
           </View>
         )}
       </TouchableOpacity>
@@ -210,16 +209,12 @@ export default function Shop(): ReactNode {
         <TouchableWithoutFeedback onPress={() => handleVoucherPress(item)}>
           <View style={styles.voucherCard}>
             <View style={styles.voucherImageContainer}>
-              {item.image?.url ? (
+              {item.image.url && (
                 <Image 
                   source={{ uri: item.image.url }}
                   style={styles.voucherImage}
                   resizeMode="contain"
                 />
-              ) : (
-                <View style={[styles.voucherImage, styles.placeholderVoucherImage]}>
-                  <Ionicons name="ticket-outline" size={40} color="#ccc" />
-                </View>
               )}
             </View>
             
@@ -229,8 +224,7 @@ export default function Shop(): ReactNode {
             
             <View style={styles.voucherFooter}>
               <View style={styles.voucherPriceContainer}>
-                <Ionicons name="logo-usd" size={16} color="#FFD700" />
-                <Text style={styles.voucherPrice}>{item.price}</Text>
+                <Coin size="small" value={item.price}/>
               </View>
               <Text style={styles.voucherQuantity}>剩餘 {item.quantity}</Text>
             </View>
@@ -245,7 +239,7 @@ export default function Shop(): ReactNode {
     
     return (
       <View style={styles.voucherFooterContainer}>
-        <Text style={styles.voucherFooterText}>－沒有更多商品了－</Text>
+        <Text style={styles.voucherFooterText}>－ 沒有更多商品了 －</Text>
       </View>
     );
   };
@@ -306,27 +300,6 @@ export default function Shop(): ReactNode {
     );
   };
 
-  const renderTabBar = () => (
-    <View style={styles.tabContainer}>
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => setActiveTab('virtual')}
-      >
-        <Text style={[styles.tabText, activeTab === 'virtual' && styles.activeTabText]}>
-          虛擬商品
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.tab}
-        onPress={() => setActiveTab('physical')}
-      >
-        <Text style={[styles.tabText, activeTab === 'physical' && styles.activeTabText]}>
-          實體兌換
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   const renderVirtualContent = () => (
     <FlatList
       data={themes}
@@ -379,16 +352,30 @@ export default function Shop(): ReactNode {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Headers 
-        username={getUsername()} 
-        money={getMoney()} 
-        router={router} 
-        showShop={false} 
-        showBackpack={false} 
-        showBackButton={true}
-      />
-      
-      {renderTabBar()}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.replace('/')} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Coin size="medium" value={getMoney()} />
+      </View>
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={styles.tab}
+          onPress={() => setActiveTab('virtual')}
+        >
+          <Text style={[styles.tabText, activeTab === 'virtual' && styles.activeTabText]}>
+            虛擬商品
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tab}
+          onPress={() => setActiveTab('physical')}
+        >
+          <Text style={[styles.tabText, activeTab === 'physical' && styles.activeTabText]}>
+            實體兌換
+          </Text>
+        </TouchableOpacity>
+      </View>
       
       {activeTab === 'virtual' ? renderVirtualContent() : renderPhysicalContent()}
       
@@ -431,6 +418,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 16,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -524,12 +523,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  voucherPrice: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#B7791F',
-    marginLeft: 4,
-  },
   voucherQuantity: {
     fontSize: 12,
     color: '#666',
@@ -602,11 +595,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     margin: 6,
     borderRadius: 16,
-  },
-  coinText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#B7791F',
   },
   purchasedContainer: {
     flexDirection: 'row',
