@@ -16,6 +16,7 @@ import { asyncGet } from '@/utils/fetch';
 import { feedback_api, user_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
 import { QuestionStats } from '@/interface/Question';
+import { useTheme } from '@/hooks/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -40,6 +41,12 @@ export default function Profile() {
 
   const { logout } = useAuth();
 
+  const { 
+    themeMode,
+    isDark,
+    setThemeMode
+  } = useTheme();
+
   useEffect(() => {
     const getToken = async () => {
       const storedToken = await tokenStorage.getToken();
@@ -47,6 +54,14 @@ export default function Profile() {
     };
     getToken();
   }, []);
+
+  const handleThemeChange = async () => {
+    if (isDark) {
+      await setThemeMode('light');
+    } else {
+      await setThemeMode('dark');
+    }
+  };
 
   const transformTrashStats = useCallback(() => {
     const trashStatsData = getTrashStats();
@@ -122,6 +137,10 @@ export default function Profile() {
   const handleSettingsPress = () => {
     router.push('/(tabs)/profile/settings');
   };
+  
+  const handleVoucherPress = () => {
+    router.push('/(tabs)/profile/voucher');
+  }
 
   const handleFeedbackPress = async () => {
     if (!token || isCheckingFeedback) return;
@@ -223,17 +242,8 @@ export default function Profile() {
   const getListData = () => {
     return [
       { id: 'user', type: 'user' },
+      { id: 'menu', type: 'menu' },
       { id: 'stats', type: 'stats' },
-      { 
-        id: 'feedback', 
-        type: 'menu', 
-        icon: 'chatbubbles-outline', 
-        title: '意見回饋中心', 
-        color: '#007AFF', 
-        onPress: handleFeedbackPress,
-      },
-      { id: 'settings', type: 'menu', icon: 'settings-outline', title: '個人設定', color: '#323436ff', onPress: handleSettingsPress },
-      { id: 'logout', type: 'menu', icon: 'log-out-outline', title: '登出', color: '#ff0000ff', onPress: handleLogout },
     ];
   };
 
@@ -241,7 +251,7 @@ export default function Profile() {
     switch (item.type) {
       case 'user':
         return (
-           <View style={styles.userContainer}>
+          <View style={styles.userContainer}>
             <TouchableOpacity
               style={styles.userIconContainer}
               onPress={handleProfileImagePress}
@@ -278,14 +288,42 @@ export default function Profile() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.userName}>
-              <Text style={{fontSize: 23, fontWeight: 'bold'}}>
-                {getUsername()}
-              </Text>
-            </View>
+            <Text style={[styles.userName, {color: isDark ? '#fff' : '#aaa'}]}>
+              {getUsername()}
+            </Text>
           </View>
         );
-      
+
+      case 'menu':
+        return (
+          <View style={styles.menuContainer}>
+            <MenuButton 
+              icon="barcode-outline" 
+              title="電子票券" 
+              isDark={isDark}
+              onPress={handleVoucherPress}
+            />
+            <MenuButton 
+              icon="chatbubbles-outline" 
+              title="回饋中心" 
+              isDark={isDark}
+              onPress={handleFeedbackPress}
+            />
+            <MenuButton 
+              icon="settings-outline" 
+              title="設定" 
+              isDark={isDark}
+              onPress={handleSettingsPress}
+            />
+            <MenuButton 
+              icon="log-out-outline" 
+              title="登出" 
+              isDark={isDark}
+              onPress={handleLogout}
+            />
+          </View>
+        );
+
       case 'stats':
         return (
           <View style={styles.statsContainer}>
@@ -354,17 +392,6 @@ export default function Profile() {
             </View>
           </View>
         );
-      
-      case 'menu':
-        return (
-          <MenuButton 
-            icon={item.icon} 
-            title={item.title} 
-            color={item.color} 
-            onPress={item.onPress}
-          />
-        );
-      
       default:
         return null;
     }
@@ -381,19 +408,24 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={getListData()}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
-      
-      <HelpModal 
-        visible={showHelpModal}
-        onClose={() => setShowHelpModal(!showHelpModal)}
-        type={getCurrentModalType()}
-      />
+      <TouchableOpacity style={styles.themeChange} onPress={handleThemeChange}>
+        <Ionicons size={24} name={isDark ? "moon-outline" : "moon"} color={isDark ? "#fff" : "#1C1C1C"} />
+        <Text style={{marginTop: 4, color: isDark ? "#fff" : "#1C1C1C"}}>{isDark ? "淺色模式" : "深色模式"}</Text>
+      </TouchableOpacity>
+      <View style={[styles.background, {backgroundColor: isDark ? "#1C1C1C" : "#fffcf6"}]} />
+        <FlatList
+          data={getListData()}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+        
+        <HelpModal 
+          visible={showHelpModal}
+          onClose={() => setShowHelpModal(!showHelpModal)}
+          type={getCurrentModalType()}
+        />
     </View>
   );
 }
@@ -401,23 +433,39 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffff',
+  },
+  themeChange: {
+    position: 'absolute',
+    flexDirection: 'column',
+    alignItems: 'center',
+    top: 32,
+    right: 32,
+    zIndex: 2,
+  },
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 350,
+    borderBottomLeftRadius: 1500,
+    borderBottomRightRadius: 1500,
+    transform: [{ scaleX: 1.8 }],
   },
   listContainer: {
     flexGrow: 1,
-    paddingBottom: 6 + 65 + 30, // default padding + bar height + camera y offset
+    paddingBottom: 65 + 30, // default padding + bar height + camera y offset
   },
   userContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginTop: 48,
+    marginLeft: 32,
   },
   userIconContainer: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 100,
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
@@ -425,8 +473,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   profileImage: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 100,
   },
   editIconContainer: {
@@ -464,9 +512,15 @@ const styles = StyleSheet.create({
     borderTopColor: 'transparent',
   },
   userName: {
-    flex: 1,
-    fontSize: 16,
-    marginBottom: 12,
+    fontSize: 20,
+    marginLeft: 12,
+  },
+  menuContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginVertical: 8,
   },
   helpContainer: {
     position: 'absolute',
@@ -496,6 +550,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statsTitle: {
+    marginTop: 8,
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
