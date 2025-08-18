@@ -9,6 +9,7 @@ import { ImageSize } from '@/interface/Image';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { useTheme } from '@/hooks/theme';
 import { router } from 'expo-router';
+import { Grayscale } from 'react-native-color-matrix-image-filters';
 
 const { width, height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 50;
@@ -309,12 +310,24 @@ export default function Index() {
       <TouchableOpacity 
         style={[styles.iconContainer, { top: 120, right: 20 }]}
         onPress={fetchDailyCheckIn}
+        disabled={checkInStatus === 'already'}
       >
-        <Image
-          style={styles.icon}
-          source={require("@/assets/icons/checkIn.png")}
-          resizeMode="contain"
-        />
+        {checkInStatus === '' ? (
+          <Image
+            style={styles.icon}
+            source={require("@/assets/icons/checkIn.png")}
+            resizeMode="contain"
+          />
+        ) : (
+          <Grayscale>
+            <Image
+              style={styles.icon}
+              source={require("@/assets/icons/checkIn.png")}
+              resizeMode="contain"
+            />
+          </Grayscale>
+        )}
+
         {checkInStatus === 'already' && countdown ? (
           <Text style={styles.iconText}>{countdown}</Text>
         ) : (
