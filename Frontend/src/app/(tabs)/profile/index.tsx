@@ -17,6 +17,7 @@ import { feedback_api, user_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
 import { QuestionStats } from '@/interface/Question';
 import { useTheme } from '@/hooks/theme';
+import { Coin } from '@/components/Coin';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -34,7 +35,8 @@ export default function Profile() {
     user, 
     fetchUserProfile, 
     clearUser, 
-    getUsername, 
+    getUsername,
+    getMoney,
     getTrashStats,
     updateProfile
   } = useUser();
@@ -287,10 +289,12 @@ export default function Profile() {
                 </View>
               )}
             </TouchableOpacity>
-
-            <Text style={[styles.userName, {color: isDark ? '#fff' : '#aaa'}]}>
-              {getUsername()}
-            </Text>
+            <View style={{flexDirection: 'column', marginLeft: 12, gap: 8}}>
+              <Text style={[styles.userName, {color: isDark ? '#fff' : '#aaa'}]}>
+                {getUsername()}
+              </Text>
+              <Coin size="small" value={getMoney()} />
+            </View>
           </View>
         );
 
@@ -513,7 +517,6 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 20,
-    marginLeft: 12,
   },
   menuContainer: {
     flexDirection: 'row',

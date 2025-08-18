@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Coin } from '@/components/Coin';
 
 interface VoucherConfirmModalProps {
   visible: boolean;
@@ -21,9 +22,10 @@ export default function VoucherConfirmModal({
 
   const totalCost = quantity * voucherPrice;
   const canAfford = totalCost <= userCoins;
+  const maxQuantity = Math.floor(userCoins / voucherPrice);
+  const isAtMaxQuantity = quantity >= maxQuantity;
 
   const increaseQuantity = () => {
-    const maxQuantity = Math.floor(userCoins / voucherPrice);
     if (quantity < maxQuantity) {
       setQuantity(quantity + 1);
     }
@@ -53,22 +55,20 @@ export default function VoucherConfirmModal({
           <View style={styles.modalContent}>
             <View style={styles.coinsSection}>
               <Text style={styles.coinsLabel}>持有狗狗幣</Text>
-              <View style={styles.coinsContainer}>
-                <View style={styles.coinIcon}>
-                  <Text style={styles.coinText}>D</Text>
-                </View>
-                <Text style={styles.coinsAmount}>{userCoins.toLocaleString()}</Text>
-              </View>
+              <Coin value={userCoins} size="medium" />
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.quantitySection}>
-              <Text style={styles.quantityLabel}>購買數量</Text>
+              <Text style={styles.quantityLabel}>兌換數量</Text>
               
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
-                  style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
+                  style={[
+                    styles.quantityButton, 
+                    quantity <= 1 && styles.quantityButtonDisabled
+                  ]}
                   onPress={decreaseQuantity}
                   disabled={quantity <= 1}
                 >
@@ -80,9 +80,12 @@ export default function VoucherConfirmModal({
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.quantityButton, !canAfford && styles.quantityButtonDisabled]}
+                  style={[
+                    styles.quantityButton, 
+                    (isAtMaxQuantity || !canAfford) && styles.quantityButtonDisabled
+                  ]}
                   onPress={increaseQuantity}
-                  disabled={!canAfford || quantity >= Math.floor(userCoins / voucherPrice)}
+                  disabled={isAtMaxQuantity || !canAfford}
                 >
                   <Ionicons name="add" size={24} color={"#ffffff"} />
                 </TouchableOpacity>
@@ -90,14 +93,9 @@ export default function VoucherConfirmModal({
             </View>
 
             <View style={styles.costSection}>
-              <Text style={styles.costLabel}>使用</Text>
+              <Text style={styles.costLabel}>將扣除</Text>
               <View style={styles.costContainer}>
-                <View style={styles.coinIcon}>
-                  <Text style={styles.coinText}>D</Text>
-                </View>
-                <Text style={[styles.costAmount, !canAfford && styles.costAmountError]}>
-                  {totalCost.toLocaleString()}
-                </Text>
+                <Coin value={totalCost} size="large" />
               </View>
             </View>
 
@@ -146,35 +144,11 @@ const styles = StyleSheet.create({
   },
   coinsSection: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   coinsLabel: {
     fontSize: 16,
     color: '#666',
     marginBottom: 12,
-  },
-  coinsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  coinIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFA500',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  coinText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  coinsAmount: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFA500',
   },
   divider: {
     width: '100%',
@@ -229,14 +203,6 @@ const styles = StyleSheet.create({
   costContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  costAmount: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ff4444',
-  },
-  costAmountError: {
-    color: '#ff0000',
   },
   errorText: {
     color: '#ff0000',

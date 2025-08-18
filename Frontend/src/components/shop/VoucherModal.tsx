@@ -3,6 +3,7 @@ import { View, Text, Modal, Image, TouchableOpacity, StyleSheet, ScrollView, Dim
 import { Ionicons } from '@expo/vector-icons';
 import { VoucherType } from '@/interface/Voucher';
 import VoucherConfirmModal from './VoucherConfirmModal';
+import { Coin } from '../Coin';
 
 const { width } = Dimensions.get('window');
 
@@ -84,8 +85,7 @@ export default function VoucherModal({
               <View style={styles.detailsContainer}>
                 <View style={styles.detailRow}>
                   <View style={styles.priceContainer}>
-                    <Ionicons name="logo-usd" size={20} color="#FFD700" />
-                    <Text style={styles.priceText}>{voucher.price}</Text>
+                    <Coin value={voucher.price} />
                   </View>
                   <Text style={styles.detailValue}>剩下 {voucher.quantity} 個</Text>
                 </View>
@@ -224,12 +224,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 12,
-  },
-  priceText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#B7791F',
-    marginLeft: 4,
   },
   termsContainer: {
     marginTop: 8,
