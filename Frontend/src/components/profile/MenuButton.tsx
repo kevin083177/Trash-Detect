@@ -5,40 +5,28 @@ import { Ionicons } from '@expo/vector-icons';
 interface MenuButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  color: string;
+  isDark: boolean;
   onPress: () => void;
 }
 
-export default function MenuButton({ icon, title, color, onPress }: MenuButtonProps) {
+export default function MenuButton({ icon, title, isDark, onPress }: MenuButtonProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
-        <Ionicons name={icon} size={22} color={color} />
+      <View style={styles.iconContainer}>
+        <Ionicons name={icon} size={22} color={isDark ? "#fff" : "#aaa"} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Ionicons name="chevron-forward" size={18} color="#C8C8D0" />
+      <Text style={[styles.title, { color: isDark ? "#fff" : "#f87000ff" }]}>{title}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    width: 95,
+    flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 1)',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginHorizontal: 16,
-    marginVertical: 6,
+    justifyContent: 'center',
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
   },
   iconContainer: {
     width: 40,
@@ -46,13 +34,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
   title: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C2C2E',
+    fontSize: 14,
     letterSpacing: 0.2,
   },
 });

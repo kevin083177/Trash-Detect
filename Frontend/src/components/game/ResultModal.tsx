@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Dimensions, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Coin } from '../Coin';
 
 interface ResultModalProps {
   visible: boolean;
@@ -116,8 +117,13 @@ export function ResultModal({
               styles.resultTitle,
               !isSuccess && !isChallenge && styles.failedResultTitle
             ]}>
-              { isChallenge ? `挑戰結果: $${money.toLocaleString()}` : (isSuccess ? '關卡完成' : "關卡失敗") }
+              { isChallenge ? `挑戰結束` : (isSuccess ? '關卡完成' : "關卡失敗") }
             </Text>
+            {isChallenge && (
+              <View style={{marginTop: 20}}>
+                <Coin size="large" value={money}/>
+              </View>
+            )}
           </View>
           <View style={styles.resultSection}>
             <View style={styles.scoreSection}>
@@ -287,7 +293,7 @@ const styles = StyleSheet.create({
   resultSection: {
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: 32,
+    paddingVertical: 16,
     flexDirection: 'column',
   },
   scoreSection: {

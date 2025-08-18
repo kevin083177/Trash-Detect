@@ -32,7 +32,7 @@ export default function EmailVerification() {
 
   const checkVerificationStatus = async () => {
     try {
-      const response = await asyncGet(`${auth_api.code_status}?email=${newEmail}`);
+      const response = await asyncGet(`${auth_api.email_code_status}?email=${newEmail}`);
       if (response.body?.exists) {
         setRemainingAttempts(Math.max(0, 5 - response.body.attempts));
         if (response.body.expired) {
@@ -98,7 +98,7 @@ export default function EmailVerification() {
       setIsLoading(true);
       const token = await tokenStorage.getToken();
       
-      const response = await asyncPost(`${auth_api.verify_code}`, {
+      const response = await asyncPost(`${auth_api.verify_email_code}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -141,7 +141,7 @@ export default function EmailVerification() {
       setIsResending(true);
       const token = await tokenStorage.getToken();
       
-      const response = await asyncPost(`${auth_api.resend_code}`, {
+      const response = await asyncPost(`${auth_api.resend_email_code}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },

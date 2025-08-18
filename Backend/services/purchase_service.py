@@ -15,7 +15,8 @@ class PurchaseService(DatabaseService):
             
             purchase = Purchase(
                 user_id = user_id,
-                product = []
+                product = [],
+                voucher = []
             )
             result = self.purchase.insert_one(purchase.to_dict())
             return result.inserted_id
@@ -87,7 +88,8 @@ class PurchaseService(DatabaseService):
             # 更新購買記錄中的商品信息
             purchase['product'] = products
             purchase['_id'] = str(purchase['_id'])
-            purchase['user_id'] = str(purchase['user_id'])
+            purchase.pop('user_id', None)
+            purchase.pop('voucher', None)
             
             return purchase
         

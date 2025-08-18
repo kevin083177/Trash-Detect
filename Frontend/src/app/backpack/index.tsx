@@ -11,10 +11,9 @@ import { useProduct } from '@/hooks/product';
 import { saveRoom, loadRoom, ItemTransform } from '@/utils/roomStorage';
 
 const { width, height } = Dimensions.get('window');
-const TAB_BAR_HEIGHT = 62;
+const TAB_BAR_HEIGHT = 65;
 const PRODUCT_PANEL_HEIGHT = 150;
 const DRAG_INDICATOR_HEIGHT = 40;
-const TITLE_CONTAINER_HEIGHT = 50;
 
 export default function Backpack() {
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('wallpaper');
@@ -150,23 +149,17 @@ export default function Backpack() {
     return selectedRoomItems[selectedCategory] || null;
   };
 
-  const roomPreviewHeight = height - TITLE_CONTAINER_HEIGHT - TAB_BAR_HEIGHT;
+  const roomPreviewHeight = height - TAB_BAR_HEIGHT;
   
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={handleGoBack}
-          >
-            <Ionicons name='arrow-back' size={24} color={"black"}></Ionicons>
-          </TouchableOpacity>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+          <Ionicons name="arrow-back-outline" size={24} color={"#ffffff"}></Ionicons>
+        </TouchableOpacity>
+        <View style={styles.titleContainer}>
           <Text style={styles.titleText}>房間預覽</Text>
         </View>
-        <TouchableOpacity style={styles.shopIcon} onPress={() => router.push('/shop')}>
-            <Ionicons name="storefront-outline" size={24} color="black" />
-        </TouchableOpacity>
       </View>
 
       <View style={[styles.roomPreviewContainer, { height: roomPreviewHeight }]}>
@@ -227,27 +220,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'black',
   },
-  titleContainer: {
-    height: TITLE_CONTAINER_HEIGHT,
-    flexDirection: "row",
-    justifyContent: 'space-between',
+  headerContainer: {
+    position: 'absolute',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 16,
-    backgroundColor: 'white',
-    zIndex: 100,
+    top: 16,
+    left: 16,
+    zIndex: 100
   },
   backButton: {
-    paddingHorizontal: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    width: 50,
+    height: 50,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleContainer: {
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    borderRadius: 20,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   titleText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
     textAlign: 'center',
-    padding: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12
   },
   roomPreviewContainer: {
     width: '100%',
@@ -302,11 +304,5 @@ const styles = StyleSheet.create({
   productPanelContent: {
     flex: 1,
     backgroundColor: 'white',
-  },
-  shopIcon: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
+  }
 });

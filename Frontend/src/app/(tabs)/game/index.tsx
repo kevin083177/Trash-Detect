@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, SafeAreaView, FlatList, ImageBackground } from 'react-native';
-import Headers from '@/components/Headers';
 import { ChapterButton } from '@/components/game/ChapterButton';
 import { Chapter } from '@/interface/Chapter';
 import { router, useFocusEffect } from 'expo-router';
@@ -10,8 +9,8 @@ import { useUserLevel } from '@/hooks/userLevel';
 import { useUser } from '@/hooks/user';
 
 const { width, height } = Dimensions.get('window');
-const CARD_WIDTH = 300;
-const CARD_HEIGHT = height * 0.6;
+const CARD_WIDTH = 350;
+const CARD_HEIGHT = height * 0.7;
 const CARD_SPACE = (width - CARD_WIDTH) / 2;
 
 export default function GameChapterScreen() {
@@ -36,7 +35,7 @@ export default function GameChapterScreen() {
     setChapterUnlocked
   } = useUserLevel();
 
-  const { getUsername, getMoney, getTotalTrash } = useUser();
+  const { getTotalTrash } = useUser();
 
   useFocusEffect(
     useCallback(() => {
@@ -141,15 +140,6 @@ export default function GameChapterScreen() {
   const chaptersToRender = getChaptersToRender();
   return (
     <SafeAreaView style={styles.container}>
-      <Headers 
-        router={router} 
-        username={getUsername()} 
-        money={getMoney()} 
-        showBackpack={false} 
-        showShop={false} 
-        showBackButton={true}
-      />
-      
       {loading ? (
         <View style={styles.loadingContainer}>
           <Text>載入中...</Text>
@@ -217,6 +207,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     overflow: 'hidden',
+    marginTop: -80,
     borderRadius: 20,
   },
   chapterBackground: {

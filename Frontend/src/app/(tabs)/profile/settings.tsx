@@ -269,7 +269,7 @@ export default function Settings() {
         <Text style={styles.sectionTitle}>帳號設定</Text>
         
         {renderSettingItem(
-          '用戶名',
+          '使用者名稱',
           user.username,
           'username',
           'person-outline'
@@ -277,7 +277,7 @@ export default function Settings() {
         
         {renderSettingItem(
           '密碼',
-          '••••••••',
+          '••••••••••••',
           'password',
           'lock-closed-outline'
         )}

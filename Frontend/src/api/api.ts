@@ -17,6 +17,7 @@ const level_url = `${api_url}/level`;
 const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
 const feedback_url = `${api_url}/feedback`
+const voucher_url = `${api_url}/voucher`
 
 export const auth_api = {
     login: `${auth_url}/login`,
@@ -114,4 +115,10 @@ export const user_level_api = {
 export const feedback_api = {
     create_feedback: `${feedback_url}/add`,
     get_user_feedbacks: `${feedback_url}/user`
+}
+
+export const voucher_api = {
+    get_voucher: `${voucher_url}/types`,
+    redeem: `${voucher_url}/redeem`,
+    get_user_redeem: `${voucher_url}/my`
 }

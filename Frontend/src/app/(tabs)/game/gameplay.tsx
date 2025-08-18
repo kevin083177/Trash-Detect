@@ -416,7 +416,7 @@ export default function Gameplay() {
 
   const handleBackToMenu = () => {
     setShowResultModal(false);
-    router.replace('/game');
+    router.replace('/(tabs)/game');
   };
 
   const handlePlayAgain = async () => {
@@ -540,7 +540,7 @@ export default function Gameplay() {
         setShowResultModal(false);
         
         router.replace({
-          pathname: '/game/gameplay',
+          pathname: '/(tabs)/game/gameplay',
           params: {
             isChallenge: 'false',
             levelId: nextLevelId,
@@ -613,7 +613,7 @@ export default function Gameplay() {
     scoreAnimRef.stopAnimation();
     TimerScoreVisible.stopAnimation();
     
-    router.replace('/game');
+    router.replace('/(tabs)/game');
   };
 
   return (

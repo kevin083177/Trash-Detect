@@ -107,7 +107,7 @@ export function ChallengeModal({
         onClose();
         
         router.replace({
-          pathname: '/game/gameplay',
+          pathname: '/(tabs)/game/gameplay',
           params: {
             isChallenge: 'true',
             chapterSequence: chapterSequence,
@@ -190,7 +190,7 @@ export function ChallengeModal({
           </ImageBackground>
         </View>
           <Text style={styles.descriptionText}>
-            {'從所有題目隨機選取 10 題\n每獲得 200 分即可獲得 10 金錢獎勵'}
+            {'從所有題目隨機選取 10 題\n每獲得 200 分即可獲得 10 狗狗幣'}
         </Text>
       </View>
     </Modal>

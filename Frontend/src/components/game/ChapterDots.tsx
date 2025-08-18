@@ -27,19 +27,19 @@ export function ChapterDots({ totalDots, activeDotIndex }: ChapterDotsProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 110,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10, // Ensure it stays on top
+    zIndex: 10,
   },
   dotsContainer: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 20,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 12,  
   },
   dot: {
     width: 8,
