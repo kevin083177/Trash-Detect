@@ -1,13 +1,10 @@
 // 關閉 Tab Bar 的路由
 export const HIDE_TAB_BAR_PATHS = [
-  '/setting',
-  '/verification',
+  '/profile/',
   '/scanner',
   '/backpack',
   '/shop',
   '/game/gameplay',
-  '/feedback',
-  '/create'
 ]
 
 // Tab bar icon with navigation/TabBarIcon
