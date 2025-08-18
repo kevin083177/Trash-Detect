@@ -1,17 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Image,
-  Animated,
-  Pressable,
-  useColorScheme,
-} from 'react-native';
+import React, { useRef } from 'react';
+import { View, StyleSheet, Text, Image, Animated, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
 import { USER_TAB_SCREENS } from '@/constants/tabScreen';
+import { useTheme } from '@/hooks/theme';
 
 const THEME_COLORS = {
   light: {
@@ -32,8 +25,7 @@ const THEME_COLORS = {
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark } = useTheme();
   const theme = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
   
   const scaleAnims = useRef(
