@@ -19,6 +19,8 @@ class DatabaseService:
             'verifications': self.db.verifications,
             'daily_trash': self.db.daily_trash,
             'feedbacks': self.db.feedbacks,
+            'voucher_types': self.db.voucher_types,
+            'vouchers': self.db.vouchers
         }
     
     def get_collection(self, collection_name):

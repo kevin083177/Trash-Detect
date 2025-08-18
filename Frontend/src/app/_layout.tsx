@@ -7,6 +7,7 @@ import { UserProvider } from '@/hooks/user';
 import { UserLevelProvider } from '@/hooks/userLevel';
 import { ThemeProvider, useTheme } from '@/hooks/theme';
 import { setAuthErrorCallback } from '@/utils/fetch';
+import { VoucherProvider } from '@/hooks/voucher';
 
 function AppWithAuthCallback({ children }: { children: React.ReactNode }) {
   const { handleAuthError } = useAuth();
@@ -25,7 +26,7 @@ function ThemedStatusBar() {
     <StatusBar 
       translucent={false} 
       barStyle={isDark ? 'light-content' : 'dark-content'}
-      backgroundColor={isDark ? '#000000' : '#ffffff'}
+      backgroundColor={isDark ? '#1C1C1C' : '#ffffff'}
     />
   );
 }
@@ -38,12 +39,14 @@ export default function RootLayout() {
         <UserProvider>
           <UserLevelProvider>
             <ProductProvider>
-              <AppWithAuthCallback>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="(tabs)" />
-                </Stack>
-              </AppWithAuthCallback>
+              <VoucherProvider>
+                <AppWithAuthCallback>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                </AppWithAuthCallback>
+              </VoucherProvider>
             </ProductProvider>
           </UserLevelProvider>
         </UserProvider>

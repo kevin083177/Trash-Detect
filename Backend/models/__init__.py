@@ -12,6 +12,7 @@ from .email_model import EmailVerification
 from .image_model import Image
 from .daily_trash_model import DailyTrash
 from .feedback_model import Feedback
+from .voucher_model import Voucher, VoucherType
 
 __all__ = [
     'User',
@@ -27,5 +28,6 @@ __all__ = [
     'EmailVerification',
     'Image',
     'DailyTrash',
-    'Feedback'
+    'Feedback',
+    'Voucher', 'VoucherType'
 ]

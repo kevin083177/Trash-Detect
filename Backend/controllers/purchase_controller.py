@@ -91,7 +91,6 @@ class PurchaseController:
             purchase = purchase_service.get_purchase_by_user(user)
             
             if purchase:
-                purchase.pop('user_id', None)
                 return {
                     "message": "成功找到使用者購買紀錄",
                     "body": purchase

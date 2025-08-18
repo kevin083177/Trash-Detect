@@ -11,6 +11,7 @@ from .question_controller import QuestionController
 from .question_category_controller import QuestionCategoryController
 from .daily_trash_controller import DailyTrashController
 from .feedback_controller import FeedbackController
+from .voucher_controller import VoucherController
 
 __all__ = [
     'AuthController',
@@ -25,5 +26,6 @@ __all__ = [
     'QuestionController',
     'QuestionCategoryController',
     'DailyTrashController',
-    'FeedbackController'
+    'FeedbackController',
+    'VoucherController'
 ]
