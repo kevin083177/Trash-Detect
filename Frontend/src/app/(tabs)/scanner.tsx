@@ -19,7 +19,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const detectSpeed = 50; // 1000 divide detectSpeed = fps
+const detectSpeed = 100; // 1000 divide detectSpeed = fps
 const detectTime = 2;
 
 export default function Scanner() {
