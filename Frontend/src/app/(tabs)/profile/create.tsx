@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
-import Toast from '@/components/Toast';
+import { Toast } from '@/components/Toast';
 import LoadingModal from '@/components/LoadingModal';
 import { asyncPost } from '@/utils/fetch';
 import { tokenStorage } from '@/utils/tokenStorage';

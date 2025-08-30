@@ -12,7 +12,7 @@ import { router } from 'expo-router';
 import ClearableInput from '@/components/auth/ClearableInput';
 import PasswordInput from '@/components/auth/PasswordInput';
 import LoadingModal from '@/components/LoadingModal';
-import Toast from '@/components/Toast';
+import { Toast } from '@/components/Toast';
 import { useUser } from '@/hooks/user';
 
 type SettingType = 'username' | 'password' | 'email' | null;

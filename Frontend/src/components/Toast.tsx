@@ -1,22 +1,22 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Animated, Text } from 'react-native';
 
 export interface ToastProps {
   visible: boolean;
   message: string;
-  type?: 'success' | 'error' | 'info';
+  position?: 'center' | 'bottom' | 'top';
   duration?: number;
   onHide: () => void;
-  style?: object; // 添加自定義樣式屬性
+  style?: object;
 }
 
-const Toast: React.FC<ToastProps> = ({ 
+export const Toast: React.FC<ToastProps> = ({ 
   visible, 
   message, 
-  type = 'info',
-  duration = 2000,
+  position = 'center',
+  duration = 3000,
   onHide,
-  style  // 接收自定義樣式
+  style
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(100)).current;
@@ -24,28 +24,51 @@ const Toast: React.FC<ToastProps> = ({
 
   useEffect(() => {
     if (visible) {
-      // Clear any existing animations and timers
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      translateY.setValue(100);
-      fadeAnim.setValue(0);
+      
+      if (position === 'bottom') {
+        translateY.setValue(100);
+        fadeAnim.setValue(0);
 
-      // Start show animation
-      Animated.parallel([
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          })
+        ]).start();
+      } else if (position === 'top') {
+        translateY.setValue(-100);
+        fadeAnim.setValue(0);
+
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          })
+        ]).start();
+      } else {
+        fadeAnim.setValue(0);
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 300,
           useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      ]).start();
+        }).start();
+      }
 
-      // Set hide timer
       timerRef.current = setTimeout(() => {
         hideToast();
       }, duration);
@@ -56,48 +79,68 @@ const Toast: React.FC<ToastProps> = ({
         clearTimeout(timerRef.current);
       }
     };
-  }, [visible, message]); // Add message to dependencies to restart animation on message change
+  }, [visible, message, position, duration]);
 
   const hideToast = () => {
-    Animated.parallel([
+    if (position === 'bottom') {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 100,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        onHide();
+      });
+    } else if (position === 'top') {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: -100,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        onHide();
+      });
+    } else {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 100,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ]).start(() => {
-      onHide();
-    });
-  };
-
-  const getBackgroundColor = () => {
-    switch (type) {
-      case 'success':
-        return '#4CAF50';
-      case 'error':
-        return '#F44336';
-      default:
-        return '#333333';
+      }).start(() => {
+        onHide();
+      });
     }
   };
 
   if (!visible) return null;
 
+  const containerStyle = position === 'center' 
+    ? styles.centerContainer 
+    : position === 'top' 
+    ? styles.topContainer 
+    : styles.bottomContainer;
+    
+  const animatedStyle = position === 'center' 
+    ? { opacity: fadeAnim }
+    : { opacity: fadeAnim, transform: [{ translateY }] };
+
   return (
     <Animated.View
       style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY }],
-          backgroundColor: getBackgroundColor(),
-        },
-        style // 應用自定義樣式
+        containerStyle,
+        animatedStyle,
+        style
       ]}
     >
       <Text style={styles.text}>{message}</Text>
@@ -105,34 +148,59 @@ const Toast: React.FC<ToastProps> = ({
   );
 };
 
-const windowHeight = Dimensions.get('window').height;
-
 const styles = StyleSheet.create({
-  container: {
+  bottomContainer: {
     position: 'absolute',
     bottom: 20,
     left: 20,
     right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
     padding: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000, // 設置高層級zIndex確保Toast顯示在最上層
+    zIndex: 10000,
+  },
+  topContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    padding: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+  },
+  centerContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -150 }, { translateY: -25 }],
+    width: 300,
+    maxWidth: '80%',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    padding: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
   },
   text: {
     color: '#FFFFFF',
     fontSize: 14,
     textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 20,
   },
 });
-
-export default Toast;
