@@ -17,7 +17,7 @@ class AuthController:
         try:
             data = request.get_json()
             
-            required_fields = ['username', 'password', 'email']
+            required_fields = ['password', 'email']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -25,12 +25,6 @@ class AuthController:
                     "message": f"缺少: {', '.join(missing_fields)}",
                 }, 400
             
-            if auth_service.check_username_exists(data['username']):
-                return {
-                    "message": "使用者名稱已存在",
-                }, 409
-
-            # 檢查 email 是否已存在
             if auth_service._check_email_exists(data['email']):
                 return {
                     "message": "電子郵件已被註冊",
@@ -45,7 +39,6 @@ class AuthController:
             # 創建驗證記錄並發送郵件
             success, message = verification_service.create_verification(
                 email=data['email'],
-                username=data['username'],
                 password=data['password'],
                 user_role=data['userRole']
             )
@@ -179,7 +172,7 @@ class AuthController:
             if not token or not user:
                 return {
                     "message": "電子郵件或密碼錯誤",
-                }, 401
+                }, 400
 
             user.pop('password', None)
             user['_id'] = str(user['_id'])

@@ -11,7 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
   logout: () => Promise<void>;
   handleAuthError: () => void;
   verifyEmailCode: (email: string, verification_code: string) => Promise<{ success: boolean; message: string;}>;
@@ -109,13 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }> => {
+  const register = async (email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }> => {
     try {
       setIsLoading(true);
       
       const response = await asyncPost(auth_api.register, {
         body: {
-          username: username,
           password,
           email,
           userRole: 'user'

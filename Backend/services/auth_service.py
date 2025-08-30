@@ -21,8 +21,6 @@ class AuthService(DatabaseService):
             user_role = user['userRole']
             token = generate_token(str(user['_id']), user_role)
             
-            logger.info(f"{user_role} {user["username"]} login")
-            
             return token, user
         except Exception as e:
             print(f"Token generation error: {str(e)}")
@@ -36,7 +34,6 @@ class AuthService(DatabaseService):
         
         user = User(
             userRole=user_data['userRole'],
-            username=user_data['username'],
             email=user_data['email'],
             password=hashed_password,
         )
@@ -57,7 +54,6 @@ class AuthService(DatabaseService):
             if not user:
                 return False
             
-            logger.info(f"{user['userRole']} {user['username']} logout")
             return True
         except Exception as e:
             print(f"Logout error: {str(e)}")
@@ -68,10 +64,6 @@ class AuthService(DatabaseService):
             plain_password.encode('utf-8'),
             hashed_password.encode('utf-8')
         )
-
-    def check_username_exists(self, username):
-        """檢查用戶名是否已存在"""
-        return self.users.find_one({"username": username}) is not None
 
     def _check_email_exists(self, email):
         """檢查郵箱是否已存在"""

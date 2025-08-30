@@ -6,14 +6,12 @@ import PasswordInput from '@/components/auth/PasswordInput';
 import ClearableInput from '@/components/auth/ClearableInput';
 
 type ErrorFields = {
-  username?: boolean;
   email?: boolean;
   password?: boolean;
   confirmPassword?: boolean;
 };
 
 export default function Register() {
-  const [username, setUsername] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
@@ -24,13 +22,6 @@ export default function Register() {
 
   const validateForm = () => {
     const newErrorFields: ErrorFields = {};
-    
-    if (!username || username.length < 6 || username.length > 12) {
-      setErrorMessage('使用者名稱必須介於6至12字元');
-      newErrorFields.username = true;
-      setErrorFields(newErrorFields);
-      return false;
-    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -64,7 +55,7 @@ export default function Register() {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
-    const result = await register(username, email, password);
+    const result = await register(email, password);
     
     if (result.success && result.needsVerification) {
       router.push({
@@ -83,18 +74,6 @@ export default function Register() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>註冊</Text>
-      
-      <ClearableInput 
-        placeholder="使用者名稱"
-        value={username}
-        onChangeText={(text) => {
-          setUsername(text);
-          setErrorFields({});
-          setErrorMessage('');
-        }}
-        editable={!isLoading}
-        hasError={errorFields.username}
-      />
       
       <ClearableInput 
         placeholder="電子郵件"
