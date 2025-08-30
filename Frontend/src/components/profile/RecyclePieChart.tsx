@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import { RecycleValues, RECYCLE_TYPE_LABELS } from '@/interface/Recycle';
+import { Ionicons } from '@expo/vector-icons';
 
 interface RecyclePieChartProps {
   data: RecycleValues;
@@ -26,7 +27,7 @@ const COLORS = {
 
 export default function RecyclePieChart({ 
   data, 
-  size = 200, 
+  size = 200,
   containerWidth 
 }: RecyclePieChartProps) {
   const total = Object.values(data).reduce((sum, value) => sum + value, 0);
@@ -36,6 +37,10 @@ export default function RecyclePieChart({
       <View style={styles.emptyContainer}>
         <View style={[styles.emptyCircle, { width: size, height: size }]}>
           <Text style={styles.emptyText}>尚未開始回收</Text>
+        </View>
+        <View style={styles.emptyLabels}>
+          <Text style={styles.emptyLabel}>點選下方按鈕開始辨識</Text>
+          <Ionicons name="arrow-down" size={64} color="#000" />
         </View>
       </View>
     );
@@ -253,8 +258,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    minHeight: 400,
   },
   emptyCircle: {
     borderRadius: 200,
@@ -264,11 +271,21 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 40,
   },
   emptyText: {
     color: '#999',
     fontSize: 16,
     textAlign: 'center',
+  },
+  emptyLabels: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  emptyLabel: {
+    marginBottom: 24,
+    fontSize: 16,
+    fontWeight: '500'
   },
   legendContainer: {
     width: '100%',
