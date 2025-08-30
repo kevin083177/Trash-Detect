@@ -1,18 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Tabs, usePathname } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/navigation/TabBar';
-import { 
-  USER_TAB_SCREENS, 
-  HIDE_TAB_BAR_PATHS 
-} from '@/constants/tabScreen';
+import { Tutorial } from '@/components/Tutorial';
+import { TutorialProvider, useTutorial } from '@/hooks/tutorial';
+import { USER_TAB_SCREENS, HIDE_TAB_BAR_PATHS } from '@/constants/tabScreen';
 
-export default function TabsLayout() {
+function TabsWithTutorial() {
   const pathname = usePathname();
   const shouldHideTabBar = HIDE_TAB_BAR_PATHS.some(path => pathname.includes(path));
+  const { 
+    isTutorialVisible, 
+    tutorialSteps, 
+    completeTutorial, 
+    checkAndShowTutorial,
+  } = useTutorial();
+
+  useEffect(() => {
+    if (pathname === '/') {
+      checkAndShowTutorial();
+    }
+  }, [pathname, checkAndShowTutorial]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <>
       <Tabs
         screenOptions={{ headerShown: false }}
         tabBar={(props) => {
@@ -22,7 +34,6 @@ export default function TabsLayout() {
           return <TabBar {...props} />;
         }}
       >
-        {/* 用戶頁面 */}
         {USER_TAB_SCREENS.map((screen) => (
           <Tabs.Screen
             key={screen.name}
@@ -33,6 +44,26 @@ export default function TabsLayout() {
           />
         ))}
       </Tabs>
-    </View>
+
+      {isTutorialVisible && (
+        <Tutorial
+          visible={isTutorialVisible}
+          steps={tutorialSteps}
+          onComplete={completeTutorial}
+        />
+      )}
+    </>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <SafeAreaProvider>
+      <TutorialProvider>
+        <View style={{ flex: 1 }}>
+          <TabsWithTutorial />
+        </View>
+      </TutorialProvider>
+    </SafeAreaProvider>
   );
 }

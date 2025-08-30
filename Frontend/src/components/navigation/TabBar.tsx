@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, Image, Animated, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
 import { USER_TAB_SCREENS } from '@/constants/tabScreen';
 import { useTheme } from '@/hooks/theme';
+import { useTutorial } from '@/hooks/tutorial';
 
 const THEME_COLORS = {
   light: {
@@ -31,7 +32,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const scaleAnims = useRef(
     state.routes.map(() => new Animated.Value(1))
   ).current;
-  
+
+  const { registerElement } = useTutorial();
+  const scannerTabRef = useRef(null);
+  const profileTabRef = useRef(null);
+  const gameTabRef = useRef(null);
+  const shopTabRef = useRef(null);
+
   const cameraButtonScale = useRef(new Animated.Value(1)).current;
   const cameraButtonRotate = useRef(new Animated.Value(0)).current;
 
@@ -79,6 +86,17 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     outputRange: ['0deg', '30deg'],
   });
 
+  const getTabTestId = (routeName: string, index: number) => {
+    return routeName === 'index' ? 'tab-home' : `tab-${routeName}`;
+  };
+
+  useEffect(() => {
+    registerElement('scannerTab', scannerTabRef);
+    registerElement('profileTab', profileTabRef);
+    registerElement('gameTab', gameTabRef);
+    registerElement('shopTab', shopTabRef);
+  }, [registerElement]);
+
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <View style={styles.tabContainer}>
@@ -89,7 +107,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         </View>
       </View>
       
-      <View style={styles.tabBarContainer}>
+      <View style={styles.tabBarContainer} testID="tab-bar-container">
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = options.title
@@ -97,6 +115,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const isFocused = state.index === index;
           const isCamera = route.name === 'scanner';
           
+          let ref;
+          if (route.name === 'scanner') ref = scannerTabRef;
+          else if (route.name === 'shop') ref = shopTabRef;
+          else if (route.name === 'profile') ref = profileTabRef;
+          else if (route.name === 'game') ref = gameTabRef;
+
           const screenConfig = USER_TAB_SCREENS.find(screen => screen.name === route.name);
           const iconSource = screenConfig?.icon;
 
@@ -125,7 +149,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           if (isCamera) {
             return (
-              <View key={index} style={styles.cameraButtonContainer}>
+              <View 
+                key={index} 
+                ref={ref}
+                style={styles.cameraButtonContainer}
+                testID={getTabTestId(route.name, index)}
+              >
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={isFocused ? { selected: true } : {}}
@@ -176,6 +205,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           return (
             <Pressable
               key={index}
+              ref={ref}
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -184,6 +214,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               onPressIn={() => animateTab(index, 0.8)}
               onPressOut={() => animateTab(index, 1)}
               style={styles.tab}
+              testID={getTabTestId(route.name, index)}
             >
               <Animated.View
                 style={[

@@ -1,7 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Dimensions } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useUser } from '@/hooks/user';
 import { loadRoom, RoomData, hasRoom, ItemTransform, loadDefaultDecorations } from '@/utils/roomStorage';
 import { ITEM_Z_INDEX, ProductCategory } from '@/interface/Product';
@@ -10,6 +9,8 @@ import { tokenStorage } from '@/utils/tokenStorage';
 import { useTheme } from '@/hooks/theme';
 import { router } from 'expo-router';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
+import { Toast } from '@/components/Toast';
+import { useTutorial } from '@/hooks/tutorial';
 
 const { width, height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 50;
@@ -35,11 +36,13 @@ export default function Index() {
 
   const [imageSizes, setImageSizes] = useState<Partial<Record<ProductCategory, ImageSize>>>({});
 
-  const { 
-    fetchUserProfile, 
-    dailyCheckIn, 
-    checkDailyCheckInStatus 
-  } = useUser();
+  const { dailyCheckIn, checkDailyCheckInStatus } = useUser();
+
+  const { registerElement } = useTutorial();
+  const homeRef = useRef(null);
+  const roomDecorationRef = useRef(null);
+  const dailyCheckInRef = useRef(null);
+  const dogRef = useRef(null);
 
   const { isDark } = useTheme();
 
@@ -176,7 +179,6 @@ export default function Index() {
       const initialize = async () => {
         try {
           await Promise.all([
-            fetchUserProfile(),
             fetchUserCheckInStatus(),
             loadRoomData()
           ]);
@@ -186,7 +188,7 @@ export default function Index() {
       };
       
       initialize();
-    }, [fetchUserProfile])
+    }, [])
   );
   
   const fetchUserCheckInStatus = async () => {
@@ -250,7 +252,6 @@ export default function Index() {
           type: 'success'
         });
         startCountdown();
-        await fetchUserProfile();
       } else {
         if (response.alreadyCheckedIn) {
           setCheckInStatus('already');
@@ -280,12 +281,26 @@ export default function Index() {
     }
   };
   
+  useEffect(() => {
+    registerElement('home', homeRef);
+    registerElement('roomDecoration', roomDecorationRef);
+    registerElement('dailyCheckIn', dailyCheckInRef);
+    registerElement('dog', dogRef);
+  }, [registerElement]);
+
   return (
-    <View style={[
-      styles.container,
-      isDark ? { backgroundColor: '#1C1C1E' } : { backgroundColor: '#fffcf6' }
-    ]}>
-      <TouchableOpacity style={[styles.iconContainer, {top: 20, right: 20}]} onPress={() => router.push('/backpack')}>
+    <View
+      style={[
+        styles.container,
+        isDark ? { backgroundColor: '#1C1C1E' } : { backgroundColor: '#fffcf6' }
+      ]}
+    >
+      <TouchableOpacity 
+        ref={roomDecorationRef}
+        style={[styles.iconContainer, {top: 20, right: 20}]} 
+        onPress={() => router.push('/backpack')}
+        testID="room-decoration-button"
+      >
         <Image
           style={styles.icon}
           source={require("@/assets/icons/room.png")}
@@ -293,8 +308,12 @@ export default function Index() {
         />
         <Text style={styles.iconText}>家具布置</Text>
       </TouchableOpacity>
-      <View style={[styles.buildingArea, { height: height - TAB_BAR_HEIGHT }]}>
+      <View
+        ref={homeRef} 
+        style={[styles.buildingArea, { height: height - TAB_BAR_HEIGHT }]}
+      >
         <ImageBackground
+          ref={homeRef}
           source={{ uri: roomData.selectedItems.wallpaper?.image?.url }}
           style={styles.backgroundImage}
           resizeMode="cover"
@@ -303,14 +322,20 @@ export default function Index() {
         </ImageBackground>
       </View>
 
-      <TouchableOpacity style={styles.dogButton} onPress={() => null}>
+      <TouchableOpacity
+        ref={dogRef}
+        style={styles.dogButton} 
+        onPress={() => null}
+      >
         <Image source={require("@/assets/images/dog.png")} style={styles.dogImage} />
       </TouchableOpacity>
 
-      <TouchableOpacity 
+      <TouchableOpacity
+        ref={dailyCheckInRef}
         style={[styles.iconContainer, { top: 120, right: 20 }]}
         onPress={fetchDailyCheckIn}
         disabled={checkInStatus === 'already'}
+        testID="daily-checkin-button"
       >
         {checkInStatus === '' ? (
           <Image
@@ -334,6 +359,12 @@ export default function Index() {
           <Text style={styles.iconText}>可簽到</Text>
         )}
       </TouchableOpacity>
+      
+      <Toast
+        visible={notification.visible}
+        message={notification.message}
+        onHide={() => setNotification({ ...notification, visible: false })}
+      />
     </View>
   );
 }
@@ -362,11 +393,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  tutorialButton: {
+    position: 'absolute',
+    top: 30,
+    left: 20,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 15,
+  },
+  tutorialButtonText: {
+    textAlign: 'center',
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   dogButton: {
     position: 'absolute', 
     zIndex: 10,
     elevation: 4,
-    left: width / 2,
+    left: width / 2 - 75,
     bottom: 100,
   },
   dogImage: {
@@ -391,40 +440,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  floatingDailySection: {
-    position: 'absolute',
-    top: '15%',
-    right: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 20,
-  },
-  checkInContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 50,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  checkInText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#2D3748',
-  },
-  countdownText: {
-    fontSize: 13,
-    color: '#718096',
-    marginTop: 4,
-    fontWeight: '400',
-  }
 });
