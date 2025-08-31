@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useProduct } from '@/hooks/product';
 import { saveRoom, loadRoom, ItemTransform } from '@/utils/roomStorage';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 const PRODUCT_PANEL_HEIGHT = 150;
 const DRAG_INDICATOR_HEIGHT = 40;
@@ -111,7 +111,7 @@ export default function Backpack() {
       [category]: product
     }));
 
-    if (category !== 'wallpaper' && category !== 'box') {
+    if (category !== 'wallpaper') {
       setEditingCategory(category);
     }
   };

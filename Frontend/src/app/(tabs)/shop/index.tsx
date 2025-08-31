@@ -42,7 +42,7 @@ export default function Shop(): ReactNode {
     hasEnoughMoney,
   } = useProduct();
 
-  const { fetchUserProfile, getUsername, getMoney } = useUser();
+  const { fetchUserProfile, getMoney } = useUser();
 
   const {
     voucherTypes,
@@ -128,17 +128,8 @@ export default function Shop(): ReactNode {
     setRefreshing(true);
     
     try {
-      if (activeTab === 'virtual') {
-        await Promise.all([
-          fetchUserProfile(),
-          refreshProducts()
-        ]);
-      } else {
-        await Promise.all([
-          fetchUserProfile(),
-          refreshVouchers()
-        ]);
-      }
+      await fetchUserProfile();
+      activeTab === 'virtual' ? await refreshProducts() : refreshVouchers();
     } catch (error) {
       console.error('Refresh error:', error);
       Alert.alert('刷新失敗', '請檢查網絡連接後重試');
@@ -247,7 +238,7 @@ export default function Shop(): ReactNode {
   const renderThemeSection = ({ item, index }: { item: string; index: number }) => {
     const products = themeProducts[item] || [];
     const isThemeLoading = themeLoading[item] || false;
-    const typeOrder = ['wallpaper', 'box', 'table', 'carpet', 'bookshelf', 'lamp', 'pendant', 'calendar'];
+    const typeOrder = ['wallpaper', 'table', 'carpet', 'bookshelf', 'lamp', 'pendant', 'calendar'];
 
     const sortedProducts = [...products].sort((a, b) => {
       const aPurchased = isProductPurchased(a._id);
