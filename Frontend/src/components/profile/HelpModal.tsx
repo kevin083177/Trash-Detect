@@ -15,14 +15,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ visible, onClose, type }) 
     if (type === 'recycle') {
         return {
           title: '回收統計說明',
-          imagePath: require("@/assets/images/recycle_helper2.png"),
+          imagePath: require("@/assets/images/recycle_helper.png"),
           helpText: `圓餅圖為您的各類回收物品數量分布\n回收量顯示各類別的具體數量\n百分比顯示該類別佔總回收量的比例`,
         };
     }
     else {
         return {
           title: '答題統計說明',
-          imagePath: require("@/assets/images/question_helper2.png"),
+          imagePath: require("@/assets/images/question_helper.png"),
           helpText: `根據圖表了解自己對於回收的知識掌握度\n圖中顯示您在各類別問題的答對率\n圖形越大表示該類別答對率越高`,
         };
     }
