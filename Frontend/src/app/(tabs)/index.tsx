@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Dimensions } from 'react-native';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Dimensions, Keyboard } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useUser } from '@/hooks/user';
 import { loadRoom, RoomData, hasRoom, ItemTransform, loadDefaultDecorations } from '@/utils/roomStorage';
 import { ITEM_Z_INDEX, ProductCategory } from '@/interface/Product';
@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
 import { Toast } from '@/components/Toast';
 import { useTutorial } from '@/hooks/tutorial';
+import { Dog } from '@/components/Dog';
 
 const { width, height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 50;
@@ -38,7 +39,7 @@ export default function Index() {
 
   const { dailyCheckIn, checkDailyCheckInStatus } = useUser();
 
-  const { registerElement } = useTutorial();
+  const { registerElement, isTutorialVisible } = useTutorial();
   const homeRef = useRef(null);
   const roomDecorationRef = useRef(null);
   const dailyCheckInRef = useRef(null);
@@ -48,12 +49,15 @@ export default function Index() {
 
   const loadRoomData = async () => {
     try {
+      const token = await tokenStorage.getToken();
+      if (!token) return;
+
       const room = await hasRoom();
       if (room) {
         const loadedRoom = await loadRoom();
         setRoomData(loadedRoom);
       } else {
-        const defaultRoom = await loadDefaultDecorations(await tokenStorage.getToken() as string, width, height);
+        const defaultRoom = await loadDefaultDecorations(token, width, height);
         setRoomData(defaultRoom);
       }
     } catch (error) {
@@ -62,11 +66,26 @@ export default function Index() {
   };
 
   useEffect(() => {
+  const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide',
+    () => {
+      if (isTutorialVisible) {
+        setTimeout(() => {
+        }, 100);
+      }
+    }
+  );
+
+  return () => {
+    keyboardDidHideListener.remove();
+  };
+}, [isTutorialVisible]);
+
+  useEffect(() => {
     const loadImageSizes = async () => {
       const newImageSizes: Partial<Record<ProductCategory, ImageSize>> = {};
       
       const promises = Object.entries(roomData.selectedItems).map(([category, item]) => {
-        if (!item || category === 'wallpaper' || category === 'box' || !item.image?.url) {
+        if (!item || category === 'wallpaper' || !item.image?.url) {
           return Promise.resolve();
         }
 
@@ -112,7 +131,7 @@ export default function Index() {
 
   const renderRoomItems = () => {
     return Object.entries(roomData.selectedItems).map(([category, item]) => {
-      if (!item || category === 'wallpaper' || category === 'box') return null;
+      if (!item || category === 'wallpaper') return null;
 
       const categoryKey = category as ProductCategory;
       const transform = roomData.itemTransforms[categoryKey] as ItemTransform;
@@ -321,15 +340,15 @@ export default function Index() {
           {renderRoomItems()}
         </ImageBackground>
       </View>
-
-      <TouchableOpacity
-        ref={dogRef}
-        style={styles.dogButton} 
-        onPress={() => null}
-      >
-        <Image source={require("@/assets/images/dog.png")} style={styles.dogImage} />
-      </TouchableOpacity>
-
+        <Dog
+          ref={dogRef}
+          source={require('@/assets/images/walking.json')}
+          size={180}
+          initialX={width / 2}
+          initialY={height - 220}
+          autoWalk={true}
+          paused={isTutorialVisible}
+        />
       <TouchableOpacity
         ref={dailyCheckInRef}
         style={[styles.iconContainer, { top: 120, right: 20 }]}
@@ -410,17 +429,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-  },
-  dogButton: {
-    position: 'absolute', 
-    zIndex: 10,
-    elevation: 4,
-    left: width / 2 - 75,
-    bottom: 100,
-  },
-  dogImage: {
-    width: 150,
-    height: 150,
   },
   buildingArea: {
     justifyContent: 'center',
