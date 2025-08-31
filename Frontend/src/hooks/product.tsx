@@ -35,7 +35,6 @@ export function ProductProvider ({ children }: ProductProviderProps) {
     const [purchasedProductIds, setPurchasedProductIds] = useState<string[]>([]);
     const [purchasedProductsByType, setPurchasedProductsByType] = useState<PurchasedProducts>({
         bookshelf: [],
-        box: [],
         calendar: [],
         carpet: [],
         lamp: [],
@@ -103,7 +102,6 @@ export function ProductProvider ({ children }: ProductProviderProps) {
             if (response && response.body) {
                 const products: PurchasedProducts = {
                     bookshelf: response.body.bookshelf || [],
-                    box: response.body.box || [],
                     calendar: response.body.calendar || [],
                     carpet: response.body.carpet || [],
                     lamp: response.body.lamp || [],

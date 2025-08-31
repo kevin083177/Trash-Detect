@@ -42,13 +42,7 @@ class UserController:
                 }, 400
             
             new_username = data['username']
-            
-            # 檢查使用者名稱是否已存在
-            if auth_service.check_username_exists(new_username):
-                return {
-                    "message": "使用者名稱已被使用"
-                }, 409
-            
+                        
             # 更新使用者名稱
             updated_user = user_service.update_username(user_id, new_username)
             

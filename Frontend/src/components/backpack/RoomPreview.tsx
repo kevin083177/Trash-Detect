@@ -33,7 +33,6 @@ const getDefaultPositions = (containerHeight: number): Record<ProductCategory, {
   carpet: { x: width * 0.5, y: containerHeight * 0.7 },
   pendant: { x: width * 0.4, y: containerHeight * 0.25 },
   calendar: { x: width * 0.6, y: containerHeight * 0.45 },
-  box: { x: width * 0.5, y: containerHeight * 0.8 },
   wallpaper: { x: 0, y: 0 },
 });
 
@@ -69,7 +68,7 @@ export default function RoomPreview({
       const newImageSizes: Partial<Record<ProductCategory, ImageSize>> = {};
       
       const promises = Object.entries(selectedItems).map(([category, item]) => {
-        if (!item || category === 'wallpaper' || category === 'box' || !item.image?.url) {
+        if (!item || category === 'wallpaper' || !item.image?.url) {
           return Promise.resolve();
         }
 
@@ -239,7 +238,7 @@ export default function RoomPreview({
           )}
 
           {Object.entries(selectedItems).map(([category, item]) => {
-            if (!item || category === 'wallpaper' || category === 'box') return null;
+            if (!item || category === 'wallpaper') return null;
             
             const categoryKey = category as ProductCategory;
             const transform = getItemTransform(categoryKey);

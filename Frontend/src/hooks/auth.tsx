@@ -1,17 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { asyncGet, asyncPost } from '@/utils/fetch';
-import { auth_api, user_api } from '@/api/api';
+import { auth_api } from '@/api/api';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { loadDefaultDecorations } from '@/utils/roomStorage';
-import { Dimensions } from 'react-native';
+import { Dimensions, Alert } from 'react-native';
 
 interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   
   login: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any }>;
-  register: (username: string, email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }>;
   logout: () => Promise<void>;
   handleAuthError: () => void;
   verifyEmailCode: (email: string, verification_code: string) => Promise<{ success: boolean; message: string;}>;
@@ -27,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isLoading: false,
   isAuthenticated: false,
+  isInitializing: true,
   login: async () => ({ success: false, message: '' }),
   register: async () => ({ success: false, message: '' }),
   logout: async () => {},
@@ -41,26 +43,68 @@ const AuthContext = createContext<AuthContextType>({
   checkPasswordCodeStatus: async () => ({ exists: false, attempts: 0, expired: false }),
 });
 
+let authErrorTimeout: NodeJS.Timeout | null = null;
+let isShowingAuthError = false;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
   const router = useRouter();
   const segments = useSegments();
 
   const handleAuthError = (): void => {
-    tokenStorage.clearAll();
-    setIsAuthenticated(false);
+    if (isShowingAuthError) return;
+    
+    if (authErrorTimeout) {
+      clearTimeout(authErrorTimeout);
+    }
+
+    authErrorTimeout = setTimeout(async () => {
+      if (!isShowingAuthError) {
+        isShowingAuthError = true;
+        
+        await tokenStorage.clearAll();
+        setIsAuthenticated(false);
+        
+        Alert.alert(
+          '登入已過期',
+          '請重新登入',
+          [
+            {
+              text: '確定',
+              onPress: () => {
+                isShowingAuthError = false;
+                router.replace('/login');
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+    }, 100);
   };
 
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = await tokenStorage.getToken();
-      setIsAuthenticated(!!token);
+      try {
+        const token = await tokenStorage.getToken();
+        
+        setIsAuthenticated(!!token);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsInitializing(false);
+      }
     };
+
     checkAuthStatus();
   }, []);
 
   useEffect(() => {
+    if (isInitializing) return;
+
     const inAuthGroup = segments[0] === '(auth)';
     
     if (!isAuthenticated && !inAuthGroup) {
@@ -68,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/');
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated, segments, isInitializing]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any }> => {
     try {
@@ -85,9 +129,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.status === 200) {
         const token = response.body.token;
         await tokenStorage.setToken(token);
+        
         setIsAuthenticated(true);
         
-        await loadDefaultDecorations(token, width, height);
+        try {
+          await loadDefaultDecorations(token, width, height);
+        } catch (error) {
+          console.error('Failed to load default decorations:', error);
+        }
         
         return { success: true, message: '登入成功' };
       } else {
@@ -109,13 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }> => {
+  const register = async (email: string, password: string): Promise<{ success: boolean; message: string; errorFields?: any; needsVerification?: boolean }> => {
     try {
       setIsLoading(true);
       
       const response = await asyncPost(auth_api.register, {
         body: {
-          username: username,
           password,
           email,
           userRole: 'user'
@@ -179,6 +227,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await tokenStorage.clearAll();
       setIsAuthenticated(false);
+      
+      if (authErrorTimeout) {
+        clearTimeout(authErrorTimeout);
+        authErrorTimeout = null;
+      }
+      isShowingAuthError = false;
       
     } catch (error) {
       console.error('Logout error:', error);
@@ -367,6 +421,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     isLoading,
     isAuthenticated,
+    isInitializing,
     login,
     register,
     logout,

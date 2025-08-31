@@ -12,7 +12,6 @@ export interface Product {
 
 export interface PurchasedProducts {
   bookshelf: Product[];
-  box: Product[];
   calendar: Product[];
   carpet: Product[];
   lamp: Product[];
@@ -23,7 +22,6 @@ export interface PurchasedProducts {
 
 export interface SelectedDecorations {
   wallpaper?: string;
-  box?: string;
   table?: string;
   carpet?: string;
   bookshelf?: string;
@@ -34,7 +32,6 @@ export interface SelectedDecorations {
 
 export type ProductCategory = 
   | 'bookshelf' 
-  | 'box' 
   | 'calendar' 
   | 'carpet' 
   | 'lamp' 
@@ -50,5 +47,4 @@ export const ITEM_Z_INDEX: Record<ProductCategory, number> = {
   calendar: 40,
   lamp: 50,
   pendant: 60,
-  box: 70,
 };

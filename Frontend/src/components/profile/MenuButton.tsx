@@ -5,17 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 interface MenuButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  isDark: boolean;
   onPress: () => void;
 }
 
-export default function MenuButton({ icon, title, isDark, onPress }: MenuButtonProps) {
+export default function MenuButton({ icon, title, onPress }: MenuButtonProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={22} color={isDark ? "#fff" : "#aaa"} />
+        <Ionicons name={icon} size={22} color={"#fff"} />
       </View>
-      <Text style={[styles.title, { color: isDark ? "#fff" : "#f87000ff" }]}>{title}</Text>
+      <Text style={[styles.title]}>{title}</Text>
     </TouchableOpacity>
   );
 }
@@ -39,5 +38,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     letterSpacing: 0.2,
+    color: '#fff'
   },
 });

@@ -18,7 +18,7 @@ class EmailService:
         """生成驗證碼"""
         return ''.join(random.choice(string.digits) for _ in range(6))
     
-    def create_verification_email(self, to_email: str, verification_code: str, username: str):
+    def create_verification_email(self, to_email: str, verification_code: str):
         """建立驗證郵件內容"""
         msg = MIMEMultipart('alternative')
         msg['Subject'] = 'Garbi - 信箱地址驗證'
@@ -37,7 +37,7 @@ class EmailService:
                     Garbi
                 </h1>
                 
-                <h2 style="color: #333; margin-bottom: 20px;">{username} 您好：</h2>
+                <h2 style="color: #333; margin-bottom: 20px;">親愛的使用者 您好：</h2>
                 
                 <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
                     歡迎使用 Garbi App，請使用以下驗證碼完成註冊：
@@ -82,7 +82,7 @@ class EmailService:
         
         # 純文字版本
         text_body = f"""
-        {username} 您好：
+        親愛的使用者 您好：
         
         歡迎使用 Garbi App，請使用以下驗證碼完成註冊：
         
@@ -101,11 +101,11 @@ class EmailService:
         
         return msg
     
-    def send_verification_email(self, to_email: str, username: str) -> Optional[str]:
+    def send_verification_email(self, to_email: str) -> Optional[str]:
         """發送驗證郵件並返回驗證碼"""
         try:
             verification_code = self.generate_verification_code()
-            msg = self.create_verification_email(to_email, verification_code, username)
+            msg = self.create_verification_email(to_email, verification_code)
             
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()
@@ -118,7 +118,7 @@ class EmailService:
             logger.error(f"Failed to send verification email: {str(e)}")
             return None
     
-    def create_password_reset_email(self, to_email: str, verification_code: str, username: str):
+    def create_password_reset_email(self, to_email: str, verification_code: str):
         msg = MIMEMultipart('alternative')
         msg['Subject'] = 'Garbi - 密碼重設驗證'
         msg['From'] = f"{self.from_name} <{self.email_user}>"
@@ -136,7 +136,7 @@ class EmailService:
                     Garbi
                 </h1>
                 
-                <h2 style="color: #333; margin-bottom: 20px;">{username} 您好：</h2>
+                <h2 style="color: #333; margin-bottom: 20px;">親愛的使用者 您好：</h2>
                 
                 <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
                     您申請了重設密碼，請使用以下驗證碼完成密碼重設：
@@ -181,7 +181,7 @@ class EmailService:
         
         # 純文字版本
         text_body = f"""
-        {username} 您好：
+        親愛的使用者 您好：
         
         您申請了重設密碼，請使用以下驗證碼完成密碼重設：
         
@@ -200,10 +200,10 @@ class EmailService:
         
         return msg
     
-    def send_password_reset_email(self, to_email: str, username: str) -> Optional[str]:
+    def send_password_reset_email(self, to_email: str) -> Optional[str]:
         try:
             verification_code = self.generate_verification_code()
-            msg = self.create_password_reset_email(to_email, verification_code, username)
+            msg = self.create_password_reset_email(to_email, verification_code)
             
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 server.starttls()
@@ -228,7 +228,7 @@ class VerificationService(DatabaseService):
         self.users = self.collections['users']
         self.email_service = EmailService()
         
-    def create_verification(self, email: str, username: str, password: str, user_role: str = "user") -> tuple[bool, str]:
+    def create_verification(self, email: str, password: str, user_role: str = "user") -> tuple[bool, str]:
         """創建新的驗證記錄並發送驗證郵件"""
         try:
             existing_email = self.verifications.find_one({
@@ -240,23 +240,13 @@ class VerificationService(DatabaseService):
             
             if existing_email:
                 return False, "驗證郵件已經發送，請檢查您的郵箱"
-            
-            existing_username = self.verifications.find_one({
-                "username": username,
-                "expires_at": {"$gt": datetime.now()},
-                "is_verified": False
-            })
-            
-            if existing_username:
-                return False, "該帳號正在驗證中，請等待驗證完成"
                
-            verification_code = self.email_service.send_verification_email(email, username)
+            verification_code = self.email_service.send_verification_email(email)
             if not verification_code:
                 return False, "郵件發送失敗，請稍後再試"
             
             verification = EmailVerification(
                 email=email,
-                username=username,
                 password=password,
                 verification_code=verification_code,
                 user_role=user_role,
@@ -264,7 +254,6 @@ class VerificationService(DatabaseService):
             )
             
             self.verifications.delete_many({"email": email})
-            self.verifications.delete_many({"username": username})
             
             result = self.verifications.insert_one(verification.to_dict())
             
@@ -291,7 +280,6 @@ class VerificationService(DatabaseService):
             
             verification = EmailVerification(**{  # 使用 to_dict keys
                 'email': verification_doc['email'],
-                'username': verification_doc['username'],
                 'password': verification_doc['password'],
                 'verification_code': verification_doc['verification_code'],
                 'user_id': verification_doc.get('user_id'),
@@ -328,7 +316,6 @@ class VerificationService(DatabaseService):
                 
                 return True, "驗證成功", {
                         "email": verification.email,
-                        "username": verification.username,
                         "password": verification.password,
                         "userRole": verification.user_role
                 }
@@ -369,10 +356,7 @@ class VerificationService(DatabaseService):
                 return False, "請等待 1 分鐘後重試"
             
             # 生成新的驗證碼
-            new_verification_code = self.email_service.send_verification_email(
-                email, 
-                verification_doc["username"]
-            )
+            new_verification_code = self.email_service.send_verification_email(email)
             
             if not new_verification_code:
                 return False, "發送失敗，請稍後再試"
@@ -445,13 +429,12 @@ class VerificationService(DatabaseService):
             if existing_verification:
                 return False, "驗證郵件已經發送，請檢查您的郵箱"
             
-            verification_code = self.email_service.send_password_reset_email(email, user['username'])
+            verification_code = self.email_service.send_password_reset_email(email)
             if not verification_code:
                 return False, "郵件發送失敗，請稍後再試"
             
             verification = EmailVerification(
                 email=email,
-                username=user['username'],
                 password="",
                 verification_code=verification_code,
                 user_role=user['userRole'],
@@ -491,7 +474,6 @@ class VerificationService(DatabaseService):
             
             verification = EmailVerification(
                 email=verification_doc["email"],
-                username=verification_doc["username"],
                 password=verification_doc["password"],
                 verification_code=verification_doc["verification_code"],
                 user_role=verification_doc["userRole"],
@@ -578,10 +560,7 @@ class VerificationService(DatabaseService):
             if not user:
                 return False, "使用者不存在"
             
-            new_verification_code = self.email_service.send_password_reset_email(
-                email, 
-                user['username']
-            )
+            new_verification_code = self.email_service.send_password_reset_email(email)
             
             if not new_verification_code:
                 return False, "發送失敗"

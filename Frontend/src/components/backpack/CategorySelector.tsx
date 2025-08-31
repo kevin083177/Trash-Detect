@@ -16,7 +16,6 @@ interface CategorySelectorProps {
 
 const CATEGORIES: CategoryInfo[] = [
   { key: 'wallpaper', name: '壁紙', icon: 'image-outline'},
-  { key: 'box', name: '對話框', icon: 'chatbox-outline'},
   { key: 'bookshelf', name: '書櫃', icon: 'library-outline'},
   { key: 'table', name: '桌子', icon: 'tablet-landscape-outline'},
   { key: 'carpet', name: '地毯', icon: 'grid-outline'},

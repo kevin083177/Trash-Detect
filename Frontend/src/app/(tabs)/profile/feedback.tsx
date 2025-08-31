@@ -117,8 +117,7 @@ export default function FeedbackPage() {
         <Text style={styles.headerTitle}>意見回饋中心</Text>
       </View>
       <TouchableOpacity style={styles.addButtonContainer} onPress={() => {router.push('/profile/create')}}>
-        <Text style={styles.addButton}>+</Text>
-        <Text style={styles.addButtonText}>新增回饋</Text>
+        <Ionicons name='add' color="#fff" size={36}/>
       </TouchableOpacity>
       <FlatList
         data={feedbacks}
@@ -291,22 +290,21 @@ const styles = StyleSheet.create({
   },
   addButtonContainer: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    bottom: 30,
+    left: '50%',
+    transform: [{ translateX: -30 }],
+    zIndex: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 60,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   addButton: {
-    fontSize: 16,
-    color: '#0044ffff',
-    marginRight: 4,
-  },
-  addButtonText: {
-    fontSize: 14,
-    color: '#0044ffff',
+    fontSize: 55,
+    color: '#fff',
+    textAlignVertical: 'center',
   },
   feedbackList: {
     flex: 1,

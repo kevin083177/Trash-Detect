@@ -21,7 +21,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ detections }) => {
     } else if (detections.length === 1) {
       return translateCategory(detections[0].category);
     } else {
-      return '請一次掃描一個物體';
+      return '多個物體';
     }
   };
 
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   resultContainer: {
     position: 'absolute',
     alignSelf: 'center',
-    width: 120,
+    width: 200,
     top: 12,
     backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: 24,

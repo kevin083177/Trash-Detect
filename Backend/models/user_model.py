@@ -2,7 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 
 class User:
-    def __init__(self, userRole, username, email, password):
+    def __init__(self, userRole, email, password, username=None):
         self.userRole = userRole
         self.username = username
         self.email = email

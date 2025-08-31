@@ -10,7 +10,7 @@ interface UserContextType {
     user: User | null;
     loading: boolean;
 
-    fetchUserProfile: () => Promise<void>;
+    fetchUserProfile: () => Promise<User | null>;
     updateUsername: (username: string) => Promise<{ success: boolean; message: string }>;
     updatePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
     updateEmail: (email: string) => Promise<{ success: boolean; message: string; }>;
@@ -45,13 +45,13 @@ export function UserProvider({ children }: UserProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const fetchUserProfile = useCallback(async () => {
+    const fetchUserProfile = useCallback(async (): Promise<User | null> => {
         try {
             setLoading(true);
             const token = await tokenStorage.getToken();
             if (!token) {
                 setUser(null);
-                return;
+                return null;
             }
 
             const response = await asyncGet(user_api.get_user, {
@@ -73,12 +73,15 @@ export function UserProvider({ children }: UserProviderProps) {
                 }
 
                 setUser(userData);
+                return userData;
             } else {
                 setUser(null);
+                return null;
             }
         } catch (error) {
             console.log("Failed to fetch user profile: ", error);
             setUser(null);
+            return null;
         } finally {
             setLoading(false);
         }

@@ -9,14 +9,14 @@ import { ControlButton, ConnectionStatus } from '@/components/scanner/ControlBut
 import { BoundingBox } from '@/components/scanner/BoundingBox';
 import { ResultDisplay, translateCategory } from '@/components/scanner/ResultDisplay';
 import { Timer } from '@/components/scanner/Timer';
-import Toast from '@/components/Toast';
+import { Toast } from '@/components/Toast';
 import { socket_url } from '@/api/api';
 import { useUser } from '@/hooks/user';
 import { useUserLevel } from '@/hooks/userLevel';
 import { RecycleTipsType, RecycleValues } from '@/interface/Recycle';
-import recycleTips from '@/assets/data/recycle_tips.json';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { recycleTips } from '@/constants/recycleTips';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const detectSpeed = 100; // 1000 divide detectSpeed = fps
@@ -73,7 +73,7 @@ export default function Scanner() {
   };
 
   const getRandomRecycleTip = (trashType: keyof RecycleValues): string => {
-    const tips = (recycleTips as RecycleTipsType)[trashType];
+    const tips = recycleTips[trashType];
     const randomIndex = Math.floor(Math.random() * tips.length);
     return tips[randomIndex];
   };
@@ -504,8 +504,8 @@ export default function Scanner() {
 
           <Toast
             visible={notification.visible}
+            position='bottom'
             message={notification.message}
-            type={notification.type}
             onHide={handleToastHide}
             style={styles.toast}
           />

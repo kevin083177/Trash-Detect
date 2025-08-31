@@ -16,8 +16,8 @@ import { asyncGet } from '@/utils/fetch';
 import { feedback_api, user_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
 import { QuestionStats } from '@/interface/Question';
-import { useTheme } from '@/hooks/theme';
 import { Coin } from '@/components/Coin';
+import { useTutorial } from '@/hooks/tutorial';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -43,11 +43,7 @@ export default function Profile() {
 
   const { logout } = useAuth();
 
-  const { 
-    themeMode,
-    isDark,
-    setThemeMode
-  } = useTheme();
+  const { resetTutorial } = useTutorial();
 
   useEffect(() => {
     const getToken = async () => {
@@ -56,14 +52,6 @@ export default function Profile() {
     };
     getToken();
   }, []);
-
-  const handleThemeChange = async () => {
-    if (isDark) {
-      await setThemeMode('light');
-    } else {
-      await setThemeMode('dark');
-    }
-  };
 
   const transformTrashStats = useCallback(() => {
     const trashStatsData = getTrashStats();
@@ -124,6 +112,7 @@ export default function Profile() {
             try {
               await logout();
               await clearRoom();
+              await resetTutorial();
               clearUser();
             } catch (error) {
               console.error('Logout failed:', error);
@@ -289,8 +278,8 @@ export default function Profile() {
                 </View>
               )}
             </TouchableOpacity>
-            <View style={{flexDirection: 'column', marginLeft: 12, gap: 8}}>
-              <Text style={[styles.userName, {color: isDark ? '#fff' : '#aaa'}]}>
+            <View style={{flexDirection: 'column', marginLeft: 24, gap: 16}}>
+              <Text style={styles.userName}>
                 {getUsername()}
               </Text>
               <Coin size="small" value={getMoney()} />
@@ -304,25 +293,21 @@ export default function Profile() {
             <MenuButton 
               icon="barcode-outline" 
               title="電子票券" 
-              isDark={isDark}
               onPress={handleVoucherPress}
             />
             <MenuButton 
               icon="chatbubbles-outline" 
               title="回饋中心" 
-              isDark={isDark}
               onPress={handleFeedbackPress}
             />
             <MenuButton 
               icon="settings-outline" 
               title="設定" 
-              isDark={isDark}
               onPress={handleSettingsPress}
             />
             <MenuButton 
               icon="log-out-outline" 
               title="登出" 
-              isDark={isDark}
               onPress={handleLogout}
             />
           </View>
@@ -412,11 +397,7 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.themeChange} onPress={handleThemeChange}>
-        <Ionicons size={24} name={isDark ? "moon-outline" : "moon"} color={isDark ? "#fff" : "#1C1C1C"} />
-        <Text style={{marginTop: 4, color: isDark ? "#fff" : "#1C1C1C"}}>{isDark ? "淺色模式" : "深色模式"}</Text>
-      </TouchableOpacity>
-      <View style={[styles.background, {backgroundColor: isDark ? "#1C1C1C" : "#fffcf6"}]} />
+      <View style={styles.background} />
         <FlatList
           data={getListData()}
           renderItem={renderItem}
@@ -439,20 +420,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffffff',
   },
-  themeChange: {
-    position: 'absolute',
-    flexDirection: 'column',
-    alignItems: 'center',
-    top: 32,
-    right: 32,
-    zIndex: 2,
-  },
   background: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 350,
+    backgroundColor: '#1C1C1C',
     borderBottomLeftRadius: 1500,
     borderBottomRightRadius: 1500,
     transform: [{ scaleX: 1.8 }],
@@ -516,7 +490,8 @@ const styles = StyleSheet.create({
     borderTopColor: 'transparent',
   },
   userName: {
-    fontSize: 20,
+    fontSize: 24,
+    color: '#fff'
   },
   menuContainer: {
     flexDirection: 'row',

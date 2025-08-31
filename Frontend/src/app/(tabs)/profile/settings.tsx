@@ -12,7 +12,7 @@ import { router } from 'expo-router';
 import ClearableInput from '@/components/auth/ClearableInput';
 import PasswordInput from '@/components/auth/PasswordInput';
 import LoadingModal from '@/components/LoadingModal';
-import Toast from '@/components/Toast';
+import { Toast } from '@/components/Toast';
 import { useUser } from '@/hooks/user';
 
 type SettingType = 'username' | 'password' | 'email' | null;
@@ -168,14 +168,13 @@ export default function Settings() {
     );
   };
 
-  // 渲染編輯表單
   const renderEditForm = (type: SettingType) => {
     switch (type) {
       case 'username':
         return (
           <View style={styles.editForm}>
             <ClearableInput
-              placeholder="新用戶名"
+              placeholder="輸入使用者名稱"
               value={newUsername}
               onChangeText={setNewUsername}
             />
@@ -195,17 +194,17 @@ export default function Settings() {
         return (
           <View style={styles.editForm}>
             <PasswordInput
-              placeholder="舊密碼"
+              placeholder="輸入目前密碼"
               value={oldPassword}
               onChangeText={setOldPassword}
             />
             <PasswordInput
-              placeholder="新密碼"
+              placeholder="輸入新密碼"
               value={newPassword}
               onChangeText={setNewPassword}
             />
             <PasswordInput
-              placeholder="確認新密碼"
+              placeholder="輸入確認密碼"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
@@ -225,7 +224,7 @@ export default function Settings() {
         return (
           <View style={styles.editForm}>
             <ClearableInput
-              placeholder="新電子郵件"
+              placeholder="輸入新電子郵件"
               value={newEmail}
               onChangeText={setNewEmail}
               keyboardType="email-address"
@@ -293,7 +292,6 @@ export default function Settings() {
       <Toast
         visible={toast.visible}
         message={toast.message}
-        type={toast.type}
         onHide={() => setToast(prev => ({ ...prev, visible: false }))}
       />
     </View>

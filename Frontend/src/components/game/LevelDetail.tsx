@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal, Text, View, StyleSheet, TouchableOpacity, Image, Dimensions, TouchableWithoutFeedback } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import { Coin } from "../Coin";
 
 interface LevelDetailProps {
   visible: boolean;
@@ -100,17 +101,14 @@ export function LevelDetail({
                                                     resizeMode="contain"
                                                 />
                                                 
-                                                {!isActive && (
-                                                    <Text style={styles.scoreRequirementText}>
-                                                        {starRequirement}
-                                                    </Text>
-                                                )}
+                                                <Text style={styles.scoreRequirementText}>
+                                                    {!isActive && starRequirement}
+                                                </Text>
                                             </View>
                                         );
                                     })}
                                 </View>
-                            </View>
-                                            
+                            </View> 
                             <View style={styles.scoreSection}>
                                 <Text style={styles.scoreTitle}>最高得分</Text>
                                 <Text style={styles.scoreText}>{user_scores}</Text>
@@ -121,7 +119,16 @@ export function LevelDetail({
                             <View style={styles.descriptionSection}>
                                 <Text style={styles.descriptionText}>{formatDescription(level_description)}</Text>
                             </View>
-                            
+                            {user_stars < 3 && (
+                                <View style={styles.coinContainer}>
+                                    <Text style={styles.coinText}>通關獎勵</Text>
+                                    <Coin
+                                        value={50}
+                                        size="medium"
+                                        fontColor="#fff"
+                                    />
+                                </View>
+                            )}
                             <View style={styles.footer}>
                                 <TouchableOpacity style={styles.startButton} onPress={onStart}>
                                     <View style={styles.buttonGradient}>
@@ -319,6 +326,21 @@ const styles = StyleSheet.create({
     scoreRequirementText: {
         color: 'gray'
     },
+    coinContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#8B5A3C',
+        paddingVertical: 8,
+        paddingHorizontal: 18,
+        borderRadius: 24,
+    },
+    coinText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginRight: 12
+    },
     divider: {
         height: 3,
         width: 150,
@@ -349,7 +371,7 @@ const styles = StyleSheet.create({
     },
     descriptionSection: {
         paddingHorizontal: 10,
-        marginBottom: 20,
+        marginBottom: 12,
         zIndex: 10,
         position: 'relative',
     },
@@ -358,7 +380,6 @@ const styles = StyleSheet.create({
         color: '#8B5A3C',
         textAlign: 'center',
         lineHeight: 24,
-        fontWeight: '500',
     },
     footer: {
         zIndex: 10,

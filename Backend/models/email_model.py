@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 
 class EmailVerification:
-    def __init__(self, email: str, username: str, password: str, verification_code: str, user_id = None, verification_type: str = "register", user_role: str = "user"):
+    def __init__(self, email: str, password: str, verification_code: str, user_id = None, verification_type: str = "register", user_role: str = "user"):
         self.email = email
-        self.username = username
         self.password = password
         self.verification_code = verification_code
         self.verification_type = verification_type
@@ -22,7 +21,6 @@ class EmailVerification:
     def to_dict(self):
         result = {
             "email": self.email,
-            "username": self.username,
             "password": self.password,
             "verification_code": self.verification_code,
             "userRole": self.user_role,

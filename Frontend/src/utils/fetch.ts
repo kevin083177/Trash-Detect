@@ -1,6 +1,8 @@
 import { tokenStorage } from '@/utils/tokenStorage';
 
 let authErrorCallback: (() => void) | null = null;
+let isHandling401 = false;
+let handle401Timeout: NodeJS.Timeout | null = null;
 
 export function setAuthErrorCallback(callback: () => void) {
   authErrorCallback = callback;
@@ -8,8 +10,22 @@ export function setAuthErrorCallback(callback: () => void) {
 
 async function handleResponse(response: Response): Promise<any> {
   if (response.status === 401) {
-    if (authErrorCallback) {
-      authErrorCallback();
+    if (!isHandling401) {
+      isHandling401 = true;
+      
+      if (handle401Timeout) {
+        clearTimeout(handle401Timeout);
+      }
+      
+      handle401Timeout = setTimeout(() => {
+        if (authErrorCallback) {
+          authErrorCallback();
+        }
+        
+        setTimeout(() => {
+          isHandling401 = false;
+        }, 2000);
+      }, 100);
     }
   }
 
