@@ -138,13 +138,22 @@ export default function GameChapterScreen() {
   };
 
   const chaptersToRender = getChaptersToRender();
+
+  const currentChapterBackground = chaptersToRender.length > 0 && chaptersToRender[activeIndex] 
+    ? chaptersToRender[activeIndex].image.url 
+    : '';
+
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text>載入中...</Text>
-        </View>
-      ) : error ? (
+      <ImageBackground 
+        source={{ uri: currentChapterBackground }}
+        style={styles.backgroundImage}
+        imageStyle={styles.backgroundImageStyle}
+        resizeMode="cover"
+        blurRadius={5}
+      >
+      <View style={styles.overlay} />
+      {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchChapters}>
@@ -185,6 +194,7 @@ export default function GameChapterScreen() {
         challengeHighestScore={getChallengeHighestScore(selectChapterSequence)}
         onClose={() => setLevelSelectorVisible(false)}
       />
+      </ImageBackground>
     </SafeAreaView>
   );
 }
@@ -193,6 +203,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white'
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundImageStyle: {
+    opacity: 0.7,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)'
   },
   carouselContainer: {
     flex: 1,
@@ -221,21 +243,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 10,
+    margin: 20,
   },
   errorText: {
     marginBottom: 16,
     textAlign: 'center',
     color: '#ff0000',
+    fontSize: 16,
   },
   retryButton: {
     backgroundColor: '#007BFF',
