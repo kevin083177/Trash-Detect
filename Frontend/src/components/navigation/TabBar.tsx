@@ -4,30 +4,19 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
 import { USER_TAB_SCREENS } from '@/constants/tabScreen';
-import { useTheme } from '@/hooks/theme';
 import { useTutorial } from '@/hooks/tutorial';
 
 const THEME_COLORS = {
-  light: {
-    background: '#fffcf6',
-    activeText: 'rgba(91, 60, 44, 1)',
-    inactiveText: '#B0B0B0',
-    cameraBackground: '#cee6ba',
-    borderColor: '#fffcf6',
-  },
-  dark: {
-    background: '#1C1C1E',
-    activeText: '#FFFFFF',
-    inactiveText: '#8E8E93',
-    cameraBackground: '#cee6ba',
-    borderColor: '#1C1C1E',
-  },
+  background: '#1C1C1E',
+  activeText: '#FFFFFF',
+  inactiveText: '#8E8E93',
+  cameraBackground: '#cee6ba',
+  borderColor: '#1C1C1E',
 };
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { isDark } = useTheme();
-  const theme = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
+  const theme = THEME_COLORS;
   
   const scaleAnims = useRef(
     state.routes.map(() => new Animated.Value(1))

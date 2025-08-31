@@ -6,7 +6,6 @@ import { loadRoom, RoomData, hasRoom, ItemTransform, loadDefaultDecorations } fr
 import { ITEM_Z_INDEX, ProductCategory } from '@/interface/Product';
 import { ImageSize } from '@/interface/Image';
 import { tokenStorage } from '@/utils/tokenStorage';
-import { useTheme } from '@/hooks/theme';
 import { router } from 'expo-router';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
 import { Toast } from '@/components/Toast';
@@ -44,8 +43,6 @@ export default function Index() {
   const roomDecorationRef = useRef(null);
   const dailyCheckInRef = useRef(null);
   const dogRef = useRef(null);
-
-  const { isDark } = useTheme();
 
   const loadRoomData = async () => {
     try {
@@ -311,7 +308,6 @@ export default function Index() {
     <View
       style={[
         styles.container,
-        isDark ? { backgroundColor: '#1C1C1E' } : { backgroundColor: '#fffcf6' }
       ]}
     >
       <TouchableOpacity 
@@ -391,6 +387,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1C1C1C'
   },
   iconContainer: {
     position: 'absolute',

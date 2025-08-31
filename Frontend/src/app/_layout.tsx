@@ -5,7 +5,6 @@ import { StatusBar } from 'react-native';
 import { ProductProvider } from '@/hooks/product';
 import { UserProvider } from '@/hooks/user';
 import { UserLevelProvider } from '@/hooks/userLevel';
-import { ThemeProvider, useTheme } from '@/hooks/theme';
 import { setAuthErrorCallback } from '@/utils/fetch';
 import { VoucherProvider } from '@/hooks/voucher';
 
@@ -19,22 +18,14 @@ function AppWithAuthCallback({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ThemedStatusBar() {
-  const { isDark } = useTheme();
-
-  return (
-    <StatusBar 
-      translucent={false} 
-      barStyle={isDark ? 'light-content' : 'dark-content'}
-      backgroundColor={isDark ? '#1C1C1C' : '#ffffff'}
-    />
-  );
-}
-
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <ThemedStatusBar />
+    <>
+      <StatusBar 
+        translucent={false} 
+        barStyle={'light-content'}
+        backgroundColor={'#1C1C1C'}
+      />
       <AuthProvider>
         <UserProvider>
           <UserLevelProvider>
@@ -51,6 +42,6 @@ export default function RootLayout() {
           </UserLevelProvider>
         </UserProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </>
   );
 }
