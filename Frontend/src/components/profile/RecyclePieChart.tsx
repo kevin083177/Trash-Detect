@@ -17,13 +17,7 @@ interface ChartData {
   percentage: number;
 }
 
-const COLORS = {
-  paper: '#03045E',
-  plastic: '#90E0EF',
-  containers: '#0077B6',
-  bottles: '#CAF0F8',
-  cans: '#00B4D8',
-};
+const COLORS = ['#CAF0F8', '#90E0EF', '#00B4D8', '#0077B6', '#03045E'];
 
 export default function RecyclePieChart({ 
   data, 
@@ -51,10 +45,14 @@ export default function RecyclePieChart({
     .map(([key, value]) => ({
       label: RECYCLE_TYPE_LABELS[key as keyof RecycleValues],
       value,
-      color: COLORS[key as keyof RecycleValues],
+      color: '',
       percentage: (value / total) * 100,
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value)
+    .map((item, index) => ({
+      ...item,
+      color: COLORS[index] || COLORS[COLORS.length - 1],
+    }));
 
   const createPath = (startAngle: number, endAngle: number, radius: number, innerRadius: number = 0) => {
     const centerX = size / 2;
