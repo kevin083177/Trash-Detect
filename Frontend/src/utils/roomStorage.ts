@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product, ProductCategory } from '@/interface/Product';
 import { asyncGet } from './fetch';
 import { theme_api } from '@/api/api';
-import { Platform } from 'react-native';
 
 const ROOM_KEY = 'room';
 
@@ -115,7 +114,6 @@ const generateDefaultTransform = (width: number, height: number, category: Produ
     'lamp': { position: { x: width - 45, y: height / 1.7 }, scale: 3, rotation: 0},
     'pendant': { position: { x: 120, y: 75}, scale: 3, rotation: 0},
     'calendar': { position: { x: width / 3, y: height / 4 }, scale: 1.5, rotation: 0},
-    'box': { position: { x: 0, y: 0 }, scale: 1, rotation: 0},
   };
 
   const baseTransform = baseTransforms[category] as ItemTransform;
@@ -150,6 +148,13 @@ const generateDefaultTransform = (width: number, height: number, category: Produ
 
 
 export const loadDefaultDecorations = async (token: string, width: number, height: number): Promise<RoomData> => {
+  if (!token) {
+    return {
+      selectedItems: {},
+      itemTransforms: {}
+    }
+  }
+
   try {
     const defaultProducts = await fetchDefaultTheme(token);
     const selectedItems: Partial<Record<ProductCategory, Product>> = {};
