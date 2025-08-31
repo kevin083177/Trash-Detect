@@ -288,7 +288,6 @@ export default function Create() {
       <Toast
         visible={toast.visible}
         message={toast.message}
-        type={toast.type}
         onHide={() => setToast(prev => ({ ...prev, visible: false }))}
       />
     </SafeAreaView>
