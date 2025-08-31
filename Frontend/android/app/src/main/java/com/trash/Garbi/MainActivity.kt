@@ -1,4 +1,4 @@
-package com.anonymous.TrashDetect
+package com.trash.Garbi
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

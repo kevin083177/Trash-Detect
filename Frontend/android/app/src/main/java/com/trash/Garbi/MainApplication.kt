@@ -1,4 +1,4 @@
-package com.anonymous.TrashDetect
+package com.trash.Garbi
 
 import android.app.Application
 import android.content.res.Configuration
