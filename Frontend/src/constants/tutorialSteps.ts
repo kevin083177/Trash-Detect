@@ -1,4 +1,5 @@
 import { TutorialStep } from "@/interface/Tutorial";
+import { Keyboard } from "react-native";
 
 export interface ElementRefs {
   home?: { measure: () => Promise<{ x: number; y: number; width: number; height: number }> };
@@ -15,7 +16,7 @@ const getStaticTutorialSteps = (username: string = ''): Omit<TutorialStep, 'targ
   {
     id: 'dog',
     title: '初次見面！',
-    description: '主人您好！我是您的小寵物嘎逼，請問主人叫什麼呢？',
+    description: '主人您好！我是您的小寵物嘎逼，請問主人該怎麼稱呼您呢？',
     placement: 'top',
     requiresInput: true,
   },
@@ -117,6 +118,9 @@ export const getTutorialSteps = async (
   elementRefs: ElementRefs,
   username: string = ''
 ): Promise<TutorialStep[]> => {
+  Keyboard.dismiss();
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
   const staticSteps = getStaticTutorialSteps(username);
   const steps: TutorialStep[] = [];
 

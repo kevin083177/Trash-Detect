@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Animated, TouchableWithoutFeedback, TouchableOpacity, Alert, TextInput, Keyboard, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TutorialStep } from '@/interface/Tutorial';
@@ -21,6 +21,8 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { initialStep, saveUsername } = useTutorial();
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -32,6 +34,27 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
     height: 100,
     borderRadius: 12,
   });
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setKeyboardVisible(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -99,8 +122,10 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
       const padding = calculatePadding(step);
       const borderRadius = 12;
       
+      const keyboardAdjustment = keyboardVisible && step.requiresInput ? keyboardHeight : 0;
+
       const spotX = targetElement.x - padding.left;
-      const spotY = targetElement.y - padding.top;
+      const spotY = targetElement.y - padding.top - keyboardAdjustment;
       const spotW = targetElement.width + padding.left + padding.right;
       const spotH = targetElement.height + padding.top + padding.bottom;
 
@@ -128,6 +153,17 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
 
   const handleNext = async () => {
     const step = steps[currentStep];
+    setErrorMessage('');
+
+    if (step.requiresInput && keyboardVisible) {
+      Keyboard.dismiss();
+      setTimeout(() => {
+        proceedToNextStep();
+      }, 100);
+    } else {
+      proceedToNextStep();
+    }
+
     if (step.requiresInput && step.id === 'dog') {
       if (!inputValue.trim()) {
         setErrorMessage('請輸入您的名稱');
@@ -216,12 +252,13 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
     const margin = 20;
     const arrowSize = 8;
     
-    const inputAdjustment = requiresInput ? 40 : 0;
+    const inputAdjustment = requiresInput ? 60 : 0;
+    const keyboardAdjustment = keyboardVisible && requiresInput ? keyboardHeight / 2 : 0;
 
     if (!targetElement) {
       return {
         position: 'center',
-        top: height / 2 - contentHeight / 2 - inputAdjustment,
+        top: height / 2 - contentHeight / 2 - inputAdjustment - keyboardAdjustment,
         left: (width - contentWidth) / 2,
       };
     }
@@ -229,7 +266,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
     if (placement === 'screen-top') {
       return {
         position: 'screen-position',
-        top: insets.top + margin - inputAdjustment,
+        top: insets.top + margin - inputAdjustment - keyboardAdjustment,
         left: (width - contentWidth) / 2,
       }
     }
@@ -237,7 +274,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
     if (placement === 'screen-center') {
       return {
         position: 'center',
-        top: height / 2 - contentHeight / 2 - inputAdjustment,
+        top: height / 2 - contentHeight / 2 - inputAdjustment - keyboardAdjustment,
         left: (width - contentWidth) / 2,
       };
     }
@@ -250,7 +287,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
           position: 'relative',
           top: Math.max(
             insets.top + margin,
-            targetElement.y - contentHeight - arrowSize - margin - inputAdjustment
+            targetElement.y - contentHeight - arrowSize - margin - inputAdjustment - keyboardAdjustment
           ),
           left: Math.max(margin, Math.min(
             targetCenterX - contentWidth / 2,
@@ -262,7 +299,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
           position: 'relative',
           top: Math.min(
             height - contentHeight - insets.bottom - margin,
-            targetElement.y + targetElement.height + arrowSize + margin - inputAdjustment
+            targetElement.y + targetElement.height + arrowSize + margin - inputAdjustment - keyboardAdjustment
           ),
           left: Math.max(margin, Math.min(
             targetCenterX - contentWidth / 2,
@@ -284,6 +321,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
   const contentPosition = getContentPosition();
   const hasTarget = !!currentStepData?.targetElement;
   const isFirstStep = currentStep === 0 && currentStepData?.requiresInput;
+  const isFinalStep = currentStep === steps.length - 1;
 
   return (
     <View style={styles.container}>
@@ -362,7 +400,7 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
             <Text style={styles.stepIndicator}>
               {currentStep + 1} / {steps.length}
             </Text>
-            {!isFirstStep && (
+            {!isFirstStep && !isFinalStep && (
               <TouchableWithoutFeedback onPress={handleSkip}>
                 <View style={styles.skipButton}>
                   <Text style={styles.skipText}>跳過</Text>
@@ -410,15 +448,10 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
               disabled={isProcessing}
             >
               <Text style={styles.nextText}>
-                {isFirstStep ? '確認' : (currentStep === steps.length - 1 ? '完成' : '下一步')}
+                {isFirstStep ? `${isProcessing ? '保存中' : '確認'}` : (currentStep === steps.length - 1 ? '完成' : '下一步')}
               </Text>
               {!isFirstStep && currentStep < steps.length - 1 && (
                 <Ionicons name="arrow-forward" size={18} color="white" />
-              )}
-              {isProcessing && (
-                <View style={styles.loadingContainer}>
-                  <Text style={styles.loadingText}>保存中...</Text>
-                </View>
               )}
             </TouchableOpacity>
           </View>
@@ -619,14 +652,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
     marginRight: 6,
-  },
-  loadingContainer: {
-    marginLeft: 8,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: 'white',
-    opacity: 0.8,
   },
   progressContainer: {
     flexDirection: 'row',

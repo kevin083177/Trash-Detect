@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { QuestionStats } from '@/interface/Question';
 import { useTheme } from '@/hooks/theme';
 import { Coin } from '@/components/Coin';
+import { useTutorial } from '@/hooks/tutorial';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -43,11 +44,9 @@ export default function Profile() {
 
   const { logout } = useAuth();
 
-  const { 
-    themeMode,
-    isDark,
-    setThemeMode
-  } = useTheme();
+  const { isDark, setThemeMode } = useTheme();
+
+  const { resetTutorial } = useTutorial();
 
   useEffect(() => {
     const getToken = async () => {
@@ -124,6 +123,7 @@ export default function Profile() {
             try {
               await logout();
               await clearRoom();
+              await resetTutorial();
               clearUser();
             } catch (error) {
               console.error('Logout failed:', error);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Image, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Image, Animated, Pressable, Keyboard } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Grayscale } from 'react-native-color-matrix-image-filters';
@@ -33,7 +33,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     state.routes.map(() => new Animated.Value(1))
   ).current;
 
-  const { registerElement } = useTutorial();
+  const { registerElement, isTutorialVisible } = useTutorial();
   const scannerTabRef = useRef(null);
   const profileTabRef = useRef(null);
   const gameTabRef = useRef(null);
@@ -50,6 +50,21 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       useNativeDriver: true,
     }).start();
   };
+
+  useEffect(() => {
+  const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide',
+    () => {
+      if (isTutorialVisible) {
+        setTimeout(() => {
+        }, 100);
+      }
+    }
+  );
+
+  return () => {
+    keyboardDidHideListener.remove();
+  };
+}, [isTutorialVisible]);
 
   const animateCameraPress = () => {
     Animated.sequence([

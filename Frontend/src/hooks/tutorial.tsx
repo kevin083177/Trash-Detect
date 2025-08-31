@@ -9,10 +9,10 @@ interface TutorialContextType {
   initialStep: number;
   tutorialSteps: TutorialStep[];
   username: string;
-  startTutorial: () => Promise<void>;
+  startTutorial: (username: string | null, hasUsername: boolean) => Promise<void>;
   completeTutorial: () => void;
   registerElement: (id: string, ref: any) => void;
-  checkAndShowTutorial: () => Promise<void>;
+  checkAndShowTutorial: (username?: string | null, hasUsername?: boolean) => Promise<void>;
   resetTutorial: () => Promise<void>;
   saveUsername: (name: string) => Promise<void>;
 }
@@ -29,8 +29,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState('');
   const [initialStep, setInitialStep] = useState(0);
   const elementRefs = useRef<ElementRefs>({});
+  
+  const [hasCheckedTutorial, setHasCheckedTutorial] = useState(false);
 
-  const { updateUsername } = useUser();
+  const { updateUsername, getUsername } = useUser();
 
   const registerElement = useCallback((id: string, ref: any) => {
     if (ref?.current) {
@@ -56,27 +58,38 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn('Failed to save username:', error);
     }
-  }, []);
+  }, [updateUsername]);
 
-  const startTutorial = useCallback(async () => {
+  const startTutorial = useCallback(async (username: string | null, hasUsername: boolean) => {
     try {
-      const savedUsername = await AsyncStorage.getItem(USERNAME_KEY);
-      const progress = await AsyncStorage.getItem(TUTORIAL_PROGRESS_KEY);
-
-      if (savedUsername) {
-        setUsername(savedUsername);
-      }
-      
-      if (progress === 'username_saved' && savedUsername) {
+      if (hasUsername && username) {
+        setUsername(username);
         setInitialStep(1);
+        await AsyncStorage.setItem(USERNAME_KEY, username);
+        await AsyncStorage.setItem(TUTORIAL_PROGRESS_KEY, 'username_saved');
+        
+        const steps = await getTutorialSteps(elementRefs.current, username);
+        setTutorialSteps(steps);
       } else {
-        setInitialStep(0);
-      }
+        const savedUsername = await AsyncStorage.getItem(USERNAME_KEY);
+        const progress = await AsyncStorage.getItem(TUTORIAL_PROGRESS_KEY);
 
-      const steps = await getTutorialSteps(elementRefs.current, savedUsername || '');
-      setTutorialSteps(steps);
+        if (savedUsername && progress === 'username_saved') {
+          setUsername(savedUsername);
+          setInitialStep(1);
+        } else {
+          setUsername('');
+          setInitialStep(0);
+        }
+
+        const steps = await getTutorialSteps(elementRefs.current, savedUsername || '');
+        setTutorialSteps(steps);
+      }
     } catch (error) {
       console.warn('Failed to get element positions, using fallback:', error);
+      setInitialStep(0);
+      const steps = await getTutorialSteps(elementRefs.current, '');
+      setTutorialSteps(steps);
     }
     
     setIsTutorialVisible(true);
@@ -84,6 +97,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const completeTutorial = useCallback(async () => {
     setIsTutorialVisible(false);
+    setHasCheckedTutorial(true);
     try {
       await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
       await AsyncStorage.removeItem(TUTORIAL_PROGRESS_KEY);
@@ -98,26 +112,45 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.removeItem(TUTORIAL_PROGRESS_KEY);
       await AsyncStorage.removeItem(USERNAME_KEY);
       setUsername('');
+      setHasCheckedTutorial(false);
     } catch (error) {
       console.warn('Failed to reset tutorial:', error);
     }
   }, []);
   
-  const checkAndShowTutorial = useCallback(async () => {
+  const checkAndShowTutorial = useCallback(async (providedUsername?: string | null, providedHasUsername?: boolean) => {
+    if (hasCheckedTutorial) {
+      return;
+    }
+    
     try {
       const completed = await AsyncStorage.getItem(TUTORIAL_COMPLETED_KEY);
-      if (!completed) {
-        setTimeout(() => {
-          startTutorial();
-        }, 1000);
+      if (completed === 'true') {
+        setHasCheckedTutorial(true);
+        return;
       }
+
+      let username: string | null;
+      let hasUsername: boolean;
+
+      if (providedUsername !== undefined && providedHasUsername !== undefined) {
+        username = providedUsername;
+        hasUsername = providedHasUsername;
+      } 
+
+      setHasCheckedTutorial(true);
+
+      setTimeout(() => {
+        startTutorial(username, hasUsername);
+      }, 500);
+      
     } catch (error) {
       console.warn('Failed to check tutorial status:', error);
       setTimeout(() => {
-        startTutorial();
-      }, 1000);
+        startTutorial(null, false);
+      }, 500);
     }
-  }, [startTutorial]);
+  }, [hasCheckedTutorial, getUsername, startTutorial]);
 
   return (
     <TutorialContext.Provider value={{
