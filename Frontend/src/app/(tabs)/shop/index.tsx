@@ -2,12 +2,12 @@ import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TouchableWithoutFeedback, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import LoadingModal from '@/components/LoadingModal';
 import { Product } from '@/interface/Product';
 import { VoucherType } from '@/interface/Voucher';
 import ProductDetail from '@/components/shop/ProductDetail';
 import VoucherModal from '@/components/shop/VoucherModal';
 import ConfirmModal from '@/components/shop/ConfirmModal';
+import ThemePreview from '@/components/shop/ThemePreview';
 import { useProduct } from '@/hooks/product';
 import { useUser } from '@/hooks/user';
 import { useVoucher } from '@/hooks/voucher';
@@ -25,6 +25,9 @@ export default function Shop(): ReactNode {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [purchaseConfirmText, setPurchaseConfirmText] = useState('');
   
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
+  
   const [refreshing, setRefreshing] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'virtual' | 'physical'>('virtual');
@@ -33,7 +36,6 @@ export default function Shop(): ReactNode {
     themes,
     themeProducts,
     themeLoading,
-    loading: productLoading,
     fetchThemes,
     fetchPurchasedProducts,
     purchaseProduct,
@@ -47,7 +49,6 @@ export default function Shop(): ReactNode {
   const {
     voucherTypes,
     loading: voucherLoading,
-    redeeming,
     fetchVoucherTypes,
     redeem: redeemVoucher,
     refreshAll: refreshVouchers,
@@ -56,7 +57,13 @@ export default function Shop(): ReactNode {
   } = useVoucher();
 
   const handleThemePress = (theme: string) => {
-    router.push(`/shop/theme?theme=${encodeURIComponent(theme)}`);
+    setSelectedTheme(theme);
+    setThemeModalVisible(true);
+  };
+
+  const handleCloseThemeModal = () => {
+    setThemeModalVisible(false);
+    setSelectedTheme(null);
   };
   
   const handleProductPress = (product: Product) => {
@@ -160,36 +167,47 @@ export default function Shop(): ReactNode {
     
     return (
       <TouchableOpacity 
-        style={styles.productCard} 
+        style={[styles.productCard, purchased && styles.purchasedCard]} 
         onPress={() => handleProductPress(item)}
+        activeOpacity={0.8}
       >
-        <Image 
-          source={{ uri: item.image?.url }}
-          style={[
-            styles.productImage,
-            purchased && styles.purchasedProductImage
-          ]}
-          resizeMode="contain"
-        />
-        <Text 
-          style={[
-            styles.productText,
-            purchased && styles.purchasedProductText
-          ]} 
-          numberOfLines={1}
-        >
-          {item.name}
-        </Text>
+        <View style={styles.productImageContainer}>
+          <Image 
+            source={{ uri: item.image?.url }}
+            style={[
+              styles.productImage,
+              purchased && styles.purchasedProductImage
+            ]}
+            resizeMode="contain"
+          />
+          {purchased && (
+            <View style={styles.purchasedBadge}>
+              <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+            </View>
+          )}
+        </View>
         
-        {purchased ? (
-          <View style={styles.purchasedContainer}>
-            <Text style={styles.purchasedText}>已購買</Text>
+        <View style={styles.productInfo}>
+          <Text 
+            style={[
+              styles.productText,
+              purchased && styles.purchasedProductText
+            ]} 
+            numberOfLines={1}
+          >
+            {item.name}
+          </Text>
+          
+          <View style={styles.productPriceRow}>
+            {purchased ? (
+              <Text style={styles.purchasedLabel}>已擁有</Text>
+            ) : (
+              <View style={styles.priceContainer}>
+                <Coin size="small" value={item.price} />
+              </View>
+            )}
           </View>
-        ) : (
-          <View style={styles.coinContainer}>
-            <Coin size="small" value={item.price} />
-          </View>
-        )}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -263,9 +281,12 @@ export default function Shop(): ReactNode {
     return (
       <View style={styles.themeSection}>
         <View style={styles.themeHeader}>
-          <Text style={styles.themeTitle}>{item}</Text>
-          <TouchableOpacity onPress={() => handleThemePress(item)}>
-            <Text style={styles.previewText}>預覽 &gt;</Text>
+          <View style={styles.themeTitleContainer}>
+            <Text style={styles.themeTitle}>{item}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handleThemePress(item)} style={styles.previewButton}>
+            <Text style={styles.previewText}>預覽</Text>
+            <Ionicons name="chevron-forward" size={16} color="#007AFF" />
           </TouchableOpacity>
         </View>
         
@@ -335,27 +356,22 @@ export default function Shop(): ReactNode {
     );
   };
 
-  if (productLoading) {
-    return (
-      <LoadingModal visible={productLoading} text='商店讀取中' />
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.replace('/')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Coin size="medium" value={getMoney()} />
+          <Coin size="medium" value={getMoney()} />
       </View>
+      
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={styles.tab}
           onPress={() => setActiveTab('virtual')}
         >
           <Text style={[styles.tabText, activeTab === 'virtual' && styles.activeTabText]}>
-            虛擬商品
+            家具
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -363,7 +379,7 @@ export default function Shop(): ReactNode {
           onPress={() => setActiveTab('physical')}
         >
           <Text style={[styles.tabText, activeTab === 'physical' && styles.activeTabText]}>
-            實體兌換
+            電子票券
           </Text>
         </TouchableOpacity>
       </View>
@@ -392,6 +408,12 @@ export default function Shop(): ReactNode {
           onRedeem={handleRedeemVoucher}
         />
       )}
+
+      <ThemePreview
+        visible={themeModalVisible}
+        theme={selectedTheme}
+        onClose={handleCloseThemeModal}
+      />
       
       <ConfirmModal
         visible={confirmModalVisible}
@@ -399,8 +421,6 @@ export default function Shop(): ReactNode {
         confirm={handleBuyProduct}
         cancel={handleCancelPurchase}
       />
-
-      <LoadingModal visible={redeeming} text='兌換中...' />
     </SafeAreaView>
   );
 }
@@ -412,15 +432,15 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: '#fff',
   },
   backButton: {
-    padding: 4,
-    marginRight: 16,
+    position: 'absolute',
+    left: 16,
+    top: '50%',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -458,13 +478,134 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  mainContent: {
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  themeSection: {
+    marginHorizontal: 12,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+  },
+  themeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  themeTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  themeIcon: {
+    fontSize: 20,
+  },
+  themeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  previewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  previewText: {
+    fontSize: 14,
+    color: '#007AFF',
+  },
+  productList: {
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  productCard: {
+    width: (width - 64) / 3,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderColor: 'transparent',
+  },
+  purchasedCard: {
+    borderColor: '#E8F5E9',
+    backgroundColor: '#FAFAFA',
+  },
+  productImageContainer: {
+    position: 'relative',
+    aspectRatio: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  productImage: {
+    width: '90%',
+    height: '90%',
+  },
+  purchasedProductImage: {
+    opacity: 0.5,
+  },
+  purchasedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    padding: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  productInfo: {
+    padding: 8,
+    backgroundColor: '#fff',
+    alignItems: 'center'
+  },
+  productText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+  },
+  purchasedProductText: {
+    color: '#888',
+  },
+  productPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  purchasedLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4CAF50',
+  },
+  noProductsContainer: {
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noProductsText: {
+    color: '#999',
+    fontSize: 14,
+  },
   voucherList: {
     paddingVertical: 8,
     paddingBottom: 32,
-  },
-  voucherRow: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
   },
   voucherCardWrapper: {
     width: '50%',
@@ -492,11 +633,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 8,
-  },
-  placeholderVoucherImage: {
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   voucherName: {
     fontSize: 14,
@@ -529,84 +665,4 @@ const styles = StyleSheet.create({
     color: '#999',
     fontWeight: '400',
   },
-  mainContent: {
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  themeSection: {
-    marginHorizontal: 12,
-    marginBottom: 16,
-  },
-  themeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 8,
-  },
-  themeTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  previewText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  productList: {
-    gap: 12,
-    paddingHorizontal: 12
-  },
-  productCard: {
-    width: (width - 64) / 3,
-    marginBottom: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  productImage: {
-    width: '90%',
-    aspectRatio: 1,
-    marginBottom: 8,
-  },
-  purchasedProductImage: {
-    opacity: 0.5,
-  },
-  productText: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#333',
-    width: '90%',
-  },
-  purchasedProductText: {
-    color: '#888',
-  },
-  coinContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 6,
-    borderRadius: 16,
-  },
-  purchasedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 6,
-    borderRadius: 16,
-  },
-  purchasedText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#4CAF50',
-  },
-  noProductsContainer: {
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
-  noProductsText: {
-    color: '#999',
-    fontSize: 14,
-  }
 });
