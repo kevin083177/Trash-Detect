@@ -8,6 +8,7 @@ const AUTH_URL = `${API_BASE_URL}${API_VERSION}/auth`;
 const THEME_URL = `${API_BASE_URL}${API_VERSION}/theme`;
 const CHAPTER_URL = `${API_BASE_URL}${API_VERSION}/chapter`;
 const QUESTION_URL = `${API_BASE_URL}${API_VERSION}/question`;
+const FEEDBACK_URL = `${API_BASE_URL}${API_VERSION}/feedback`;
 
 export const admin_api = {
     get_all_users_info: `${ADMIN_URL}/users/all`,
@@ -24,7 +25,7 @@ export const auth_api = {
 export const theme_api = {
     get_theme: `${THEME_URL}/`,
     add_theme: `${THEME_URL}/add_theme`,
-    get_all_themes: `${THEME_URL}/get_all_themes`,
+    get_all_themes: `${THEME_URL}/all`,
     get_theme_products: `${THEME_URL}`, // + theme_name/products
 }
 
@@ -37,4 +38,10 @@ export const question_api = {
     delete_question: `${QUESTION_URL}/delete_question`,
     update_question: `${QUESTION_URL}/update_question`,
     get_question_by_category: `${QUESTION_URL}/all` // + chapter name slice(0, -2);
+}
+
+export const feedback_api = {
+    all: `${FEEDBACK_URL}/all`,
+    update_status: `${FEEDBACK_URL}/update`,
+    reply: `${FEEDBACK_URL}/reply`
 }
