@@ -212,7 +212,7 @@ class FeedbackController:
         try:
             data = request.get_json()
             
-            required_fields = ['feedback_id', 'reply_content', 'status']
+            required_fields = ['feedback_id', 'reply_content']
             missing_fields = [field for field in required_fields if not data.get(field)]            
             if missing_fields:
                 return {
@@ -220,13 +220,7 @@ class FeedbackController:
                 }, 400
                 
             feedback_id = data['feedback_id']
-            status = data['status']
             reply_content = data['reply_content']     
-            
-            if status not in Feedback.STATUS_TYPES:
-                return {
-                    "message": "無效的狀態"
-                }, 400
             
             feedback = feedback_service.get_feedback(feedback_id)
             
@@ -242,7 +236,7 @@ class FeedbackController:
             
             admin_id = token_data['user_id']
             
-            result = feedback_service.add_reply(feedback_id, reply_content, admin_id, status)
+            result = feedback_service.add_reply(feedback_id, reply_content, admin_id)
             
             if result:
                 return {

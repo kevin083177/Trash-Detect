@@ -102,7 +102,11 @@ class FeedbackService(DatabaseService):
             for feedback in feedbacks:
                 feedback["_id"] = str(feedback["_id"])
                 feedback["user_id"] = str(feedback["user_id"])
-                
+                if feedback["admin_id"]:
+                    admin_id = feedback.pop("admin_id", None)
+                    admin = self.users.find_one({"_id": admin_id})
+                    feedback["admin_name"] = admin["username"] if admin else None
+                    
                 user = self.users.find_one({"_id": ObjectId(feedback["user_id"])})
                 if user:
                     feedback["user_info"] = {
@@ -170,7 +174,7 @@ class FeedbackService(DatabaseService):
             print(f"Update feedback status error: {str(e)}")
             raise e
         
-    def add_reply(self, feedback_id: str, reply_content: str, admin_id: str, status: str) -> bool:
+    def add_reply(self, feedback_id: str, reply_content: str, admin_id: str) -> bool:
         try:
             feedback = self.get_feedback(feedback_id)
             if not feedback:
@@ -182,7 +186,7 @@ class FeedbackService(DatabaseService):
                     "$set": {
                         "reply_content": reply_content,
                         "reply_at": datetime.now(),
-                        "status": status,
+                        "status": "processing",
                         "admin_id": ObjectId(admin_id)
                     }
                 }
