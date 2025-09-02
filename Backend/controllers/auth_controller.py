@@ -1,3 +1,4 @@
+import bcrypt
 from flask import request
 from services import AuthService, PurchaseService, UserService, UserLevelService, VerificationService, ThemeService
 from config import Config
@@ -39,7 +40,7 @@ class AuthController:
             # 創建驗證記錄並發送郵件
             success, message = verification_service.create_verification(
                 email=data['email'],
-                password=data['password'],
+                password=bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
                 user_role=data['userRole']
             )
             

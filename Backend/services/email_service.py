@@ -278,7 +278,7 @@ class VerificationService(DatabaseService):
             if not verification_doc:
                 return False, "驗證記錄不存在或已驗證", {}
             
-            verification = EmailVerification(**{  # 使用 to_dict keys
+            verification = EmailVerification(**{
                 'email': verification_doc['email'],
                 'password': verification_doc['password'],
                 'verification_code': verification_doc['verification_code'],
