@@ -27,11 +27,9 @@ class ProductService(DatabaseService):
     def add_product(self, product_data: dict, image_file = None) -> dict:
         """新增商品"""
         try:
-            # 先檢查是否有 image_service
             if not self.image_service:
                 raise ValueError("Image service not initialized")
             
-            # 停用 recylce_requirement  
             # self._validate_recycle_requirement(product_data['recycle_requirement'])
             product = Product(**product_data)
             
@@ -91,26 +89,22 @@ class ProductService(DatabaseService):
     def delete_product_by_id(self, product_id: str):
         """刪除商品"""
         try:
-            # 先檢查商品是否存在
             product = self.get_product(product_id)
             
             if not product:
                 return False, 0
             
-            # 刪除 Cloudinary 的圖片
             if 'image' in product and 'public_id' in product['image']:
                 try:
                     self.image_service.delete_image(product['image']['public_id'])
                 except Exception as e:
                     print(f"Delete image failed: {str(e)}")
             
-            # 從所有用戶的購買紀錄中移除此商品
             updated_user = self.purchase.update_many(
                 {"product": ObjectId(product_id)},
                 {"$pull": {"product": ObjectId(product_id)}}
             )
             
-            # 刪除商品
             result = self.products.delete_one({"_id": ObjectId(product_id)})
             return result.deleted_count, updated_user.modified_count
 
@@ -144,113 +138,81 @@ class ProductService(DatabaseService):
             更新後的商品資料，如果更新失敗則返回None
         """
         try:
-            # 檢查商品是否存在
             product = self.get_product(product_id)
             if not product:
                 raise ValueError(f"找不到ID為 {product_id} 的商品")
-            
-            # 準備更新數據
+
             updates = {}
-            
-            # 處理名稱更新（確保名稱不重複）
-            if 'name' in update_data and update_data['name'] != product['name']:
-                # 檢查新名稱是否已被其他商品使用
+
+            if 'name' in update_data and update_data['name'] != product.get('name'):
                 if self._check_product_exists(update_data['name']):
                     raise ValueError(f"商品名稱 '{update_data['name']}' 已存在")
                 updates['name'] = update_data['name']
-            
-            # 處理描述更新
+
             if 'description' in update_data:
                 updates['description'] = update_data['description']
-            
-            # 處理價格更新
+
             if 'price' in update_data:
                 if not isinstance(update_data['price'], int):
                     raise ValueError("price 必須為整數")
                 updates['price'] = update_data['price']
-            
-            # 處理主題更新
-            old_theme = product.get('theme')
-            new_theme = update_data.get('theme')
-            
-            if new_theme and new_theme != old_theme:
-                updates['theme'] = new_theme
-            
-            # 處理圖片更新
+
+            new_image_result = None
             if new_image_file:
-                # 確保已初始化圖片服務
                 if not self.image_service:
                     raise ValueError("Image service not initialized")
-                
-                # 確定存儲圖片的文件夾 (使用新主題或保留原有主題)
-                folder = new_theme if new_theme else old_theme
-                # 使用商品的新名稱或原有名稱作為圖片的public_id
-                public_id = updates.get('name', product['name'])
-                
-                # 上傳新圖片
+
+                folder = product.get('theme')
+                public_id = updates.get('name', product.get('name'))
+
+                old_image_id = None
+                if 'image' in product and isinstance(product['image'], dict):
+                    old_image_id = product['image'].get('public_id')
+
+                if old_image_id:
+                    try:
+                        self.image_service.delete_image(old_image_id)
+                    except Exception as e:
+                        raise RuntimeError(f"刪除舊圖片失敗: {e}")
+
                 new_image_result = self.image_service.upload_image(
-                    image_file=new_image_file, 
+                    image_file=new_image_file,
                     public_id=public_id,
                     folder=folder
                 )
-                
-                # 更新圖片資訊
+
                 updates['image'] = {
                     'public_id': new_image_result['public_id'],
-                    'url': new_image_result['url'],
+                    'url': new_image_result.get('url'),
                 }
-                
-                # 刪除舊圖片
-                try:
-                    if 'image' in product and 'public_id' in product['image']:
-                        self.image_service.delete_image(product['image']['public_id'])
-                except Exception as e:
-                    print(f"刪除舊圖片時出錯: {str(e)}")
-            
-            # 如果沒有任何更新數據，直接返回原商品
+
             if not updates:
                 return product
-            
-            # 進行更新
+
             result = self.products.update_one(
                 {"_id": ObjectId(product_id)},
                 {"$set": updates}
             )
-            
+
             if result.modified_count > 0 or result.matched_count > 0:
-                # 獲取更新後的商品
                 updated_product = self.get_product(product_id)
-                
-                # 處理主題變更
-                if new_theme and new_theme != old_theme:
-                    # 從舊主題中移除商品
-                    from_theme_result = self.collections['themes'].update_one(
-                        {"name": old_theme},
-                        {"$pull": {"products": ObjectId(product_id)}}
-                    )
-                    
-                    # 添加到新主題
-                    to_theme_result = self.collections['themes'].update_one(
-                        {"name": new_theme},
-                        {"$addToSet": {"products": ObjectId(product_id)}}
-                    )
-                    
-                    # 檢查主題更新結果
-                    if not from_theme_result.matched_count or not to_theme_result.matched_count:
-                        print(f"警告: 商品主題更新可能不完整。舊主題: {old_theme}, 新主題: {new_theme}")
-                
                 return updated_product
-            
-            return None
-            
-        except Exception as e:
-            # 如果在更新過程中上傳了新圖片但後續處理失敗，需要清理已上傳的圖片
-            if 'new_image_result' in locals():
+
+            if new_image_result:
                 try:
                     self.image_service.delete_image(new_image_result['public_id'])
-                except:
+                except Exception:
                     pass
-            raise e
+
+            return None
+
+        except Exception as e:
+            if 'new_image_result' in locals() and new_image_result:
+                try:
+                    self.image_service.delete_image(new_image_result['public_id'])
+                except Exception:
+                    pass
+            raise
           
     def _check_product_exists(self, name):
         """檢查商品名稱是否已存在"""
