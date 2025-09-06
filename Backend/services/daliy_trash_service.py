@@ -25,7 +25,8 @@ class DailyTrashService(DatabaseService):
             
             existing_stats = self.daily_trash.find_one({"date": target_date})
             if existing_stats:
-                return self._update_daily_trash(target_date)
+                existing_stats["_id"] = str(existing_stats["_id"])
+                return existing_stats
             
             total_trash = self._calculate_all_users_trash()
             
