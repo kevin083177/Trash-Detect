@@ -278,11 +278,11 @@ export default function Profile() {
                 </View>
               )}
             </TouchableOpacity>
-            <View style={{flexDirection: 'column', marginLeft: 24, gap: 16}}>
+            <View style={{flexDirection: 'column', marginLeft: 24, gap: 8}}>
               <Text style={styles.userName}>
                 {getUsername()}
               </Text>
-              <Coin size="small" value={getMoney()} />
+              <Coin size="medium" value={getMoney()} />
             </View>
           </View>
         );

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 import { Product } from "@/interface/Product";
 import { Ionicons } from "@expo/vector-icons";
+import { Coin } from "../Coin";
 
 interface ProductDetailProps {
   product: Product;
@@ -26,7 +27,6 @@ export default function ProductDetail({ product, visible, purchased, canAfford, 
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          {/* Header with close button */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#333" />
@@ -34,17 +34,14 @@ export default function ProductDetail({ product, visible, purchased, canAfford, 
           </View>
           
           <View style={styles.productContainer}>
-            {/* Product Image */}
             <Image
               source={{ uri: product.image?.url }}
               style={styles.productImage}
               resizeMode="contain"
             />
             
-            {/* Product Name */}
             <Text style={styles.productName}>{product.name}</Text>
             
-            {/* Description */}
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
                 {product.description || "暫無描述"}
@@ -53,20 +50,17 @@ export default function ProductDetail({ product, visible, purchased, canAfford, 
             
           </View>
           
-          {/* Buy Button */}
           <TouchableOpacity 
             style={styles.buyButton}
             onPress={onBuy}
             disabled={!canAfford}
           >
             <View style={styles.priceContainer}>
-              <Ionicons name="logo-usd" size={24} color="#FFD700" />
-              { canAfford ? (
-                <Text style={styles.priceText}>{product.price}</Text>
-                ) : (
-                  <Text style={styles.priceNotEnough}>餘額不足</Text>
-                )
-              }
+              <Coin
+                size="large"
+                value={product.price} 
+                fontColor={canAfford ? "#ff8800" : "red"}
+              />
             </View>
           </TouchableOpacity>
         </View>

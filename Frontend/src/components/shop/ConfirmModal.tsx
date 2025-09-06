@@ -18,26 +18,30 @@ export default function ConfirmModal({ visible, text, confirm, cancel }: Confirm
         >
             <View style={styles.overlay}>
                 <View style={styles.modalContainer}>
-                    <Text style={styles.title}>確認</Text>
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.title}>商店訊息</Text>
+                        <View style={styles.titleBorder} />
+                    </View>
                     
-                    <Text style={styles.messageText}>
-                        {text}
-                    </Text>
+                    <View style={styles.messageContainer}>
+                        <Text style={styles.messageText}>
+                            {text}
+                        </Text>
+                    </View>
                     
                     <View style={styles.buttonContainer}>
-                        <TouchableOpacity 
-                            style={[styles.button, styles.confirmButton]} 
-                            onPress={confirm}
-                        >
-                            <Text style={styles.confirmButtonText}>確認</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity 
                             style={[styles.button, styles.cancelButton]} 
                             onPress={cancel}
                         >
                             <Text style={styles.cancelButtonText}>取消</Text>
                         </TouchableOpacity>
-                        
+                        <TouchableOpacity 
+                            style={[styles.button, styles.confirmButton]} 
+                            onPress={confirm}
+                        >
+                            <Text style={styles.confirmButtonText}>確認</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -50,64 +54,83 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContainer: {
-        width: width * 0.65,
-        backgroundColor: 'white',
+        width: width * 0.8,
+        backgroundColor: '#ffffff',
         borderRadius: 12,
-        padding: 20,
-        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 2,
+            height: 8,
         },
         shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+        shadowRadius: 10,
+        elevation: 8,
+    },
+    headerContainer: {
+        paddingTop: 20,
+        paddingHorizontal: 24,
+        alignItems: 'center',
     },
     title: {
         fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 15,
-        color: '#333',
+        fontWeight: '600',
+        color: '#1a1a1a',
+    },
+    titleBorder: {
+        width: '100%',
+        height: 1,
+        backgroundColor: '#e1e5e9',
+        marginTop: 16,
+    },
+    messageContainer: {
+        paddingVertical: 32,
+        justifyContent: 'center',
+        height: 140,
     },
     messageText: {
         fontSize: 16,
+        fontWeight: 400,
         textAlign: 'center',
-        marginBottom: 20,
-        color: '#555',
-        lineHeight: 22,
+        color: '#1C1C1C',
+        lineHeight: 24,
     },
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
+        borderTopWidth: 1,
+        borderTopColor: '#e1e5e9',
     },
     button: {
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-        minWidth: 100,
+        flex: 1,
+        paddingVertical: 18,
         alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+        borderTopWidth: 0,
+        borderBottomWidth: 0,
     },
     cancelButton: {
-        backgroundColor: 'red',
-        borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: '#e1e5e9',
+        borderRightWidth: 1,
     },
     confirmButton: {
-        backgroundColor: '#2196F3',
+        borderColor: '#e1e5e9',
+        borderLeftWidth: 1,
     },
     cancelButtonText: {
-        color: '#ffffff',
-        fontWeight: '500',
+        color: '#e53e3e',
+        fontWeight: '600',
+        fontSize: 16,
+        letterSpacing: 0.3,
     },
     confirmButtonText: {
-        color: 'white',
-        fontWeight: '500',
+        color: '#3182ce',
+        fontWeight: '600',
+        fontSize: 16,
+        letterSpacing: 0.3,
     },
 });

@@ -1,5 +1,5 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TouchableWithoutFeedback, Dimensions, SafeAreaView, Alert, RefreshControl } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TouchableWithoutFeedback, Dimensions, SafeAreaView, Alert, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Product } from '@/interface/Product';
@@ -12,6 +12,7 @@ import { useProduct } from '@/hooks/product';
 import { useUser } from '@/hooks/user';
 import { useVoucher } from '@/hooks/voucher';
 import { Coin } from '@/components/Coin';
+import { Toast } from '@/components/Toast';
 
 const { width } = Dimensions.get('window');
 
@@ -30,7 +31,17 @@ export default function Shop(): ReactNode {
   
   const [refreshing, setRefreshing] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<'virtual' | 'physical'>('virtual');
+  const [activeTab, setActiveTab] = useState<'furniture' | 'voucher'>('furniture');
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+   const [notification, setNotification] = useState<{
+      visible: boolean;
+      message: string;
+    }>({
+      visible: false,
+      message: '',
+    });
 
   const {
     themes,
@@ -79,7 +90,7 @@ export default function Shop(): ReactNode {
   const initiateProductPurchase = () => {
     if (!selectedProduct) return;
     
-    setPurchaseConfirmText(`確定要購買 ${selectedProduct.name} 嗎？`);
+    setPurchaseConfirmText(`確定要購買 ${selectedProduct.name} 嗎？\n將扣除 ${selectedProduct.price} 狗狗幣`);
     setConfirmModalVisible(true);
   };
   
@@ -90,15 +101,22 @@ export default function Shop(): ReactNode {
       const success = await purchaseProduct(selectedProduct._id);
       
       if (success) {
-        Alert.alert("成功", "購買成功！");
+        setConfirmModalVisible(false);
+        setDetailModalVisible(false);
+        setNotification({
+          visible: true,
+          message: `購買 ${selectedProduct.name} 成功`,
+        });
         await fetchUserProfile();
         await fetchPurchasedProducts();
       } else {
-        Alert.alert("失敗", "購買失敗");
+        setConfirmModalVisible(false);
+        setDetailModalVisible(false);
+        setNotification({
+          visible: true,
+          message: `購買失敗`,
+        });
       }
-      
-      setConfirmModalVisible(false);
-      setDetailModalVisible(false);
     } catch (error) {
       console.error("Error buying product:", error);
       Alert.alert("錯誤", "購買失敗");
@@ -136,7 +154,7 @@ export default function Shop(): ReactNode {
     
     try {
       await fetchUserProfile();
-      activeTab === 'virtual' ? await refreshProducts() : refreshVouchers();
+      activeTab === 'furniture' ? await refreshProducts() : refreshVouchers();
     } catch (error) {
       console.error('Refresh error:', error);
       Alert.alert('刷新失敗', '請檢查網絡連接後重試');
@@ -161,6 +179,10 @@ export default function Shop(): ReactNode {
     
     initializeShop();
   }, [fetchThemes, fetchUserProfile, fetchPurchasedProducts, fetchVoucherTypes]);
+
+  const handleToastHide = () => {
+    setNotification(prev => ({ ...prev, visible: false }));
+  };
 
   const renderProductItem = ({ item, index }: { item: Product, index: number }) => {
     const purchased = isProductPurchased(item._id);
@@ -212,18 +234,36 @@ export default function Shop(): ReactNode {
     );
   };
 
-  const renderVoucherItem = ({ item, index }: { item: VoucherType, index: number }) => {
+  const renderVoucherItem = ({ item, index, numColumns}: { item: VoucherType, index: number, numColumns: number }) => {
+    const isSoldOut = item.quantity === 0;
+    const cardWrapperStyle = numColumns === 1 
+    ? [styles.voucherCardWrapper, styles.singleVoucherWrapper]
+    : styles.voucherCardWrapper;
+
     return (
-      <View style={styles.voucherCardWrapper}>
-        <TouchableWithoutFeedback onPress={() => handleVoucherPress(item)}>
-          <View style={styles.voucherCard}>
+      <View style={cardWrapperStyle}>
+        <TouchableWithoutFeedback 
+          onPress={isSoldOut ? undefined : () => handleVoucherPress(item)}
+          disabled={isSoldOut}
+        >
+          <View style={[styles.voucherCard, isSoldOut && styles.soldOutCard]}>
             <View style={styles.voucherImageContainer}>
               {item.image.url && (
-                <Image 
-                  source={{ uri: item.image.url }}
-                  style={styles.voucherImage}
-                  resizeMode="contain"
-                />
+                <>
+                  <Image 
+                    source={{ uri: item.image.url }}
+                    style={[
+                      styles.voucherImage,
+                      isSoldOut && styles.soldOutImage
+                    ]}
+                    resizeMode="contain"
+                  />
+                  {isSoldOut && (
+                    <View style={styles.soldOutBadge}>
+                      <Text style={styles.soldOutText}>已售完</Text>
+                    </View>
+                  )}
+                </>
               )}
             </View>
             
@@ -235,24 +275,39 @@ export default function Shop(): ReactNode {
               <View style={styles.voucherPriceContainer}>
                 <Coin size="small" value={item.price}/>
               </View>
-              <Text style={styles.voucherQuantity}>剩餘 {item.quantity}</Text>
+              <Text style={[
+                styles.voucherQuantity,
+                isSoldOut && styles.soldOutQuantity
+              ]}>
+                {isSoldOut ? '已售完' : `剩餘 ${item.quantity}`}
+              </Text>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </View>
     );
   };
-
-  const renderVoucherFooter = () => {
-    if (voucherTypes.length === 0) return null;
-    
-    return (
-      <View style={styles.voucherFooterContainer}>
-        <Text style={styles.voucherFooterText}>－ 沒有更多商品了 －</Text>
-      </View>
-    );
-  };
   
+  const getFilteredVouchers = () => {
+      let filteredVouchers = voucherTypes;
+      
+      if (searchQuery.trim()) {
+        filteredVouchers = voucherTypes.filter(voucher => 
+          voucher.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+        );
+      }
+      
+      return filteredVouchers.sort((a, b) => {
+        const aIsSoldOut = a.quantity === 0;
+        const bIsSoldOut = b.quantity === 0;
+        
+        if (aIsSoldOut && !bIsSoldOut) return 1;
+        if (!aIsSoldOut && bIsSoldOut) return -1;
+        
+        return a.price - b.price;
+      });
+    };
+
   const renderThemeSection = ({ item, index }: { item: string; index: number }) => {
     const products = themeProducts[item] || [];
     const isThemeLoading = themeLoading[item] || false;
@@ -312,7 +367,7 @@ export default function Shop(): ReactNode {
     );
   };
 
-  const renderVirtualContent = () => (
+  const renderFurnitureContent = () => (
     <FlatList
       data={themes}
       renderItem={renderThemeSection}
@@ -327,7 +382,7 @@ export default function Shop(): ReactNode {
     />
   );
 
-  const renderPhysicalContent = () => {
+  const renderVoucherContent = () => {
     if (voucherLoading) {
       return (
         <View style={styles.loadingContainer}>
@@ -337,22 +392,51 @@ export default function Shop(): ReactNode {
       );
     }
 
+    const filteredVouchers = getFilteredVouchers();
+    const numColumns = filteredVouchers.length === 1 ? 1 : 2;
+
     return (
-      <FlatList
-        data={voucherTypes}
-        key={2}
-        renderItem={renderVoucherItem}
-        keyExtractor={(item, index) => `voucher-${index}`}
-        numColumns={2}
-        contentContainerStyle={styles.voucherList}
-        ListFooterComponent={renderVoucherFooter}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+      <View style={styles.voucherContainer}>
+        <View style={styles.searchInputContainer}>
+          <Ionicons name="search" size={20} color="#007AFF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="搜尋票券名稱"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#666"
           />
-        }
-      />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color="#999" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <FlatList
+          data={filteredVouchers}
+          key={numColumns}
+          renderItem={(props) => renderVoucherItem({...props, numColumns})}
+          keyExtractor={(item, index) => `voucher-${index}`}
+          numColumns={numColumns}
+          contentContainerStyle={styles.voucherList}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+          ListEmptyComponent={
+            searchQuery.trim() ? (
+              <View style={styles.emptySearchContainer}>
+                <Ionicons name="search" size={48} color="#ccc" />
+                <Text style={styles.emptySearchText}>找不到相關票券</Text>
+                <Text style={styles.emptySearchSubText}>請嘗試其他關鍵字</Text>
+              </View>
+            ) : null
+          }
+        />
+      </View>
     );
   };
 
@@ -368,23 +452,23 @@ export default function Shop(): ReactNode {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={styles.tab}
-          onPress={() => setActiveTab('virtual')}
+          onPress={() => setActiveTab('furniture')}
         >
-          <Text style={[styles.tabText, activeTab === 'virtual' && styles.activeTabText]}>
+          <Text style={[styles.tabText, activeTab === 'furniture' && styles.activeTabText]}>
             家具
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tab}
-          onPress={() => setActiveTab('physical')}
+          onPress={() => setActiveTab('voucher')}
         >
-          <Text style={[styles.tabText, activeTab === 'physical' && styles.activeTabText]}>
+          <Text style={[styles.tabText, activeTab === 'voucher' && styles.activeTabText]}>
             電子票券
           </Text>
         </TouchableOpacity>
       </View>
       
-      {activeTab === 'virtual' ? renderVirtualContent() : renderPhysicalContent()}
+      {activeTab === 'furniture' ? renderFurnitureContent() : renderVoucherContent()}
       
       {selectedProduct && (
         <ProductDetail
@@ -420,6 +504,14 @@ export default function Shop(): ReactNode {
         text={purchaseConfirmText}
         confirm={handleBuyProduct}
         cancel={handleCancelPurchase}
+      />
+
+      <Toast
+        visible={notification.visible}
+        position='center'
+        message={notification.message}
+        onHide={handleToastHide}
+        style={styles.toast}
       />
     </SafeAreaView>
   );
@@ -540,8 +632,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
   },
   productImage: {
     width: '90%',
@@ -604,11 +694,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   voucherList: {
-    paddingVertical: 8,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   voucherCardWrapper: {
     width: '50%',
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  singleVoucherWrapper: {
+    width: '70%',
+    alignSelf: 'center',
     paddingHorizontal: 8,
     marginBottom: 16,
   },
@@ -631,8 +726,7 @@ const styles = StyleSheet.create({
   },
   voucherImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
+    aspectRatio: 1,
   },
   voucherName: {
     fontSize: 14,
@@ -655,14 +749,83 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
-  voucherFooterContainer: {
-    width: '100%',
-    paddingVertical: 20,
+  soldOutCard: {
+    opacity: 0.8,
+  },
+  soldOutImage: {
+    opacity: 0.4,
+  },
+  soldOutBadge: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -35 }, { translateY: -35 }],
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(128, 128, 128, 0.8)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  voucherFooterText: {
+  soldOutText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  soldOutVoucherName: {
+    color: '#999',
+  },
+  soldOutQuantity: {
+    color: '#f44336',
+    fontWeight: '600',
+  },
+  voucherContainer: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginVertical: 24,
+    borderRadius: 25,
+    paddingHorizontal: 24,
+    width: width * 0.9,
+    height: 50,
+    elevation: 3,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    marginLeft: 8,
+  },
+  emptySearchContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptySearchText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
+  },
+  emptySearchSubText: {
     fontSize: 14,
     color: '#999',
-    fontWeight: '400',
+    marginTop: 8,
+  },
+  toast: {
+    zIndex: 1000,
+    elevation: 10,
   },
 });

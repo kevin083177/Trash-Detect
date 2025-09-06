@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     },
     lockIcon: {
         opacity: 0.9,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
         padding: 16,
         borderRadius: 50,
         marginBottom: 16,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 14,
         textAlign: 'center',
-        opacity: 0.9,
+        fontWeight: 'bold',
         textShadowColor: 'rgba(0, 0, 0, 0.75)',
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 3,
