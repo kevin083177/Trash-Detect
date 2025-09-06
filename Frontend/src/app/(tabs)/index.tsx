@@ -19,11 +19,9 @@ export default function Index() {
   const [notification, setNotification] = useState<{
     visible: boolean;
     message: string;
-    type: 'success' | 'error' | 'info';
   }>({
     visible: false,
     message: '',
-    type: 'info'
   });
   const [checkInStatus, setCheckInStatus] = useState<'success' | 'already' | 'error' | ''>('');
   const [countdown, setCountdown] = useState<string>('');
@@ -228,7 +226,6 @@ export default function Index() {
       setNotification({
         visible: true,
         message: '無法取得簽到狀態，請檢查網路連線',
-        type: 'error'
       });
     }
   };
@@ -265,7 +262,6 @@ export default function Index() {
         setNotification({
           visible: true,
           message: response.message,
-          type: 'success'
         });
         startCountdown();
       } else {
@@ -275,14 +271,12 @@ export default function Index() {
           setNotification({
             visible: true,
             message: response.message,
-            type: 'info'
           });
         } else {
           setCheckInStatus('error');
           setNotification({
             visible: true,
             message: response.message,
-            type: 'error'
           });
         }
       }
@@ -292,7 +286,6 @@ export default function Index() {
       setNotification({
         visible: true,
         message: '簽到失敗，請檢查網路連線',
-        type: 'error'
       });
     }
   };
