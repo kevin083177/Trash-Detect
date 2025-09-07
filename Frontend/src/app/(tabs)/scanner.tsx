@@ -51,11 +51,9 @@ export default function Scanner() {
   const [notification, setNotification] = useState<{
     visible: boolean;
     message: string;
-    type: 'success' | 'error' | 'info';
   }>({
     visible: false,
     message: '',
-    type: 'info'
   });
 
   const { addTrashStat } = useUser();
@@ -141,14 +139,12 @@ export default function Scanner() {
       setNotification({
         visible: true,
         message: randomTip,
-        type: 'success'
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       setNotification({
         visible: true,
         message: `更新失敗: ${errorMessage}`,
-        type: 'error'
       });
     }
   };

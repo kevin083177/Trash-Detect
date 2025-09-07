@@ -28,20 +28,6 @@ export default function VoucherModal({
 }: VoucherDetailProps) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const handleRedeem = () => {
-    if (!canRedeem) {
-      Alert.alert('錯誤', '暫時無法兌換');
-      return;
-    }
-    
-    if (!canAfford) {
-      Alert.alert('錯誤', '金額不足');
-      return;
-    }
-
-    setShowConfirmModal(true);
-  };
-
   const handleConfirmRedeem = (count: number) => {
     setShowConfirmModal(false);
     onRedeem(count);
@@ -87,7 +73,7 @@ export default function VoucherModal({
                   <View style={styles.priceContainer}>
                     <Coin value={voucher.price} />
                   </View>
-                  <Text style={styles.detailValue}>剩下 {voucher.quantity} 個</Text>
+                  <Text style={styles.detailValue}>剩餘 {voucher.quantity}</Text>
                 </View>
               </View>
             </View>
@@ -102,16 +88,12 @@ export default function VoucherModal({
           <View style={styles.footer}>
             {!canRedeem ? (
               <View style={styles.unavailableContainer}>
-                <Text style={styles.unavailableText}>
-                  {voucher.quantity <= 0 ? '已兌換完畢' : '暫時無法兌換'}
-                </Text>
-              </View>
-            ) : !canAfford ? (
-              <View style={styles.unavailableContainer}>
-                <Text style={styles.unavailableText}>金額不足</Text>
+                {voucher.quantity <= 0 && (
+                  <Text style={styles.unavailableText}>已兌換完畢</Text>
+                )}
               </View>
             ) : (
-              <TouchableOpacity style={styles.redeemButton} onPress={handleRedeem}>
+              <TouchableOpacity style={styles.redeemButton} onPress={() => setShowConfirmModal(!showConfirmModal)}>
                 <Text style={styles.redeemButtonText}>立即兌換</Text>
               </TouchableOpacity>
             )}
@@ -165,8 +147,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   voucherImage: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.8,
+    height: width * 0.8,
     borderRadius: 12,
   },
   placeholderImage: {
@@ -175,8 +157,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoContainer: {
-    padding: 20,
-    paddingTop: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
     borderRadius: 12,
     backgroundColor: "#fff",
   },
@@ -184,7 +166,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   descriptionContainer: {
     marginTop: 12,
@@ -204,7 +186,6 @@ const styles = StyleSheet.create({
   voucherDescription: {
     fontSize: 16,
     color: '#666',
-    lineHeight: 24,
     marginTop: 8,
   },
   detailsContainer: {
@@ -212,11 +193,11 @@ const styles = StyleSheet.create({
   },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   detailValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 600,
     color: '#000',
   },
@@ -291,14 +272,15 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   unavailableContainer: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 12,
+    flex: 1,
+    backgroundColor: '#6a6a6a',
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   unavailableText: {
     fontSize: 16,
-    color: '#999',
-    fontWeight: '500',
+    color: '#ffffffff',
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

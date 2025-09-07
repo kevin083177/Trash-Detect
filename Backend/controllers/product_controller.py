@@ -185,20 +185,21 @@ class ProductController:
             }, 500
             
     @staticmethod
-    def update_product(product_id):
+    def update_product():
         """
         更新商品資訊
         """
         try:
+            product_id = request.form.get('product_id')
             if not product_id:
                 return {
-                    "message": "缺少商品ID"
+                    "message": "缺少 product_id"
                 }, 400
-                
+               
             product = product_service.get_product(product_id)
             if not product:
                 return {
-                    "message": f"商品ID {product_id} 不存在"
+                    "message": "商品不存在"
                 }, 404
             
             update_data = {}
@@ -230,7 +231,7 @@ class ProductController:
                 update_data['theme'] = theme
             
             new_image_file = None
-            if 'image' in request.files and request.files['image'].filename != '':
+            if 'image' in request.files:
                 image = request.files['image']
                 
                 if not ImageService._allowed_file(image.filename):

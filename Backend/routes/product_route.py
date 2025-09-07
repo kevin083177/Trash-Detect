@@ -29,8 +29,8 @@ def delete_product_by_id():
 def delete_all_products():
     return ProductController.delete_all_products()
 
-@product_blueprint.route('/update_product/<product_id>', methods=['PUT'])
+@product_blueprint.route('/update_product', methods=['PUT'])
 @admin_required
 @log_request
-def update_product(product_id):
-    return ProductController.update_product(product_id)
+def update_product():
+    return ProductController.update_product()

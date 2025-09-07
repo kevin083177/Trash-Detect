@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Coin } from '@/components/Coin';
@@ -24,6 +24,12 @@ export default function VoucherConfirmModal({
   const canAfford = totalCost <= userCoins;
   const maxQuantity = Math.floor(userCoins / voucherPrice);
   const isAtMaxQuantity = quantity >= maxQuantity;
+
+  useEffect(() => {
+    if (visible) {
+      setQuantity(1);
+    }
+  }, [visible]);
 
   const increaseQuantity = () => {
     if (quantity < maxQuantity) {

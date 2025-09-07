@@ -27,15 +27,10 @@ class AuthService(DatabaseService):
             return None, None
     
     def register(self, user_data):
-        hashed_password = bcrypt.hashpw(
-            user_data['password'].encode('utf-8'), 
-            bcrypt.gensalt()
-        ).decode('utf-8')  # 將 bytes 轉換為字串
-        
         user = User(
             userRole=user_data['userRole'],
             email=user_data['email'],
-            password=hashed_password,
+            password=user_data['password'],
         )
         result = self.users.insert_one(user.to_dict())
         
