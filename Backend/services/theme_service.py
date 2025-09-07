@@ -114,6 +114,20 @@ class ThemeService(DatabaseService):
             print(f"Error getting {theme_name} theme: {str(e)}")
             raise
     
+    def _get_theme_by_id(self, theme_id):
+        try:
+            result = self.themes.find_one({"_id": ObjectId(theme_id)})
+            if not result:
+                return None
+                
+            result['_id'] = str(result['_id'])
+            result['products'] = [str(pid) for pid in result.get('products', [])]
+            return result
+            
+        except Exception as e:
+            print(f"Get Product Error: {str(e)}")
+            return None
+    
     def _get_all_themes(self):
         try:
             themes = self.themes.find({}, {"name": 1, "_id": 0})
@@ -218,7 +232,102 @@ class ThemeService(DatabaseService):
             error_msg = f"刪除主題 {theme_name} 時出錯: {str(e)}"
             print(error_msg)
             return {'success': False, 'error': error_msg}
-        
+    
+    def update_theme(self, theme_id: str, update_data: dict, new_image_file=None):
+        try:
+            existing_theme = self.themes.find_one({"_id": ObjectId(theme_id)})
+            if not existing_theme:
+                raise ValueError(f"主題不存在")
+
+            updates = {}
+            
+            old_theme_name = existing_theme.get('name')
+            new_theme_name = None
+            
+            if 'name' in update_data and update_data['name'] != old_theme_name:
+                new_theme_name = update_data['name']
+                existing_name_check = self.themes.find_one({
+                    "name": new_theme_name,
+                    "_id": {"$ne": ObjectId(theme_id)}
+                })
+                if existing_name_check:
+                    raise ValueError(f"主題名稱 '{new_theme_name}' 已存在")
+                updates['name'] = new_theme_name
+
+            if 'description' in update_data:
+                updates['description'] = update_data['description']
+
+            new_image_result = None
+            if new_image_file:
+                if not self.image_service:
+                    raise ValueError("ImageService 沒有初始化")
+
+                folder = new_theme_name if new_theme_name else old_theme_name
+
+                old_image = existing_theme.get('image')
+                if old_image and 'public_id' in old_image:
+                    try:
+                        self.image_service.delete_image(old_image['public_id'])
+                    except Exception as e:
+                        raise RuntimeError(f"刪除舊圖片失敗: {e}")
+
+                new_image_result = self.image_service.upload_image(
+                    image_file=new_image_file,
+                    public_id='preview',
+                    folder=folder
+                )
+
+                updates['image'] = {
+                    'public_id': new_image_result['public_id'],
+                    'url': new_image_result['url'],
+                }
+
+            if not updates:
+                existing_theme['_id'] = str(existing_theme['_id'])
+                existing_theme['products'] = [str(pid) for pid in existing_theme.get('products', [])]
+                return {
+                    "theme": existing_theme,
+                    "products_updated": 0
+                }
+
+            result = self.themes.update_one(
+                {"_id": ObjectId(theme_id)},
+                {"$set": updates}
+            )
+
+            if result.modified_count > 0 or result.matched_count > 0:
+                products_updated_count = 0
+                
+                if new_theme_name and new_theme_name != old_theme_name:
+                    update_result = self._update_products_theme_name(old_theme_name, new_theme_name)
+                    
+                    if update_result["success"]:
+                        products_updated_count = update_result["updated_products_count"]
+                
+                updated_theme = self._get_theme_by_id(theme_id)
+                if updated_theme:
+                    return {
+                        "theme": updated_theme,
+                        "products_updated": products_updated_count
+                    }
+
+            if new_image_result:
+                try:
+                    self.image_service.delete_image(new_image_result['public_id'])
+                except Exception:
+                    pass
+
+            return None
+
+        except Exception as e:
+            if 'new_image_result' in locals() and new_image_result:
+                try:
+                    self.image_service.delete_image(new_image_result['public_id'])
+                except Exception:
+                    pass
+            raise e
+            
+      
     def _delete_theme_product(self, product_id):
         """
         從主題中移除指定的商品ID
@@ -269,3 +378,39 @@ class ThemeService(DatabaseService):
         except Exception as e:
             print(f"Error add default theme products: {str(e)}")
             raise
+        
+    def _update_products_theme_name(self, old_theme_name: str, new_theme_name: str):
+        """
+        更新所有相關商品的主題名稱
+        
+        Args:
+            old_theme_name (str): 舊的主題名稱
+            new_theme_name (str): 新的主題名稱
+            
+        Returns:
+            dict: 包含更新結果的字典
+        """
+        try:
+            products_update_result = self.collections['products'].update_many(
+                {"theme": old_theme_name},
+                {"$set": {"theme": new_theme_name}}
+            )
+            
+            return {
+                "success": True,
+                "updated_products_count": products_update_result.modified_count,
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "updated_products_count": 0,
+            }
+
+    def get_theme_products_count(self, theme_name: str):
+        try:
+            count = self.collections['products'].count_documents({"theme": theme_name})
+            return count
+        except Exception as e:
+            print(f"Error counting theme products: {str(e)}")
+            return 0

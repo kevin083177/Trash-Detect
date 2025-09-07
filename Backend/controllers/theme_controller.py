@@ -11,7 +11,6 @@ class ThemeController:
     @staticmethod
     def add_theme():
         try:
-            # 檢查是否有文件上傳
             if 'image' not in request.files:
                 return {
                     "message": "缺少主題預覽圖片"
@@ -19,35 +18,29 @@ class ThemeController:
                 
             image_file = request.files['image']
             
-            # 檢查文件名是否為空
             if image_file.filename == '':
                 return {
                     "message": "未選擇圖片"
                 }, 400
             
-            # 檢查文件類型
             if not ImageService._allowed_file(image_file.filename):
                 return {
                     "message": f"不支援的圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
                 }, 400
                 
-            # 檢查文件大小
             if request.content_length > ImageService.MAX_FILE_SIZE:
                 return {
                     "message": f"圖片大小超過限制（最大 {ImageService.MAX_FILE_SIZE // 1024 // 1024}MB）"
                 }, 400
             
-            # 從表單獲取主題數據
             name = request.form.get('name')
             description = request.form.get('description')
             
-            # 檢查必填欄位
             if not name or not description:
                 return {
                     "message": f"缺少: {'name' if not name else 'description'}",
                 }, 400
             
-            # 新增主題（包含圖片上傳）
             result = theme_service.add_theme(name, description, image_file)
             
             if result:
@@ -68,6 +61,7 @@ class ThemeController:
             return {
                 "message": f"伺服器錯誤(add_theme) {str(e)}"
             }, 500
+            
     def get_theme(user, theme_name):
         try:
             theme = theme_service.get_theme(theme_name)
@@ -113,7 +107,6 @@ class ThemeController:
         
     def delete_theme(theme_name):
         try:
-            # 檢查主題名稱是否為空
             if not theme_name:
                 return {
                     "message": "請提供主題名稱"
@@ -121,9 +114,7 @@ class ThemeController:
             
             result = theme_service.delete_theme(theme_name, product_service)
             
-            # 處理刪除結果
             if not result['success']:
-                # 檢查是否因為主題不存在而失敗
                 if 'error' in result and '不存在' in result['error']:
                     return {
                         "message": result['error']
@@ -133,7 +124,6 @@ class ThemeController:
                         "message": result['error'] if 'error' in result else "刪除主題失敗"
                     }, 500
             
-            # 刪除成功
             return {
                 "message": f"成功刪除主題「{theme_name}」及其相關商品",
                 "body": {
@@ -145,4 +135,92 @@ class ThemeController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(delete_theme) {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def update_theme():
+        """更新主題"""
+        try:
+            theme_id = request.form.get('theme_id')
+            if not theme_id:
+                return {
+                    "message": "缺少 theme_id"
+                }, 400
+
+            update_data = {}
+            
+            if 'name' in request.form:
+                name = request.form.get('name')
+                if name and name.strip():
+                    update_data['name'] = name.strip()
+
+            if 'description' in request.form:
+                description = request.form.get('description')
+                if description and description.strip():
+                    update_data['description'] = description.strip()
+
+            new_image_file = None
+            if 'image' in request.files and request.files['image'].filename != '':
+                image = request.files['image']
+                
+                if not ImageService._allowed_file(image.filename):
+                    return {
+                        "message": "不支援的圖片格式"
+                    }, 400
+                    
+                if request.content_length > ImageService.MAX_FILE_SIZE:
+                    return {
+                        "message": "圖片大小超過限制"
+                    }, 400
+                    
+                new_image_file = image
+
+            if not update_data and not new_image_file:
+                try:
+                    current_theme = theme_service._get_theme_by_id(theme_id)
+                    if not current_theme:
+                        return {
+                            "message": "主題不存在"
+                        }, 404
+                        
+                except Exception as e:
+                    return {
+                        "message": f"查詢主題失敗: {str(e)}"
+                    }, 500
+                
+                return {
+                    "message": "未提供任何更新數據",
+                    "body": current_theme
+                }, 200
+
+            try:
+                result = theme_service.update_theme(theme_id, update_data, new_image_file)
+                
+                if result and result.get("theme"):
+                    updated_theme = result["theme"]
+                    products_updated = result.get("products_updated", 0)
+                    
+                    message = "主題更新成功"
+                    return {
+                        "message": message,
+                        "body": updated_theme,
+                        "products_updated": products_updated
+                    }, 200
+                else:
+                    return {
+                        "message": "主題更新失敗"
+                    }, 500
+                    
+            except ValueError as e:
+                return {
+                    "message": str(e)
+                }, 404
+            except RuntimeError as e:
+                return {
+                    "message": str(e)
+                }, 500
+                    
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(update_theme): {str(e)}"
             }, 500
