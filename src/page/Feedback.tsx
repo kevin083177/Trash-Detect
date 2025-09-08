@@ -5,6 +5,7 @@ import { Header } from "../components/Header";
 import { feedback_api } from "../api/api";
 import { asyncGet, asyncPut } from "../utils/fetch";
 import { ImageModal } from "../components/feedback/ImageModal";
+import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 
 export const FeedbackPage: React.FC = () => {
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -314,7 +315,7 @@ export const FeedbackPage: React.FC = () => {
                                         </td>
                                         <td className="feedback-expand-column">
                                             <span className="feedback-expand-arrow">
-                                                {expandedRow === item._id ? '▲' : '▼'}
+                                                {expandedRow === item._id ? <IoIosArrowUp /> : <IoIosArrowDown/>}
                                             </span>
                                         </td>
                                     </tr>
@@ -341,12 +342,12 @@ export const FeedbackPage: React.FC = () => {
                                                         <div className="feedback-detail-row">
                                                             <div className="feedback-detail-info-group">
                                                                 <h4>主旨</h4>
-                                                                <p>{item.title}</p>
+                                                                <div>{item.title}</div>
                                                             </div>
                                                             
                                                             <div className="feedback-detail-info-group">
                                                                 <h4>內容</h4>
-                                                                <p>{item.content}</p>
+                                                                <div>{item.content}</div>
                                                             </div>
                                                         </div>
                                                         {item.images && item.images.length > 0 && (
@@ -369,23 +370,26 @@ export const FeedbackPage: React.FC = () => {
                                                         
 
                                                         <div className="feedback-reply-management">
-                                                            <h4>管理員回覆</h4>
                                                             <div className="feedback-reply-section">
                                                                 {item.reply_content ? (
-                                                                    <div className="admin-reply-display">
-                                                                        {item.reply_content}
-                                                                        {item.reply_at && (
-                                                                            <span style={{ 
-                                                                                fontSize: '12px', 
-                                                                                color: '#666', 
-                                                                                marginLeft: '6px',
-                                                                            }}>
-                                                                                ({new Date(item.reply_at).toLocaleString('zh-TW')})
-                                                                            </span>
-                                                                        )}
+                                                                    <div>
+                                                                        <h4>管理員({item.admin_name})回覆</h4>
+                                                                        <div className="admin-reply-display">
+                                                                            {item.reply_content}
+                                                                            {item.reply_at && (
+                                                                                <span style={{ 
+                                                                                    fontSize: '12px', 
+                                                                                    color: '#666', 
+                                                                                    marginLeft: '6px',
+                                                                                }}>
+                                                                                    ({new Date(item.reply_at).toLocaleString('zh-TW')})
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <>
+                                                                    <div>
+                                                                        <h4>新增回覆</h4>
                                                                         <textarea
                                                                             ref={el => { replyRefs.current[item._id] = el; }}
                                                                             className="feedback-reply-textarea"
@@ -401,7 +405,7 @@ export const FeedbackPage: React.FC = () => {
                                                                         >
                                                                             送出回覆
                                                                         </button>
-                                                                    </>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
