@@ -5,49 +5,45 @@ import { asyncGet } from "../utils/fetch";
 import { theme_api } from "../api/api";
 import type { Theme } from "../interfaces/theme";
 import { Header } from "../components/Header";
+import { BiImageAdd } from "react-icons/bi";
+import { AddThemeModal } from "../components/theme/AddThemeModal";
 
 export const Themes: React.FC = () => {
     const [search, setSearch] = useState("");
     const navigate = useNavigate();
-    const [showModal, setShowModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
     const [themes, setThemes] = useState<Theme[]>([]);
     const filteredThemes = themes.filter(theme =>
         theme.name.includes(search)
     );
+    
     useEffect(() => {
-        const fetchThemesName = async () => {
+        const fetchThemes = async () => {
             try {
                 const response = await asyncGet(theme_api.get_all_themes, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
-                })
+                });
 
                 if (response.body) {
-                    const names: string[] = response.body;
-                    const promises = names.map(async (name) => {
-                        const themeDetail = await fetchThemesPreview(name);
-                        return themeDetail
-                    })
-                    const detailedThemes = await Promise.all(promises);
-                    setThemes(detailedThemes);
+                    setThemes(response.body);
                 }
             } catch (e) {
                 console.log(e);
             }
         }
-        fetchThemesName();
-    }, [])
+        fetchThemes();
+    }, []);
 
-    const fetchThemesPreview = async (name: string): Promise<Theme> => {
-        const response = await asyncGet(`${theme_api.get_theme}${name}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-        });
-
-        return response.body;
+    const handleOpenAddModal = () => {
+        setShowAddModal(true);
     };
+
+    const handleThemeSave = (newTheme: Theme) => {
+        setThemes(prev => [...prev, newTheme]);
+    };
+
     return (
         <>
             <Header />
@@ -64,8 +60,9 @@ export const Themes: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <button className="add-btn" onClick={() => setShowModal(true)}>
-                            新增主題
+                        <button className="add-theme-btn" onClick={handleOpenAddModal}>
+                            <BiImageAdd size={20}/>
+                            <p>新增主題</p>
                         </button>
                     </div>
                 </div>
@@ -73,46 +70,30 @@ export const Themes: React.FC = () => {
                 <div className="themes">
                     {filteredThemes.map((theme) => (
                         <div
-                            key={theme.name}
+                            key={theme._id}
                             className="theme-card"
                             style={{ background: "#fff", cursor: "pointer" }}
-                            onClick={() => navigate(`/products/${theme.name}`)}
+                            onClick={() => navigate(`/product`, {
+                                state: {
+                                    _id: theme._id,
+                                    name: theme.name,
+                                    description: theme.description,
+                                    products: theme.products || [],
+                                    image: theme.image
+                                }
+                            })}
                         >
-                            <img src={theme.image.url} className="theme-image" />
+                            <img src={theme.image.url} className="theme-image" alt={theme.name} />
                             <div className="theme-name">{theme.name}</div>
                         </div>
                     ))}
                 </div>
-                {showModal && (
-                    <div className="theme-modal-overlay">
-                        <div className="theme-modal-content">
-                            <div className="theme-modal-left">
-                                <label className="theme-image-upload">
-                                    +新增圖片
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        style={{ display: "none" }}
-                                    />
-                                </label>
-                            </div>
-                            <div className="theme-modal-right">
-                                <input
-                                    className="theme-name-input"
-                                    type="text"
-                                    placeholder="主題名稱"
-                                />
-                                <input
-                                    className="theme-description-input"
-                                    type="text"
-                                    placeholder="說明"
-                                />
-                            </div>
-                            <button className="theme-modal-submit" onClick={() => setShowModal(false)}>新增</button>
-                            <button className="theme-modal-close" onClick={() => setShowModal(false)}>關閉</button>
-                        </div>
-                    </div>
-                )}
+
+                <AddThemeModal
+                    isOpen={showAddModal}
+                    onClose={() => setShowAddModal(false)}
+                    onSave={handleThemeSave}
+                />
             </div>
         </>
     );
