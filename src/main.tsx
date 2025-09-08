@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router/dom'
 import { router } from './routers/router'
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from './context/NotificationContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+      </NotificationProvider>
     </AuthProvider>
   </StrictMode>
 )
