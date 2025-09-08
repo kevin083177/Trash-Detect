@@ -33,7 +33,7 @@ export const router = createHashRouter([
         ),
       },
       {
-        path: "products/:theme_name",
+        path: "product",
         element: (
           <ProtectedRoute>
             <ProductPage />
