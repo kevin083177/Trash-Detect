@@ -6,6 +6,7 @@ const API_VERSION = '/api/v1';
 const ADMIN_URL = `${API_BASE_URL}${API_VERSION}/admin`;
 const AUTH_URL = `${API_BASE_URL}${API_VERSION}/auth`;
 const THEME_URL = `${API_BASE_URL}${API_VERSION}/theme`;
+const PRODUCT_URL = `${API_BASE_URL}${API_VERSION}/product`;
 const CHAPTER_URL = `${API_BASE_URL}${API_VERSION}/chapter`;
 const QUESTION_URL = `${API_BASE_URL}${API_VERSION}/question`;
 const FEEDBACK_URL = `${API_BASE_URL}${API_VERSION}/feedback`;
@@ -25,12 +26,20 @@ export const auth_api = {
 export const theme_api = {
     get_theme: `${THEME_URL}/`,
     add_theme: `${THEME_URL}/add_theme`,
+    delete_theme: `${THEME_URL}/delete_theme`,
     get_all_themes: `${THEME_URL}/all`,
     get_theme_products: `${THEME_URL}`, // + theme_name/products
+    update_theme: `${THEME_URL}/update_theme`
 }
 
 export const chapter_api = {
     get_all_chapters: `${CHAPTER_URL}/all`,
+}
+
+export const product_api = {
+    add: `${PRODUCT_URL}/add_product`,
+    delete: `${PRODUCT_URL}/delete_product`,
+    update: `${PRODUCT_URL}/update_product`
 }
 
 export const question_api = {
