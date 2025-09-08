@@ -105,11 +105,14 @@ class ThemeController:
                 "message": f"伺服器錯誤(get_all_themes) {str(e)}"
             }, 500
         
-    def delete_theme(theme_name):
+    def delete_theme():
         try:
+            data = request.get_json()
+            theme_name = data['theme_name']
+            
             if not theme_name:
                 return {
-                    "message": "請提供主題名稱"
+                    "message": "缺少 theme_name"
                 }, 400
             
             result = theme_service.delete_theme(theme_name, product_service)

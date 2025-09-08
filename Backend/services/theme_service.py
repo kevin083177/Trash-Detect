@@ -105,9 +105,9 @@ class ThemeService(DatabaseService):
         try:
             theme = self.themes.find_one({"name": theme_name})
             if theme:
+                theme['_id'] = str(theme['_id'])
                 theme['products'] = [str(product_id) for product_id in theme['products']]
                 
-                theme.pop("_id", None)
                 return theme
             return None
         except Exception as e:
@@ -199,9 +199,9 @@ class ThemeService(DatabaseService):
             if not isinstance(product_service, ProductService):
                 raise TypeError("product_service 必須是 ProductService")
             
-            theme = self.themes.find_one({"name": theme_name})
+            theme = self.get_theme(theme_name)
             if not theme:
-                return {'success': False, 'error': f'主題 {theme_name} 不存在'}
+                return {'success': False, 'error': f'主題不存在'}
             
             products = theme.get('products', [])
             deleted_products_count = 0
