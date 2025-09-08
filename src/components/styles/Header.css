@@ -7,14 +7,87 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
-.page-header span {
+.user-menu {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-menu::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 4px;
+}
+
+.user-greeting {
   font-size: 18px;
   font-weight: 500;
   color: #333;
-  background: #f8f9fa;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
   border: 1px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: block;
+}
+
+.dropdown-menu button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dropdown-item:hover {
+  background: #6f8bb859;
+}
+
+.dropdown-item:first-child {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.dropdown-item:active {
+  background: #e9ecef;
 }
 
 @media (max-width: 768px) {
@@ -23,8 +96,32 @@
     margin-bottom: 15px;
   }
   
-  .page-header span {
+  .user-greeting {
     font-size: 16px;
-    padding: 6px 12px;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  
+  .dropdown-arrow {
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #666;
+  }
+  
+  .dropdown-menu {
+    min-width: 140px;
+  }
+  
+  .dropdown-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .dropdown-menu::before {
+    right: 12px;
+  }
+  
+  .dropdown-menu::after {
+    right: 12px;
   }
 }
