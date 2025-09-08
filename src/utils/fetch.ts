@@ -35,12 +35,17 @@ export async function asyncGet(api: string, { headers = {} }: { headers?: Header
  */
 export async function asyncPost(api: string, { body, headers = {} }: { body?: any, headers?: HeadersInit }): Promise<any> {
   try {
+    const requestHeaders: Record<string, string> = {
+      ...(headers as Record<string, string>),
+    };
+
+    if (!(body instanceof FormData)) {
+      requestHeaders['Content-Type'] = 'application/json';
+    }
+
     const res: Response = await fetch(api, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
+      headers: requestHeaders,
       body: body instanceof FormData ? body : JSON.stringify(body),
       mode: 'cors',
     });
@@ -101,12 +106,17 @@ export async function asyncDelete(api: string, { body, headers = {} }: { body: a
  */
 export async function asyncPut(api: string, { body, headers = {} }: { body: any, headers?: HeadersInit }): Promise<any> {
   try {
+    const requestHeaders: Record<string, string> = {
+      ...(headers as Record<string, string>),
+    };
+
+    if (!(body instanceof FormData)) {
+      requestHeaders['Content-Type'] = 'application/json';
+    }
+
     const res: Response = await fetch(api, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
+      headers: requestHeaders,
       body: body instanceof FormData ? body : JSON.stringify(body),
       mode: 'cors',
     });
