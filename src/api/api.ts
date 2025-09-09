@@ -10,6 +10,7 @@ const PRODUCT_URL = `${API_BASE_URL}${API_VERSION}/product`;
 const CHAPTER_URL = `${API_BASE_URL}${API_VERSION}/chapter`;
 const QUESTION_URL = `${API_BASE_URL}${API_VERSION}/question`;
 const FEEDBACK_URL = `${API_BASE_URL}${API_VERSION}/feedback`;
+const VOUCHER_URL = `${API_BASE_URL}${API_VERSION}/voucher/types`;
 
 export const admin_api = {
     get_all_users_info: `${ADMIN_URL}/users/all`,
@@ -53,4 +54,11 @@ export const feedback_api = {
     all: `${FEEDBACK_URL}/all`,
     update_status: `${FEEDBACK_URL}/update`,
     reply: `${FEEDBACK_URL}/reply`
+}
+
+export const voucher_api = {
+    all: `${VOUCHER_URL}`,
+    add: `${VOUCHER_URL}/create`,
+    delete: `${VOUCHER_URL}/delete`,
+    update: `${VOUCHER_URL}/update`
 }

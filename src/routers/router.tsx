@@ -9,6 +9,7 @@ import { Game } from "../page/Game";
 import { Login } from "../page/Login";
 import { GameQuestion } from "../page/Game_Question";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { VoucherPage } from "../page/Voucher";
 
 export const router = createHashRouter([
   { path: "login", element: <Login /> },
@@ -71,8 +72,15 @@ export const router = createHashRouter([
             <GameQuestion />
           </ProtectedRoute>
         )
+      },
+      {
+        path: "voucher",
+        element: (
+          <ProtectedRoute>
+            <VoucherPage />
+          </ProtectedRoute>
+        )
       }
-    
     ],
   },
 ]);
