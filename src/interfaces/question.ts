@@ -15,3 +15,8 @@ export interface TempQuestion extends Question {
   isTemporary?: boolean;
   tempId?: string;
 }
+
+export interface QuestionStats {
+  correct: number;
+  total: number;
+}

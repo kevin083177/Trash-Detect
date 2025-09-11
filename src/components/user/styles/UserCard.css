@@ -1,0 +1,273 @@
+.user-card-container {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  min-height: 280px;
+}
+
+.user-card-container:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.user-card-background-curve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 180px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 70%, #f5576c 100%);
+  clip-path: path("M-168 257-157 115Q0 69 165 130 348 66 495 122L500 256Z");
+  z-index: 0;
+}
+
+.user-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.user-card-avatar-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.user-card-avatar,
+.user-card-default-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.user-card-avatar {
+  object-fit: cover;
+}
+
+.user-card-default-avatar {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.8rem;
+}
+
+.user-card-status-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.user-card-status-indicator.today {
+  background: #4CAF50;
+}
+
+.user-card-status-indicator.yesterday {
+  background: #2196F3;
+}
+
+.user-card-status-indicator.week {
+  background: #FF9800;
+}
+
+.user-card-status-indicator.offline {
+  background: #9E9E9E;
+}
+
+.user-card-status-indicator.never {
+  background: #F44336;
+}
+
+.user-card-username {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+
+.user-card-user-id {
+  background: #f5f5f5;
+  color: #666;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.user-card-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.user-card-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 16px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  border: none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.user-card-container:hover .user-card-stat-item {
+  background: rgba(244, 251, 255, 0.95);
+  transform: translateY(-2px);
+}
+
+.user-card-stat-icon {
+  font-size: 1.8rem;
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.user-card-stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.user-card-stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.user-card-stat-label {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .user-card-container {
+    padding: 28px 20px;
+    min-height: 260px;
+  }
+  
+  .user-card-avatar,
+  .user-card-default-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .user-card-default-avatar {
+    font-size: 1.6rem;
+  }
+  
+  .user-card-username {
+    font-size: 1.3rem;
+  }
+  
+  .user-card-stats {
+    gap: 12px;
+  }
+  
+  .user-card-stat-item {
+    padding: 14px 10px;
+  }
+  
+  .user-card-stat-icon {
+    font-size: 1.6rem;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .coin-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-card-container {
+    padding: 28px 20px;
+    min-height: 280px;
+  }
+  
+  .user-card-header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .user-card-avatar,
+  .user-card-default-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .user-card-default-avatar {
+    font-size: 1.8rem;
+  }
+  
+  .user-card-username {
+    font-size: 1.2rem;
+  }
+  
+  .user-card-user-id {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+  
+  .user-card-stats {
+    gap: 8px;
+  }
+  
+  .user-card-stat-item {
+    padding: 14px 10px;
+  }
+  
+  .user-card-stat-icon {
+    font-size: 1.4rem;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .coin-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .user-card-stat-value {
+    font-size: 1rem;
+  }
+  
+  .user-card-stat-label {
+    font-size: 0.7rem;
+  }
+}
