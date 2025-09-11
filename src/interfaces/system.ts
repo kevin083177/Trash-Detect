@@ -2,10 +2,10 @@ export interface SystemStats {
     cpu: {
         count: number;
         usage: number;
-        frequecy: number | null;
+        frequency: number;
     };
     memory: {
-        total: string;
+        total: string; 
         used: string;
         available: string;
         usage: number;
@@ -16,10 +16,17 @@ export interface SystemStats {
         free: string;
         usage: number;
     };
-    network: {
-        bytes_sent: number;
-        bytes_recv: number;
-        packets_sent: number;
-        packets_recv: number;
+    gpu?: {
+        available: boolean;
+        count?: number;
+        gpus?: Array<{
+            id: number;
+            name: string;
+            usage: number;
+            memory_usage: number;
+            memory_used: string;
+            memory_total: string;
+            temperature: string;
+        }>;
     };
 }

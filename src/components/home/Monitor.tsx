@@ -1,6 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { socketService } from '../../utils/socket';
+import { GaugeChart } from './GaugeChart';
+import { BsCpu, BsMemory, BsGpuCard } from "react-icons/bs";
+import { CiHardDrive } from "react-icons/ci";
+import './styles/Monitor.css';
 import type { SystemStats } from '../../interfaces/system';
 
 interface MonitorProps {
@@ -21,14 +24,6 @@ export const Monitor: React.FC<MonitorProps> = ({ isActive, onToggle }) => {
         monitoring: false,
         error: null
     });
-
-    const formatBytes = (bytes: number): string => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
 
     const initializeSocket = async() => {
         try {
@@ -64,7 +59,7 @@ export const Monitor: React.FC<MonitorProps> = ({ isActive, onToggle }) => {
             setConnectionStatus(prev => ({ ...prev, monitoring: true, error: null}));
             onToggle(true);
         } catch (error) {
-            console.log("FAiled to start monitoring: ", error);
+            console.log("Failed to start monitoring: ", error);
             setConnectionStatus(prev => ({
                 ...prev,
                 connected: false,
@@ -72,30 +67,19 @@ export const Monitor: React.FC<MonitorProps> = ({ isActive, onToggle }) => {
             }));
             onToggle(false);
         }
-    }
-
-    const stopMonitoring = () => {
-        socketService.stopMonitoring();
-        setConnectionStatus(prev => ({ ...prev, monitoring: false }));
-        setSystemStats(null);
-        onToggle(false);
-    };
-
-     const toggleMonitoring = async () => {
-        if (!connectionStatus.connected) {
-        await initializeSocket();
-        return;
-        }
-
-        if (connectionStatus.monitoring) {
-        stopMonitoring();
-        } else {
-        await startMonitoring();
-        }
     };
 
     useEffect(() => {
-        initializeSocket();
+        const initAndStart = async () => {
+            await initializeSocket();
+            setTimeout(async () => {
+                if (connectionStatus.connected) {
+                    await startMonitoring();
+                }
+            }, 1000);
+        };
+
+        initAndStart();
 
         return () => {
             socketService.disconnect();
@@ -103,154 +87,145 @@ export const Monitor: React.FC<MonitorProps> = ({ isActive, onToggle }) => {
     }, []);
 
     useEffect(() => {
-        if (isActive && connectionStatus.connected && !connectionStatus.monitoring) {
-            startMonitoring();
-        } else if (!isActive && connectionStatus.monitoring) {
-            stopMonitoring();
+        if (connectionStatus.connected && !connectionStatus.monitoring) {
+            setTimeout(() => {
+                startMonitoring();
+            }, 500);
         }
-    }, [isActive]);
+    }, [connectionStatus.connected]);
+
+    const getCPUInfo = () => {
+        if (!systemStats?.cpu) {
+            return {
+                usage: 0,
+                details: 'CPU 資訊不可用',
+                extraInfo: undefined
+            };
+        }
+
+        return {
+            usage: systemStats.cpu.usage || 0,
+            details: `${(systemStats.cpu.frequency / 1000).toFixed(1)} GHz`,
+        };
+    };
+
+    const getMemoryInfo = () => {
+        if (!systemStats?.memory) {
+            return {
+                usage: 0,
+                details: '記憶體資訊不可用'
+            };
+        }
+
+        return {
+            usage: systemStats.memory.usage || 0,
+            details: `${systemStats.memory.used || 'N/A'} / ${systemStats.memory.total || 'N/A'}`
+        };
+    };
+
+    const getDiskInfo = () => {
+        if (!systemStats?.disk) {
+            return {
+                usage: 0,
+                details: '硬碟資訊不可用'
+            };
+        }
+
+        return {
+            usage: systemStats.disk.usage || 0,
+            details: `${systemStats.disk.used || 'N/A'} / ${systemStats.disk.total || 'N/A'}`
+        };
+    };
+
+    const getGPUInfo = () => {
+        if (!systemStats?.gpu?.available || !systemStats.gpu.gpus?.[0]) {
+            return { 
+                usage: 0, 
+                details: 'GPU 不可用',
+                extraInfo: undefined
+            };
+        }
+        
+        const gpu = systemStats.gpu.gpus[0];
+        return {
+            usage: gpu.usage || 0,
+            details: `${gpu.memory_used} / ${gpu.memory_total}`,
+            extraInfo: {
+                gpu: {
+                    temperature: gpu.temperature
+                }
+            }
+        };
+    };
+
+    const cpuInfo = getCPUInfo();
+    const memoryInfo = getMemoryInfo();
+    const diskInfo = getDiskInfo();
+    const gpuInfo = getGPUInfo();
 
     return (
         <div className="realtime-monitor">
             <div className="monitor-header">
-                <h3 className="monitor-title">實時系統監控</h3>
+                <h3 className="monitor-title">即時監控</h3>
                 <div className="monitor-controls">
-                <div className="connection-status">
-                    <span className={`status-indicator ${connectionStatus.connected ? 'connected' : 'disconnected'}`}></span>
-                    <span className="status-text">
-                    {connectionStatus.connected ? '已連接' : '未連接'}
-                    </span>
-                </div>
-                <button 
-                    className={`monitor-toggle-btn ${connectionStatus.monitoring ? 'active' : ''}`}
-                    onClick={toggleMonitoring}
-                    disabled={!connectionStatus.connected}
-                >
-                    {connectionStatus.monitoring ? '停止監控' : '開始監控'}
-                </button>
+                    <div className="connection-status">
+                        <span className={`status-indicator ${connectionStatus.connected ? 'connected' : 'disconnected'}`}></span>
+                        <span className="status-text">
+                            {connectionStatus.connected ? '已連接' : '未連接'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {connectionStatus.error && (
                 <div className="monitor-error">
-                <span className="error-text">{connectionStatus.error}</span>
-                <button className="retry-btn" onClick={initializeSocket}>
-                    重試連接
-                </button>
+                    <span className="error-text">{connectionStatus.error}</span>
+                    <button className="retry-btn" onClick={initializeSocket}>
+                        重試連接
+                    </button>
                 </div>
             )}
 
             {systemStats && connectionStatus.monitoring ? (
-            <div className="monitor-stats">
-                {/* CPU 使用率 */}
-                <div className="stat-card">
-                    <div className="stat-header">
-                    <span className="stat-icon">🖥️</span>
-                    <span className="stat-title">CPU</span>
-                    </div>
-                    <div className="stat-content">
-                    <div className="stat-main">
-                        <span className="stat-value">{systemStats.cpu.usage}%</span>
-                        <div className="progress-bar">
-                        <div 
-                            className="progress-fill cpu"
-                            style={{ width: `${systemStats.cpu.usage}%` }}
-                        ></div>
-                        </div>
-                    </div>
-                    <div className="stat-details">
-                        <span>核心數: {systemStats.cpu.count}</span>
-                        {systemStats.cpu.frequecy && (
-                        <span>頻率: {systemStats.cpu.frequecy} MHz</span>
-                        )}
-                    </div>
-                    </div>
+                <div className="monitor-gauges">
+                    <GaugeChart
+                        title="CPU"
+                        icon={<BsCpu />}
+                        percentage={cpuInfo.usage}
+                        details={cpuInfo.details}
+                        color="#4CAF50"
+                    />
+                    
+                    <GaugeChart
+                        title="記憶體"
+                        icon={<BsMemory />}
+                        percentage={memoryInfo.usage}
+                        details={memoryInfo.details}
+                        color="#2196F3"
+                    />
+                    
+                    <GaugeChart
+                        title="磁碟"
+                        icon={<CiHardDrive />}
+                        percentage={diskInfo.usage}
+                        details={diskInfo.details}
+                        color="#9C27B0"
+                    />
+                    
+                    <GaugeChart
+                        title="GPU"
+                        icon={<BsGpuCard />}
+                        percentage={gpuInfo.usage}
+                        details={gpuInfo.details}
+                        color="#FF9800"
+                    />
                 </div>
-
-                {/* 記憶體使用率 */}
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-icon">💾</span>
-                        <span className="stat-title">記憶體</span>
-                    </div>
-                    <div className="stat-content">
-                        <div className="stat-main">
-                            <span className="stat-value">{systemStats.memory.usage}%</span>
-                            <div className="progress-bar">
-                            <div 
-                                className="progress-fill memory"
-                                style={{ width: `${systemStats.memory.usage}%` }}
-                            ></div>
-                            </div>
-                        </div>
-                    <div className="stat-details">
-                        <span>已用: {systemStats.memory.used}</span>
-                        <span>總計: {systemStats.memory.total}</span>
-                    </div>
+            ) : (
+                <div className="monitor-loading">
+                    <div className="loading-spinner"></div>
+                    <span>正在獲取系統數據...</span>
                 </div>
-            </div>
-
-            {/* 磁碟使用率 */}
-            <div className="stat-card">
-                <div className="stat-header">
-                <span className="stat-icon">💽</span>
-                <span className="stat-title">磁碟</span>
-                </div>
-                <div className="stat-content">
-                <div className="stat-main">
-                    <span className="stat-value">{systemStats.disk.usage}%</span>
-                    <div className="progress-bar">
-                    <div 
-                        className="progress-fill disk"
-                        style={{ width: `${systemStats.disk.usage}%` }}
-                    ></div>
-                    </div>
-                </div>
-                <div className="stat-details">
-                    <span>已用: {systemStats.disk.used}</span>
-                    <span>總計: {systemStats.disk.total}</span>
-                </div>
-                </div>
-            </div>
-
-            {/* 網路狀態 */}
-            <div className="stat-card">
-                <div className="stat-header">
-                    <span className="stat-icon">🌐</span>
-                    <span className="stat-title">網路</span>
-                </div>
-                <div className="stat-content">
-                    <div className="network-stats">
-                        <div className="network-item">
-                            <span className="network-label">上傳:</span>
-                            <span className="network-value">{formatBytes(systemStats.network.bytes_sent)}</span>
-                        </div>
-                        <div className="network-item">
-                            <span className="network-label">下載:</span>
-                            <span className="network-value">{formatBytes(systemStats.network.bytes_recv)}</span>
-                        </div>
-                        <div className="network-item">
-                            <span className="network-label">發送封包:</span>
-                            <span className="network-value">{systemStats.network.packets_sent.toLocaleString()}</span>
-                        </div>
-                        <div className="network-item">
-                            <span className="network-label">接收封包:</span>
-                            <span className="network-value">{systemStats.network.packets_recv.toLocaleString()}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
-    ) : connectionStatus.monitoring ? (
-        <div className="monitor-loading">
-            <div className="loading-spinner"></div>
-            <span>正在獲取系統數據...</span>
-        </div>
-    ) : (
-        <div className="monitor-placeholder">
-            <span>點擊「開始監控」查看實時系統狀態</span>
-        </div>
-        )}
-    </div>
-  );
-}
+    );
+};
