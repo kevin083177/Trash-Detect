@@ -73,7 +73,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     }
 
     if (editProduct.price <= 0) {
-      setError('價格必須大於0');
+      setError('狗狗幣必須大於0');
       return false;
     }
 
@@ -263,11 +263,11 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
             
             <div className="edit-product-modal-field">
-              <label>價格 <span className="required">*</span></label>
+              <label>狗狗幣 <span className="required">*</span></label>
               <input
                 className="edit-product-modal-price-input"
                 type="number"
-                placeholder="輸入價格"
+                placeholder="輸入狗狗幣"
                 min="0"
                 value={editProduct.price}
                 onChange={(e) => {
