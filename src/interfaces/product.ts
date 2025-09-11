@@ -13,12 +13,12 @@ export interface Product{
 export type ProductType = | 'bookshelf' | 'calendar' | 'carpet' | 'lamp' | 'pendant' | 'table' | 'wallpaper';
 
 export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
-  bookshelf: '書架',
+  bookshelf: '書櫃',
   calendar: '時間', 
   carpet: '地毯',
   lamp: '燈具',
   pendant: '吊飾',
-  table: '桌子',
+  table: '桌椅',
   wallpaper: '壁紙'
 } as const;
 
