@@ -5,6 +5,7 @@ import { asyncGet } from "../utils/fetch";
 import { chapter_api } from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
+import { IoGameController } from "react-icons/io5";
 
 export const Game: React.FC = () => {
     const [search, setSearch] = useState("");
@@ -34,12 +35,16 @@ export const Game: React.FC = () => {
         chapter.name.includes(search)
     );
 
+    const handleOpenAddModal = () => {
+        setShowModal(true);
+    };
+
     return (
         <>
             <Header />
-            <div className="container">
-                <div className="header">
-                    <div className="search-group">
+            <div className="game-container">
+                <div className="game-header">
+                    <div className="game-search-group">
                         <span role="img" aria-label="search" style={{ fontSize: 20 }}>
                             🔍
                         </span>
@@ -52,48 +57,60 @@ export const Game: React.FC = () => {
                         />
                     </div>
                     <div>
-                        <button className="add-btn" onClick={() => setShowModal(true)}>
-                            新增關卡
+                        <button className="game-add-chapter-btn" onClick={handleOpenAddModal}>
+                            <IoGameController size={20}/>
+                            <p>新增遊戲章節</p>
                         </button>
                     </div>
                 </div>
 
-                <div className="chapter">
+                <div className="game-chapter">
                     {filteredChapters.map((chapter) => (
                         <div
-                            className="chapter-card"
+                            className="game-chapter-card"
                             key={chapter.name}
                             style={{ cursor: 'pointer' }}
                             onClick={() => navigate(`/questions/${chapter.name}`)}
                         >
                             <img src={chapter.image.url} className="chapter-image" />
-                            <div className="chapter-name">{chapter.name}</div>
+                            <div className="game-chapter-name">{chapter.name}</div>
                         </div>
                     ))}
                 </div>
 
                 {showModal && (
-                    <div className="modal-overlay">
+                    <div className="game-modal-overlay">
                         <div className="game-modal-content">
+                            <button className="game-modal-close" onClick={() => setShowModal(false)}>
+                                ✕
+                            </button>
                             <input
-                                className="chapter-input"
+                                className="game-chapter-input"
                                 type="text"
                                 placeholder="關卡名稱"
                             />
                             <input
-                                className="chapter-input"
+                                className="game-chapter-input"
                                 type="text"
                                 placeholder="垃圾需求量"
                             />
-                            <label className="image-upload">
-                                +新增圖片
+                            <label className="game-image-upload">
+                                + 新增圖片
                                 <input
                                     type="file"
                                     accept="image/*"
                                     style={{ display: "none" }}
                                 />
                             </label>
-                            <button className="modal-close" onClick={() => setShowModal(false)}>關閉</button>
+                            <button 
+                                className="game-add-chapter-btn" 
+                                style={{ width: '120px', margin: '0 auto' }}
+                                onClick={() => {
+                                    setShowModal(false);
+                                }}
+                            >
+                                確定新增
+                            </button>
                         </div>
                     </div>
                 )}

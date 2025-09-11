@@ -13,6 +13,17 @@
     justify-content: center;
 }
 
+.month-display {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.month-info {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -112,6 +123,10 @@
     .no-data-container {
         height: 150px;
     }
+    
+    .month-info {
+        font-size: 11px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -123,5 +138,9 @@
     .error-container,
     .no-data-container {
         height: 120px;
+    }
+    
+    .month-info {
+        font-size: 10px;
     }
 }

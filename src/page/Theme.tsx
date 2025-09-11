@@ -5,8 +5,8 @@ import { asyncGet } from "../utils/fetch";
 import { theme_api } from "../api/api";
 import type { Theme } from "../interfaces/theme";
 import { Header } from "../components/Header";
-import { BiImageAdd } from "react-icons/bi";
 import { AddThemeModal } from "../components/theme/AddThemeModal";
+import { MdChair } from "react-icons/md";
 
 export const Themes: React.FC = () => {
     const [search, setSearch] = useState("");
@@ -47,21 +47,21 @@ export const Themes: React.FC = () => {
     return (
         <>
             <Header />
-            <div className="container">
-                <div className="header">
-                    <div className="search-group">
+            <div className="theme-container">
+                <div className="theme-header">
+                    <div className="theme-search-group">
                         <span role="img" aria-label="search" style={{ fontSize: 20 }}>🔍</span>
                         <input
                             type="text"
                             placeholder="搜尋主題或商品"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="search-input"
+                            className="theme-search-input"
                         />
                     </div>
                     <div>
-                        <button className="add-theme-btn" onClick={handleOpenAddModal}>
-                            <BiImageAdd size={20}/>
+                        <button className="theme-add-theme-btn" onClick={handleOpenAddModal}>
+                            <MdChair size={20}/>
                             <p>新增主題</p>
                         </button>
                     </div>

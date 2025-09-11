@@ -12,10 +12,6 @@ export const VoucherCard: React.FC<VoucherCardProps> = ({
   voucher,
   onEdit
 }) => {
-  const formatPrice = (price: number) => {
-    return price.toLocaleString("zh-TW");
-  };
-
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit();
@@ -51,7 +47,7 @@ export const VoucherCard: React.FC<VoucherCardProps> = ({
               />
               <div className="voucher-price-label">狗狗幣</div>
             </span>
-            <span className="voucher-price-value">{formatPrice(voucher.price)}</span>
+            <span className="voucher-price-value">{(voucher.price).toLocaleString('zh-TW')}</span>
           </div>
           
           <div className="voucher-card-quantity">

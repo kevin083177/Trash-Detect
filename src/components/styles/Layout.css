@@ -125,6 +125,7 @@ aside.collapsed .sidebar-header {
     display: flex;
     background: #ebebeb;
     transition: margin-left 0.3s ease, width 0.3s ease;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .right-layout.sidebar-collapsed {

@@ -11,25 +11,32 @@ interface TrashData {
 interface TrashPieChartProps {
     isLoading: boolean;
     totals: Trash | null;
+    selectedMonth?: string;
 }
 
 const COLORS = ["#FFA07A", "#87CEEB", "#90EE90", "#FFD700", "#BA55D3"];
 
-export const TrashPieChart: React.FC<TrashPieChartProps> = ({ isLoading, totals }) => {
+export const TrashPieChart: React.FC<TrashPieChartProps> = ({ 
+    isLoading, 
+    totals, 
+    selectedMonth 
+}) => {
     const [trashData, setTrashData] = useState<TrashData[]>([]);
 
     useEffect(() => {
         if (totals) {
             const formattedData: TrashData[] = [
-                { name: "寶特瓶", value: totals.bottles },
-                { name: "鐵鋁罐", value: totals.cans },
-                { name: "紙容器", value: totals.containers },
-                { name: "紙類", value: totals.paper },
-                { name: "塑膠", value: totals.plastic },
+                { name: "寶特瓶", value: totals.bottles || 0 },
+                { name: "鐵鋁罐", value: totals.cans || 0 },
+                { name: "紙容器", value: totals.containers || 0 },
+                { name: "紙類", value: totals.paper || 0 },
+                { name: "塑膠", value: totals.plastic || 0 },
             ];
 
             const filteredData = formattedData.filter(item => item.value > 0);
             setTrashData(filteredData);
+        } else {
+            setTrashData([]);
         }
     }, [totals]);
 
@@ -44,6 +51,12 @@ export const TrashPieChart: React.FC<TrashPieChartProps> = ({ isLoading, totals 
             );
         }
         return null;
+    };
+
+    const formatMonthDisplay = (monthStr?: string) => {
+        if (!monthStr) return '';
+        const [year, month] = monthStr.split('-');
+        return `${year}年${month}月`;
     };
 
     if (isLoading) {
@@ -61,7 +74,12 @@ export const TrashPieChart: React.FC<TrashPieChartProps> = ({ isLoading, totals 
         return (
             <div className="recycling-chart-container">
                 <div className="no-data-container">
-                    <p>目前沒有回收資料</p>
+                    <p>
+                        {selectedMonth 
+                            ? `${formatMonthDisplay(selectedMonth)}暫無回收資料` 
+                            : '目前沒有回收資料'
+                        }
+                    </p>
                 </div>
             </div>
         );
@@ -91,6 +109,11 @@ export const TrashPieChart: React.FC<TrashPieChartProps> = ({ isLoading, totals 
                     </PieChart>
                 </ResponsiveContainer>
             </div>
+            {selectedMonth && (
+                <div className="month-display">
+                    <p className="month-info">{formatMonthDisplay(selectedMonth)}</p>
+                </div>
+            )}
         </div>
     );
 };
