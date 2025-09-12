@@ -1,4 +1,3 @@
-from flask_socketio import emit
 import threading
 from datetime import datetime
 import time
@@ -6,7 +5,8 @@ import psutil
 import platform
 from datetime import datetime
 from config import Config
-from pymongo import MongoClient
+import GPUtil
+from .detection_service import DetectionService
 
 class SystemService:
     def __init__(self, socketio):
@@ -65,13 +65,13 @@ class SystemService:
             
             disk = psutil.disk_usage('/')
             
-            network = psutil.net_io_counters()
+            gpu_info = self._get_gpu_info()
             
             return {
                 "cpu": {
                     "count": cpu_count,
                     "usage": round(cpu_percent, 1),
-                    "frequecy": round(cpu_freq.current, 0) if cpu_freq else None,
+                    "frequency": round(cpu_freq.current, 0) if cpu_freq else None,
                 },
                 "memory": {
                     "total": f"{round(memory.total / (1024**3), 2)} GB",
@@ -85,16 +85,43 @@ class SystemService:
                     "free": f"{round(disk.free / (1024**3), 2)} GB",
                     "usage": round((disk.used / disk.total) * 100, 1)
                 },
-                "network": {
-                    "bytes_sent": network.bytes_sent,
-                    "bytes_recv": network.bytes_recv,
-                    "packets_sent": network.packets_sent,
-                    "packets_recv": network.packets_recv
-                }
+                "gpu": gpu_info
             }
         except Exception as e:
             return {
                 "error": f"Failed to get system data: {str(e)}",
+            }
+    
+    def _get_gpu_info(self):
+        """獲取 GPU 使用率資訊"""
+        try:
+            gpus = GPUtil.getGPUs()
+            
+            if not gpus:
+                return {
+                    "available": False,
+                    "message": "No GPU detected"
+                }
+            
+            gpu_data = []
+            for i, gpu in enumerate(gpus):
+                gpu_data.append({
+                    "usage": round(gpu.load * 100, 1),
+                    "memory_usage": round(gpu.memoryUtil * 100, 1),
+                    "memory_used": f"{round(gpu.memoryUsed / 1024, 2)} GB",
+                    "memory_total": f"{round(gpu.memoryTotal / 1024, 2)} GB",
+                })
+            
+            return {
+                "available": True,
+                "count": len(gpus),
+                "gpus": gpu_data
+            }
+            
+        except Exception as e:
+            return {
+                "available": False,
+                "error": f"Failed to get GPU info: {str(e)}"
             }
             
 class SystemInfo:
@@ -105,11 +132,7 @@ class SystemInfo:
             return {
                 "platform": {
                     "system": platform.system(),
-                    "release": platform.release(),
                     "version": platform.version(),
-                    "machine": platform.machine(),
-                    "processor": platform.processor(),
-                    "architecture": platform.architecture()[0]
                 },
                 "server": {
                     "hostname": platform.node(),
@@ -125,8 +148,6 @@ class SystemInfo:
         """獲取應用程式資訊"""
         try:
             return {
-                "app_name": "Garbi",
-                "environment": Config.ENV,
                 "flask_port": Config.PORT,
                 "socket_port": Config.SOCKET_PORT,
                 "mongo_host": Config.MONGO_HOST,
@@ -139,11 +160,13 @@ class SystemInfo:
     def _get_model_info():
         """獲取模型資訊"""
         try:
-            model = "yolov8m.pt"
+            detection_service = DetectionService()
+            
             model_info = {
                 "yolo_model": {
-                    "model_version": model.split(".")[0][-1],
-                    "confidence_threshold": 0.85,
+                    "model_version": detection_service.model_version,
+                    "confidence_threshold": detection_service.confidence_threshold,
+                    "iou_threshold": detection_service.iou_threshold
                 },
             }
             
@@ -152,37 +175,9 @@ class SystemInfo:
             return {"error": f"Failed to get model info: {str(e)}"}
     
     @staticmethod
-    def _get_database_info():
-        """獲取資料庫資訊"""
-        try:           
-            client = MongoClient(Config.MONGO_URI)
-            db = client[Config.DB_NAME]
-            
-            # 獲取集合資訊
-            collections = db.list_collection_names()
-            collection_stats = {}
-            
-            for collection_name in collections:
-                try:
-                    stats = db.command("collStats", collection_name)
-                    collection_stats[collection_name] = {
-                        "count": stats.get("count", 0),
-                    }
-                except:
-                    collection_stats[collection_name] = {"error": "無法獲取統計"}
-            
-            return {
-                "collections": collection_stats,
-                "total_collections": len(collections)
-            }
-        except Exception as e:
-            return {"error": f"Failed to get database info: {str(e)}"}
-    
-    @staticmethod
     def get_all_system_info():
         return {
             "system": SystemInfo._get_system_info(),
             "application": SystemInfo._get_application_info(),
             "models": SystemInfo._get_model_info(),
-            "database": SystemInfo._get_database_info(),
         }
