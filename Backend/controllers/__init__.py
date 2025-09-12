@@ -2,7 +2,6 @@ from .auth_controller import AuthController
 from .user_controller import UserController
 from .user_level_controller import UserLevelController
 from .purchase_controller import PurchaseController
-from .admin_controller import AdminController
 from .product_controller import ProductController
 from .theme_controller import ThemeController
 from .chapter_controller import ChapterController
@@ -12,6 +11,7 @@ from .question_category_controller import QuestionCategoryController
 from .daily_trash_controller import DailyTrashController
 from .feedback_controller import FeedbackController
 from .voucher_controller import VoucherController
+from .system_controller import SystemController
 
 __all__ = [
     'AuthController',
@@ -27,5 +27,6 @@ __all__ = [
     'QuestionCategoryController',
     'DailyTrashController',
     'FeedbackController',
-    'VoucherController'
+    'VoucherController',
+    'SystemController'
 ]

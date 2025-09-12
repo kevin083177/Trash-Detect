@@ -36,7 +36,8 @@ class DailyTrashService(DatabaseService):
                 paper = total_trash.get("paper"),
                 cans = total_trash.get("cans"),
                 bottles = total_trash.get("bottles"),
-                containers = total_trash.get("containers")
+                containers = total_trash.get("containers"),
+                active_users = 0
             )
             
             result = self.daily_trash.insert_one(daily_trash.to_dict())
@@ -187,7 +188,9 @@ class DailyTrashService(DatabaseService):
                             "paper": 0,
                             "cans": 0,
                             "bottles": 0,
-                            "containers": 0
+                            "containers": 0,
+                            "active_users": 0,
+                            "new_registered": 0
                         }
                     }
                 }
@@ -199,7 +202,9 @@ class DailyTrashService(DatabaseService):
                 "paper": sum(stat.get("paper") for stat in all_trash),
                 "cans": sum(stat.get("cans") for stat in all_trash),
                 "bottles": sum(stat.get("bottles") for stat in all_trash),
-                "containers": sum(stat.get("containers") for stat in all_trash)
+                "containers": sum(stat.get("containers") for stat in all_trash),
+                "active_users": sum(stat.get("active_users") for stat in all_trash),
+                "new_registered": sum(stat.get("new_registered") for stat in all_trash)
             }
             
             date_range = {
@@ -219,4 +224,22 @@ class DailyTrashService(DatabaseService):
             }
         except Exception as e:
             print(f"Get All Trash Error: {str(e)}")
+            raise
+        
+    def _update_new_registered(self):
+        try:
+            date = datetime.now().strftime("%Y-%m-%d")
+            
+            if not self.daily_trash.find_one({"date": date}):
+                self._create_daily_trash(date)
+            
+            update_result = self.daily_trash.update_one(
+                {"date": date},
+                {"$inc": {"new_registered": 1}}
+            )
+            
+            return update_result.modified_count > 0
+        
+        except Exception as e:
+            print(f"Update New Registered Error: {str(e)}")
             raise

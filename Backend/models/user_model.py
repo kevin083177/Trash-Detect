@@ -25,6 +25,8 @@ class User:
             "plastic": {"total": 0, "correct": 0},
         }
         self.last_check_in = None
+        self.consecutive_check_in_days = None
+        self.last_active = None
         self.created_at = datetime.now()
 
     def to_dict(self):
@@ -39,5 +41,7 @@ class User:
             "question_stats": self.question_stats,
             "verification": self.verification,
             "last_check_in": self.last_check_in,
+            "consecutive_check_in_days": self.consecutive_check_in_days,
+            "last_active": self.last_active,
             "created_at": self.created_at
         }

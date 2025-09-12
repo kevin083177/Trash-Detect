@@ -6,16 +6,16 @@ from services import DatabaseService
 class AuthService(DatabaseService):
     def __init__(self, mongo_uri):
         super().__init__(mongo_uri)
-        self.users = self.collections['users'] # 查詢users資訊
+        self.users = self.collections['users']
         
     def login(self, email, password):
         """使用者登入"""
         user = self.users.find_one({"email": email})
         if not user:
-            return None, None  # 使用者不存在
+            return None, None
         
         if not self.verify_password(password, user['password']):
-            return None, None  # 密碼錯誤
+            return None, None
         
         try:
             user_role = user['userRole']

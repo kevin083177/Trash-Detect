@@ -312,8 +312,6 @@ class VerificationService(DatabaseService):
                     }}
                 )
                     
-                logger.info(f"Email verification successful for: {email}")
-                
                 return True, "驗證成功", {
                         "email": verification.email,
                         "password": verification.password,

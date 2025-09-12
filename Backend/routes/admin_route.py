@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from middlewares import admin_required, log_request
-from controllers import UserController, DailyTrashController, AdminController
+from controllers import UserController, DailyTrashController, SystemController
 
 admin_blueprint = Blueprint('admin', __name__)
 
@@ -9,7 +9,7 @@ admin_blueprint = Blueprint('admin', __name__)
 @admin_required
 @log_request
 def get_all_users_info():
-    return AdminController.get_all_users_info()
+    return UserController.get_all_users_info()
 
 @admin_blueprint.route('users/delete_user', methods=['DELETE'])
 @admin_required
@@ -27,4 +27,4 @@ def get_all_trash():
 @admin_required
 @log_request
 def get_system_info():
-    return AdminController.get_system_info()
+    return SystemController.get_system_info()

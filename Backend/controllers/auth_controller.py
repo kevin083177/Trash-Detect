@@ -1,6 +1,6 @@
 import bcrypt
 from flask import request
-from services import AuthService, PurchaseService, UserService, UserLevelService, VerificationService, ThemeService
+from services import AuthService, PurchaseService, UserService, UserLevelService, VerificationService, ThemeService, DailyTrashService
 from config import Config
 from utils import verify_token
 
@@ -10,6 +10,7 @@ user_level_service = UserLevelService(Config.MONGO_URI)
 theme_service = ThemeService(Config.MONGO_URI)
 purchase_service = PurchaseService(Config.MONGO_URI)
 verification_service = VerificationService(Config.MONGO_URI)
+daily_trash_service = DailyTrashService(Config.MONGO_URI)
 
 class AuthController:
     @staticmethod
@@ -123,6 +124,9 @@ class AuthController:
                         return {
                             "message": "新增預設商品失敗"
                         }, 500
+                    
+                    # 更新註冊人數
+                    daily_trash_service._update_new_registered()
                     
                     created_user.pop('password', None)
                     created_user['_id'] = str(created_user['_id'])

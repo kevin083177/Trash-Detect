@@ -23,8 +23,14 @@ def get_all_themes(user):
 def get_theme(user, theme_name):
     return ThemeController.get_theme(user, theme_name)
 
-@theme_blueprint.route('/delete_theme/<theme_name>', methods=['DELETE'])
+@theme_blueprint.route('/delete_theme', methods=['DELETE'])
 @log_request
 @admin_required
-def delete_theme(theme_name):
-    return ThemeController.delete_theme(theme_name)
+def delete_theme():
+    return ThemeController.delete_theme()
+
+@theme_blueprint.route('/update_theme', methods=["PUT"])
+@log_request
+@admin_required
+def update_theme():
+    return ThemeController.update_theme()

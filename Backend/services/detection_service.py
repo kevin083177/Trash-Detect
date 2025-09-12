@@ -17,7 +17,7 @@ class DetectionService:
         self.agg_lse_r = 4.0
         
         self.dir = Path(__file__).resolve().parent
-        self.model_version = "l"
+        self.model_version = "yolov11l"
         
         self.child_to_parent_name_map = {
             'can': 'can',
@@ -41,7 +41,7 @@ class DetectionService:
     def _load_model(self):
         """載入YOLO模型"""
         try:
-            model_path = self.dir.parent / "detect_models" / f"yolov11{self.model_version}.pt"
+            model_path = self.dir.parent / "detect_models" / f"{self.model_version}.pt"
             self.model = YOLO(model_path)
         except Exception as e:
             print(f"Error loading YOLO model: {str(e)}")

@@ -149,10 +149,6 @@ class VoucherController:
                     "message": "票券更新成功",
                     "body": result
                 }, 200
-            else:
-                return {
-                    "message": "票券更新失敗"
-                }, 500
                 
         except ValueError as e:
             return {

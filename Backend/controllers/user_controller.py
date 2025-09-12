@@ -415,7 +415,8 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(upload_profile_image) {str(e)}"
             }, 500
-            
+    
+    @staticmethod   
     def get_question_stats(user_id):
         try:
             question_stats = user_service.get_question_stats(user_id)
@@ -433,7 +434,8 @@ class UserController:
             return {
                 "message": f"伺服器錯誤(get_question_stats): {str(e)}"
             }, 500
-            
+    
+    @staticmethod   
     def update_question_stats(user_id):
         try:
             data = request.get_json()
@@ -470,4 +472,19 @@ class UserController:
         except Exception as e:
             return {
                 "message": f"伺服器錯誤(update_question_stats): {str(e)}"
+            }, 500
+            
+    @staticmethod
+    def get_all_users_info():
+        try:
+            users_info = user_service.get_all_users_info()
+            
+            return {
+                "message": f"成功獲取所有使用者資料",
+                "body": users_info
+            }, 200
+            
+        except Exception as e:
+            return {
+                "message": f"伺服器錯誤(get_all_users_info) {str(e)}"
             }, 500
