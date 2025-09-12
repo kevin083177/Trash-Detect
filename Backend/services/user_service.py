@@ -1,6 +1,6 @@
 from bson import ObjectId
 from services import DatabaseService
-from datetime import datetime
+from datetime import datetime, timedelta
 import bcrypt
 from .image_service import ImageService
 
@@ -10,6 +10,7 @@ class UserService(DatabaseService):
         self.users = self.collections['users']
         self.purchase = self.collections['purchases']
         self.user_level = self.collections['user_levels']
+        self.daily_trash = self.collections['daily_trash']
         
         if image_service is not None and not isinstance(image_service, ImageService):
             raise TypeError("image_service 必須是 ImageService")
@@ -115,23 +116,38 @@ class UserService(DatabaseService):
             
             now = datetime.now()
             last_check_in = user.get('last_check_in')
+            consecutive_days = user.get('consecutive_check_in_days', 0)
             
-            # 如果有簽到時間 檢查是否是同一天
+            # 檢查今天是否已簽到
             if last_check_in is not None:
-                # 如果 last_check_in 是字串，轉換為 datetime 對象
                 if isinstance(last_check_in, str):
-                    last_check_in = datetime.now()
+                    last_check_in = datetime.strptime(last_check_in, "%Y-%m-%d %H:%M:%S")
                 
                 if last_check_in.date() == now.date():
                     raise ValueError("今日已簽到")
             
-            # 簽到 +50塊
+            # 計算連續簽到天數
+            if last_check_in is not None:
+                days_diff = (now.date() - last_check_in.date()).days
+                
+                if days_diff == 1:
+                    consecutive_days += 1
+                else:
+                    consecutive_days = 1
+            else:
+                consecutive_days = 1
+            
+            # 獎勵 50 塊
             self.add_money(user_id, 50)
             
             result = self.users.update_one(
                 {"_id": ObjectId(user_id)},
                 {
-                    "$set": {"last_check_in": now},
+                    "$set": {
+                        "last_check_in": now,
+                        "consecutive_check_in_days": consecutive_days,
+                        "last_active": now
+                    }
                 }
             )
             
@@ -150,16 +166,12 @@ class UserService(DatabaseService):
             now = datetime.now()
             last_check_in = user.get('last_check_in')
             
-            # 如果有簽到紀錄
             if last_check_in is not None:
-                # 如果 last_check_in 是字串，轉換為 datetime 對象
                 if isinstance(last_check_in, str):
                     last_check_in = datetime.strptime(last_check_in, "%Y-%m-%d %H:%M:%S")
                 
-                # 檢查是否為今天
                 return last_check_in.date() == now.date()
             
-            # 從未簽到過
             return False
 
         except Exception as e:
@@ -372,7 +384,7 @@ class UserService(DatabaseService):
         
     def update_question_stats(self, user_id: str, category: str, total: int, correct: int):
         try:
-            valid_categories = ['plastic', 'container', 'bottles', 'cans', 'paper']
+            valid_categories = ['plastic', 'containers', 'bottles', 'cans', 'paper']
             if category not in valid_categories:
                 raise ValueError(f"無效的類別: {category}")
                 
@@ -406,4 +418,89 @@ class UserService(DatabaseService):
         
         except Exception as e:
             print(f"Update user question stats Error: {str(e)}")
+            raise
+        
+    def update_last_active(self, user_id: str):
+        try:
+            now = datetime.now()
+            today = now.strftime("%Y-%m-%d")
+            
+            result = self.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"last_active": now}}
+            )
+            
+            if result.modified_count > 0:
+                self._update_daily_active_users(today)
+                
+            return result.modified_count > 0
+        
+        except Exception as e:
+            print(f"Update last active Error: {str(e)}")
+            raise
+        
+    def _update_daily_active_users(self, date: str):
+        try:
+            start_of_day = datetime.strptime(date, "%Y-%m-%d")
+            end_of_day = start_of_day + timedelta(days=1)
+            
+            active_count = self.users.count_documents({
+                "last_active": {
+                    "$gte": start_of_day,
+                    "$lt": end_of_day
+                }
+            })
+            
+            self.daily_trash.update_one(
+                {"date": date},
+                {
+                    "$set": {"active_users": active_count},
+                    "$setOnInsert": {
+                        "plastic": 0, "paper": 0, "cans": 0, "bottles": 0, "containers": 0
+                    }                    
+                },
+                upsert=True
+            )
+            
+        except Exception as e:
+            print(f"Update daily active users Error: {str(e)}")
+            
+    def get_all_users_info(self):
+        try:
+            pipeline = [
+            {
+                "$lookup": {
+                    "from": "user_levels",
+                    "localField": "_id",
+                    "foreignField": "user_id",
+                    "as": "user_level_data"
+                }
+            },
+            {
+                "$project": {
+                    "_id": {"$toString": "$_id"},
+                    "username": 1,
+                    "money": 1,
+                    "profile": 1,
+                    "trash_stats": 1,
+                    "question_stats": 1,
+                    "highest_level": {
+                        "$ifNull": [
+                            {"$arrayElemAt": ["$user_level_data.highest_level", 0]},
+                            0
+                        ]
+                    },
+                    "last_check_in": 1,
+                    "last_active": 1,
+                    "consecutive_check_in_days": 1
+                }
+            },
+        ]
+            
+            users_info = list(self.users.aggregate(pipeline))
+            
+            return users_info
+            
+        except Exception as e:
+            print(f"Get All Users Info Error: {str(e)}")
             raise
