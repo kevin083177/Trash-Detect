@@ -95,6 +95,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       const formData = new FormData();
       
       formData.append('product_id', productId);
+      formData.append('name', editProduct.name);
       formData.append('description', editProduct.description);
       formData.append('price', editProduct.price.toString());
       formData.append('type', editProduct.type);
