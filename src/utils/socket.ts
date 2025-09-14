@@ -20,16 +20,13 @@ class SocketService {
                 });
 
                 this.socket.on('connect', () => {
-                    console.log("connected! ", this.socket?.id)
                     resolve(this.socket!);
                 });
 
                 this.socket.on('disconnect', (reason) => {
-                    console.log('disconnected! ', reason);
                 })
 
                 this.socket.on('connect_error', (error) => {
-                    console.log('connect error! ', error);
                 })
             } catch (error) {
                 reject(error);
@@ -46,12 +43,10 @@ class SocketService {
 
             this.socket.emit('start_monitoring', { token });
             this.socket.once('monitoring started', (data) => {
-                console.log("monitoring started! ", data.message);
                 resolve();
             })
 
             this.socket.once("monitoring error", (error) => {
-                console.log("monitoring error! ", error);
                 reject(new Error(error.message));
             });
         });
