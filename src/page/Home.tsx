@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import "../styles/Home.css";
-import "../components/home/styles/Monitor.css";
-import "../components/home/styles/StatusCard.css";
-import { Header } from "../components/Header";
 import { TrashPieChart } from "../components/home/TrashPieChart";
 import { MonthlyChart } from "../components/home/MonthlyChart";
 import { StatusCard } from "../components/home/StatusCard";
@@ -129,14 +126,13 @@ export const Home: React.FC = () => {
 
     return (
         <div className="home-container">
-            <Header/>
             <div className="home-main">
                 <div className="dashboard-status-section">
                     <div className="dashboard-status-cards">
                         <StatusCard
                             title="今日新使用者"
                             value={todayData?.new_registered || 0}
-                            icon={<FiUserPlus size={28} />}
+                            icon={<FiUserPlus size={18} />}
                             color="#FF0060"
                             subtitle="新註冊使用者數"
                             trend={todayData && yesterdayData ? 
@@ -149,7 +145,7 @@ export const Home: React.FC = () => {
                         <StatusCard
                             title="今日活躍使用者"
                             value={todayData?.active_users || 0}
-                            icon={<LuUsers size={28} />}
+                            icon={<LuUsers size={18} />}
                             color="#f8992c"
                             subtitle="活躍使用者數"
                             trend={todayData && yesterdayData ? 
@@ -162,7 +158,7 @@ export const Home: React.FC = () => {
                         <StatusCard
                             title="今日回收總量"
                             value={todayData?.total || 0}
-                            icon={<RiRecycleLine size={28} />}
+                            icon={<RiRecycleLine size={18} />}
                             color="#00df59"
                             subtitle="總回收物品數"
                             trend={todayData && yesterdayData ? 
@@ -175,7 +171,7 @@ export const Home: React.FC = () => {
                         <StatusCard
                             title="系統狀態"
                             value={systemInfo ? "正常" : "檢查中"}
-                            icon={<HiOutlineStatusOnline size={28} />}
+                            icon={<HiOutlineStatusOnline size={18} />}
                             color="#0079FF"
                             subtitle={systemInfo ? "系統運行正常" : "系統狀態檢查中"}
                             isLoading={systemLoading}

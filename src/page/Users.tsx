@@ -3,14 +3,17 @@ import '../styles/Users.css';
 import { asyncGet } from '../utils/fetch';
 import { admin_api } from '../api/api';
 import type { User } from '../interfaces/user';
-import { Header } from '../components/Header';
 import { UserCard } from '../components/user/UserCard';
 import { UserModal } from '../components/user/UserModal';
+import { StatusCard } from '../components/home/StatusCard';
+import { IoPersonSharp, IoStatsChart, IoCalendarSharp, IoTrendingUp } from 'react-icons/io5';
+import { FaSpinner } from 'react-icons/fa';
 
 interface DashboardStats {
   totalUsers: number;
-  activeUsers: number;
-  checkedInUsers: number;
+  activeToday: number;
+  activeYesterday: number;
+  activeThisWeek: number;
 }
 
 export const Users: React.FC = () => {
@@ -58,30 +61,43 @@ export const Users: React.FC = () => {
     }
   }, [searchTerm, users]);
 
-  const stats = useMemo((): DashboardStats => {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+  const getActivityStatus = (lastActive: string | null): 'today' | 'yesterday' | 'week' | 'offline' => {
+    if (!lastActive) return 'offline';
     
-    const activeUsers = users.filter(user => {
-      if (!user.last_active) return false;
-      const lastActive = new Date(user.last_active);
-      return (now.getTime() - lastActive.getTime()) < 24 * 60 * 60 * 1000;
-    }).length;
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    
+    const todayStr = now.getFullYear() + '-' + 
+                     String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(now.getDate()).padStart(2, '0');
+    
+    const activeDayStr = lastActiveDate.getUTCFullYear() + '-' + 
+                         String(lastActiveDate.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                         String(lastActiveDate.getUTCDate()).padStart(2, '0');
+    
+    const today = new Date(todayStr + 'T00:00:00');
+    const activeDay = new Date(activeDayStr + 'T00:00:00');
+    const daysDiff = Math.floor((today.getTime() - activeDay.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === 0) return 'today';
+    if (daysDiff === 1) return 'yesterday';
+    if (daysDiff < 7) return 'week';
+    return 'offline';
+  };
 
-    const checkedInUsers = users.filter(user => {
-      if (!user.last_check_in) return false;
-      try {
-        const lastCheckIn = new Date(user.last_check_in);
-        return lastCheckIn.toISOString().split('T')[0] === today;
-      } catch {
-        return false;
-      }
+  const stats = useMemo((): DashboardStats => {
+    const activeToday = users.filter(user => getActivityStatus(user.last_active) === 'today').length;
+    const activeYesterday = users.filter(user => getActivityStatus(user.last_active) === 'yesterday').length;
+    const activeThisWeek = users.filter(user => {
+      const status = getActivityStatus(user.last_active);
+      return status === 'today' || status === 'yesterday' || status === 'week';
     }).length;
 
     return {
       totalUsers: users.length,
-      activeUsers,
-      checkedInUsers
+      activeToday,
+      activeYesterday,
+      activeThisWeek
     };
   }, [users]);
 
@@ -95,61 +111,77 @@ export const Users: React.FC = () => {
     setSelectedUser(null);
   };
 
-  if (loading) {
-    return (
-      <div className="users-dashboard">
-        <div className="users-loading">載入中...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="users-dashboard">
-        <div className="users-error">{error}</div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      <Header />
-      <div className="users-dashboard">
-        <div className="users-stat-number">{stats.totalUsers}</div>
-
-        <div className="users-controls">
-          <div className="users-search-box">
-            <input
-              type="text"
-              placeholder="搜尋使用者名稱..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="users-grid">
-          {filteredUsers.map((user) => (
-            <UserCard
-              key={user._id}
-              user={user}
-              onClick={handleUserClick}
-            />
-          ))}
-        </div>
-
-        {filteredUsers.length === 0 && searchTerm && (
-          <div className="users-no-data">
-            找不到符合 "{searchTerm}" 的使用者
-          </div>
-        )}
-
-        <UserModal
-          user={selectedUser}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
+    <div className="users-dashboard">
+      <div className="users-stats-grid">
+        <StatusCard
+          title="總會員數量"
+          value={stats.totalUsers}
+          icon={<IoPersonSharp size={18}/>}
+          color="#3b82f6"
+          subtitle="使用者總數"
+          isLoading={loading}
+        />
+        <StatusCard
+          title="今日活躍人數"
+          value={stats.activeToday}
+          icon={<IoStatsChart size={18}/>}
+          color="#10b981"
+          subtitle="今天有登入的使用者"
+          isLoading={loading}
+        />
+        <StatusCard
+          title="昨日活躍人數"
+          value={stats.activeYesterday}
+          icon={<IoCalendarSharp size={18}/>}
+          color="#f59e0b"
+          subtitle="昨天有登入的使用者"
+          isLoading={loading}
+        />
+        <StatusCard
+          title="本週活躍人數"
+          value={stats.activeThisWeek}
+          icon={<IoTrendingUp size={18}/>}
+          color="#8b5cf6"
+          subtitle="近7天內有登入的使用"
+          isLoading={loading}
         />
       </div>
-    </>
+      
+      {error ? (
+        <div className="users-error">{error}</div>
+      ) : loading ? (
+        <div className="users-loading-container">
+          <div className="users-loading-spinner">
+            <FaSpinner className="users-spinner-icon" />
+            <span>載入用戶資料中...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="users-grid">
+            {filteredUsers.map((user) => (
+              <UserCard
+                key={user._id}
+                user={user}
+                onClick={handleUserClick}
+              />
+            ))}
+          </div>
+
+          {filteredUsers.length === 0 && searchTerm && (
+            <div className="users-no-data">
+              找不到符合 "{searchTerm}" 的使用者
+            </div>
+          )}
+
+          <UserModal
+            user={selectedUser}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+          />
+        </>
+      )}
+    </div>
   );
 };

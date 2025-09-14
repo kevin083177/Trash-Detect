@@ -333,7 +333,6 @@
   line-height: 1.6;
 }
 
-/* 隱藏數字輸入框的上下箭頭 */
 .add-voucher-modal-input::-webkit-outer-spin-button,
 .add-voucher-modal-input::-webkit-inner-spin-button {
   -webkit-appearance: none;

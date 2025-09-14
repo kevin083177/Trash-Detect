@@ -92,10 +92,6 @@
   background: #9E9E9E;
 }
 
-.user-card-status-indicator.never {
-  background: #F44336;
-}
-
 .user-card-username {
   margin: 0;
   font-size: 1.4rem;

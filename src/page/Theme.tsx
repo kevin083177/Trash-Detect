@@ -4,22 +4,26 @@ import "../styles/Theme.css";
 import { asyncGet } from "../utils/fetch";
 import { theme_api } from "../api/api";
 import type { Theme } from "../interfaces/theme";
-import { Header } from "../components/Header";
 import { AddThemeModal } from "../components/theme/AddThemeModal";
 import { MdChair } from "react-icons/md";
+import { FaSpinner } from "react-icons/fa";
+import { useNotification } from "../context/NotificationContext";
 
 export const Themes: React.FC = () => {
     const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const [showAddModal, setShowAddModal] = useState(false);
     const [themes, setThemes] = useState<Theme[]>([]);
-    const filteredThemes = themes.filter(theme =>
-        theme.name.includes(search)
-    );
-    
+    const filteredThemes = themes.filter(theme => theme.name.includes(search));
+    const [error, setError] = useState<string | null>(null);
+
+    const { showError } = useNotification();
+
     useEffect(() => {
         const fetchThemes = async () => {
             try {
+                setLoading(true);
                 const response = await asyncGet(theme_api.get_all_themes, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -28,9 +32,16 @@ export const Themes: React.FC = () => {
 
                 if (response.body) {
                     setThemes(response.body);
+                } else {
+                    setError("無法載入商品主題資料");
+                    showError("無法載入商品主題資料");
                 }
             } catch (e) {
                 console.log(e);
+                setError('載入資料時發生錯誤');
+                showError("獲取商品主題失敗")
+            } finally {
+                setLoading(false);
             }
         }
         fetchThemes();
@@ -45,28 +56,36 @@ export const Themes: React.FC = () => {
     };
 
     return (
-        <>
-            <Header />
-            <div className="theme-container">
-                <div className="theme-header">
-                    <div className="theme-search-group">
-                        <span role="img" aria-label="search" style={{ fontSize: 20 }}>🔍</span>
-                        <input
-                            type="text"
-                            placeholder="搜尋主題或商品"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="theme-search-input"
-                        />
-                    </div>
-                    <div>
-                        <button className="theme-add-theme-btn" onClick={handleOpenAddModal}>
-                            <MdChair size={20}/>
-                            <p>新增主題</p>
-                        </button>
+        <div className="theme-container">
+            <div className="theme-header">
+                <div className="theme-search-group">
+                    <span role="img" aria-label="search" style={{ fontSize: 20 }}>🔍</span>
+                    <input
+                        type="text"
+                        placeholder="搜尋商品主題"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="theme-search-input"
+                    />
+                </div>
+                <div>
+                    <button className="theme-add-theme-btn" onClick={handleOpenAddModal}>
+                        <MdChair size={20}/>
+                        <p>新增主題</p>
+                    </button>
+                </div>
+            </div>
+
+            { error ? (
+                <div className="theme-error">{error}</div>
+            ) : loading ? (
+                <div className="theme-loading-container">
+                    <div className="theme-loading-spinner">
+                        <FaSpinner className="theme-spinner-icon" />
+                        <span>載入主題資料中...</span>
                     </div>
                 </div>
-
+            ) : (
                 <div className="themes">
                     {filteredThemes.map((theme) => (
                         <div
@@ -88,13 +107,13 @@ export const Themes: React.FC = () => {
                         </div>
                     ))}
                 </div>
+            )}
 
-                <AddThemeModal
-                    isOpen={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                    onSave={handleThemeSave}
-                />
-            </div>
-        </>
+            <AddThemeModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSave={handleThemeSave}
+            />
+        </div>
     );
 }

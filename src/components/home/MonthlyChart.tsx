@@ -72,7 +72,7 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
     if (isLoading) {
         return (
             <div className="monthly-chart-section">
-                <div className="monthly-chart-title">每月掃描成長量 / 每月登入量</div>
+                <div className="monthly-chart-title">垃圾掃描量 / 活動人數</div>
                 <div className="monthly-chart-loading-container">
                     <div className="monthly-chart-loading-spinner"></div>
                     <p>載入中...</p>
@@ -84,7 +84,7 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
     return (
         <div className="monthly-chart-section">
             <div className="monthly-chart-header">
-                <div className="monthly-chart-title">每月掃描成長量 / 每月登入量</div>
+                <div className="monthly-chart-title">垃圾掃描量 / 活耀人數</div>
                 <div className="monthly-chart-month-navigation">
                     <button 
                         className={`monthly-chart-nav-button ${!hasPrevMonth ? 'disabled' : ''}`}

@@ -31,7 +31,7 @@
 
 .theme-image-container {
   width: 100%;
-  height: 90vh;
+  height: 85vh;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -110,6 +110,7 @@
   background: rgba(255, 255, 255, 1);
   border-radius: 20px;
   padding: 24px;
+  margin-right: 12px;
   flex-direction: column;
   overflow-y: auto;
 }

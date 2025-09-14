@@ -1,4 +1,3 @@
-/* MonthlyChartSection 樣式 */
 .monthly-chart-section {
     flex: 2;
     background: white;
@@ -101,7 +100,6 @@
     margin: 0;
 }
 
-/* 響應式設計 */
 @media (max-width: 1024px) {
     .monthly-chart-header {
         flex-direction: column;

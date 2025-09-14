@@ -6,7 +6,7 @@ interface StatusCardProps {
     value: string | number;
     icon: React.ReactNode;
     color: string;
-    subtitle: string;
+    subtitle?: string;
     trend?: {
         value: number;
         isPositive: boolean;

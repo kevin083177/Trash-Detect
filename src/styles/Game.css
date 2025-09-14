@@ -1,7 +1,5 @@
 .game-container {
-  max-width: 1200px;
   margin: 0 auto;
-  min-height: calc(100vh - 80px);
 }
 
 .game-header {
@@ -53,6 +51,44 @@
   font-weight: 400;
 }
 
+.game-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.game-loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #6c757d;
+}
+
+.game-spinner-icon {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.game-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: center;
+  border: 1px solid #ffcdd2;
+}
+
 .game-add-chapter-btn {
   display: flex;
   align-items: center;
@@ -93,7 +129,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
-  max-width: 1400px;
   padding-bottom: 20px;
   margin: 0 auto;
 }
@@ -241,6 +276,10 @@
     max-width: none;
   }
 
+  .game-loading-container {
+    padding: 40px 20px;
+  }
+
   .game-chapter {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
@@ -275,6 +314,10 @@
 
   .game-search-group {
     padding: 14px 20px;
+  }
+
+  .game-loading-container {
+    padding: 30px 15px;
   }
 
   .game-chapter {

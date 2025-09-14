@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-
 import '../styles/Game_Question.css';
 import type { Question, TempQuestion } from "../interfaces/question";
 import { asyncGet, asyncPost, asyncDelete, asyncPut } from "../utils/fetch";
 import { question_api } from "../api/api";
 import { QuestionCard } from "../components/question/QuestionCard";
-import { Header } from "../components/Header";
 
 export const GameQuestion: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -191,81 +189,78 @@ export const GameQuestion: React.FC = () => {
   }
 
   return (
-    <>
-      <Header />
-      <div className="question-container">
-        {error && (
-          <div className="error-message">
-            {error}
-            <button onClick={handleReload} className="reload-btn">
-              重新載入
+    <div className="question-container">
+      {error && (
+        <div className="error-message">
+          {error}
+          <button onClick={handleReload} className="reload-btn">
+            重新載入
+          </button>
+        </div>
+      )}
+      
+      <div className="question-header">
+        <div className="search-group">
+          <span role="img" aria-label="search" style={{ fontSize: 20 }}>
+            🔍
+          </span>
+          <input
+            type="text"
+            placeholder="搜尋題目"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <div className="page-controls">
+          <div className="add-question-section">
+            <button onClick={addNewQuestion} className="add-question-btn" disabled={loading}>
+              + 新增題目
+            </button>
+            <button onClick={handleReload} className="reload-btn" disabled={loading}>
+              ↻
             </button>
           </div>
-        )}
-        
-        <div className="question-header">
-          <div className="search-group">
-            <span role="img" aria-label="search" style={{ fontSize: 20 }}>
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="搜尋題目"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
+        </div>
+      </div>
+
+      <div className="pagination-section">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+          <button
+            key={pageNum}
+            onClick={() => handlePageChange(pageNum)}
+            className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+          >
+            {pageNum}
+          </button>
+        ))}
+      </div>
+
+      <div className="questions-grid">
+        {filteredQuestions.map((questionData, index) => (
+          <div key={questionData.tempId || questionData._id} className="question-grid-item">
+            <QuestionCard
+              questionData={questionData}
+              onQuestionUpdate={updateQuestion}
+              onQuestionDelete={deleteQuestion}
+              onConfirmNew={questionData.isTemporary ? confirmNewQuestion : undefined}
+              onCancelNew={questionData.isTemporary ? () => cancelNewQuestion(questionData.tempId!) : undefined}
             />
           </div>
-
-          <div className="page-controls">
-            <div className="add-question-section">
-              <button onClick={addNewQuestion} className="add-question-btn" disabled={loading}>
-                + 新增題目
-              </button>
-              <button onClick={handleReload} className="reload-btn" disabled={loading}>
-                ↻
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="pagination-section">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-            <button
-              key={pageNum}
-              onClick={() => handlePageChange(pageNum)}
-              className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
-            >
-              {pageNum}
-            </button>
-          ))}
-        </div>
-
-        <div className="questions-grid">
-          {filteredQuestions.map((questionData, index) => (
-            <div key={questionData.tempId || questionData._id} className="question-grid-item">
-              <QuestionCard
-                questionData={questionData}
-                onQuestionUpdate={updateQuestion}
-                onQuestionDelete={deleteQuestion}
-                onConfirmNew={questionData.isTemporary ? confirmNewQuestion : undefined}
-                onCancelNew={questionData.isTemporary ? () => cancelNewQuestion(questionData.tempId!) : undefined}
-              />
-            </div>
-          ))}
-        </div>
-        {questions.length === 0 && !loading && (
-          <div className="no-questions">
-            尚無任何題目，請點擊「新增題目」開始建立或「重新載入」獲取數據
-          </div>
-        )}
-
-        {filteredQuestions.length === 0 && search && questions.length > 0 && (
-          <div className="no-questions">
-            沒有找到符合搜尋條件的題目
-          </div>
-        )}
+        ))}
       </div>
-    </>
+      {questions.length === 0 && !loading && (
+        <div className="no-questions">
+          尚無任何題目，請點擊「新增題目」開始建立或「重新載入」獲取數據
+        </div>
+      )}
+
+      {filteredQuestions.length === 0 && search && questions.length > 0 && (
+        <div className="no-questions">
+          沒有找到符合搜尋條件的題目
+        </div>
+      )}
+    </div>
   );
 };

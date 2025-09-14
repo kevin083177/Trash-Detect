@@ -1,5 +1,6 @@
 .home-container {
     width: 100%;
+    max-width: 100vw;
     min-height: 100vh;
     padding: 0;
     display: flex;

@@ -88,8 +88,6 @@ export const EditVoucherModal: React.FC<EditVoucherModalProps> = ({
         body: formData
       });
       
-      console.log(response);
-
       if (response.status === 200) {
         onSave(editVoucher);
         showSuccess("更新電子票券成功");

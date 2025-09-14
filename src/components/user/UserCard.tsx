@@ -42,17 +42,24 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onClick }) => {
   };
 
   const getActivityStatus = (lastActive: string | null): string => {
-    if (!lastActive) return 'never';
+    if (!lastActive) return 'offline';
     
     const now = new Date();
     const lastActiveDate = new Date(lastActive);
     
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const activeDay = new Date(lastActiveDate.getFullYear(), lastActiveDate.getMonth(), lastActiveDate.getDate());
+    const todayStr = now.getFullYear() + '-' + 
+                     String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(now.getDate()).padStart(2, '0');
     
-    const timeDiff = today.getTime() - activeDay.getTime();
-    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-    if (daysDiff === 0) return 'today' ;
+    const activeDayStr = lastActiveDate.getUTCFullYear() + '-' + 
+                         String(lastActiveDate.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                         String(lastActiveDate.getUTCDate()).padStart(2, '0');
+    
+    const today = new Date(todayStr + 'T00:00:00');
+    const activeDay = new Date(activeDayStr + 'T00:00:00');
+    const daysDiff = Math.floor((today.getTime() - activeDay.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === 0) return 'today';
     if (daysDiff === 1) return 'yesterday';
     if (daysDiff < 7) return 'week';
     return 'offline';
