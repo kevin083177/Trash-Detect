@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { IoGameController } from "react-icons/io5";
 import { FaSpinner } from "react-icons/fa";
 import { useNotification } from "../context/NotificationContext";
+import { AddGameChapterModal } from "../components/game/AddGameChapterModal";
 
 export const Game: React.FC = () => {
     const [search, setSearch] = useState("");
@@ -31,13 +32,13 @@ export const Game: React.FC = () => {
                 if (response.body) {
                     setChapters(response.body);
                 } else {
-                    setError('無法載入遊戲章節資料');
-                    showError('無法載入遊戲章節資料');
+                    setError('無法載入遊戲主題資料');
+                    showError('無法載入遊戲主題資料');
                 }
             } catch (error) {
                 console.error("Failed to fetch chapters:", error);
                 setError('載入資料時發生錯誤');
-                showError("獲取遊戲章節失敗");
+                showError("獲取遊戲主題失敗");
             } finally {
                 setLoading(false);
             }
@@ -53,6 +54,14 @@ export const Game: React.FC = () => {
         setShowModal(true);
     };
 
+    const handleCloseModal = () => {
+        setShowModal(false);
+    };
+
+    const handleSaveChapter = (newChapter: Chapter) => {
+        setChapters(prevChapters => [...prevChapters, newChapter]);
+    };
+
     return (
         <div className="game-container">
             <div className="game-header">
@@ -62,7 +71,7 @@ export const Game: React.FC = () => {
                     </span>
                     <input
                         type="text"
-                        placeholder="搜尋遊戲章節"
+                        placeholder="搜尋遊戲主題"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="game-search-input"
@@ -71,7 +80,7 @@ export const Game: React.FC = () => {
                 <div>
                     <button className="game-add-chapter-btn" onClick={handleOpenAddModal}>
                         <IoGameController size={20}/>
-                        <p>新增遊戲章節</p>
+                        <p>新增遊戲主題</p>
                     </button>
                 </div>
             </div>
@@ -101,42 +110,12 @@ export const Game: React.FC = () => {
                 </div>
             )}
 
-            {showModal && (
-                <div className="game-modal-overlay">
-                    <div className="game-modal-content">
-                        <button className="game-modal-close" onClick={() => setShowModal(false)}>
-                            ✕
-                        </button>
-                        <input
-                            className="game-chapter-input"
-                            type="text"
-                            placeholder="關卡名稱"
-                        />
-                        <input
-                            className="game-chapter-input"
-                            type="text"
-                            placeholder="垃圾需求量"
-                        />
-                        <label className="game-image-upload">
-                            + 新增圖片
-                            <input
-                                type="file"
-                                accept="image/*"
-                                style={{ display: "none" }}
-                            />
-                        </label>
-                        <button 
-                            className="game-add-chapter-btn" 
-                            style={{ width: '120px', margin: '0 auto' }}
-                            onClick={() => {
-                                setShowModal(false);
-                            }}
-                        >
-                            確定新增
-                        </button>
-                    </div>
-                </div>
-            )}
+            <AddGameChapterModal 
+                isOpen={showModal}
+                existingChapters={chapters}
+                onClose={handleCloseModal}
+                onSave={handleSaveChapter}
+            />
         </div>
     );
 };
