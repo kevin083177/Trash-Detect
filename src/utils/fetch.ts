@@ -1,3 +1,20 @@
+let isRedirecting = false;
+
+function handle401Error() {
+  if (isRedirecting) return;
+
+  isRedirecting = true;
+
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+
+  window.location.hash = '#/login';
+
+  setTimeout(() => {
+    isRedirecting = false;
+  }, 1000);
+}
+
 /**
  * 異步呼叫 api，只可用響應體為 JSON 的 api
  * @param api 要呼叫的 api
@@ -11,7 +28,9 @@ export async function asyncGet(api: string, { headers = {} }: { headers?: Header
           ...headers,
         },
       });
-  
+      
+      if (res.status === 401) handle401Error();
+
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const jsonData = await res.json();
@@ -50,6 +69,8 @@ export async function asyncPost(api: string, { body, headers = {} }: { body?: an
       mode: 'cors',
     });
 
+    if (res.status === 401) handle401Error();
+
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       const jsonData = await res.json();
@@ -82,6 +103,8 @@ export async function asyncDelete(api: string, { body, headers = {} }: { body: a
       body: body instanceof FormData ? body : JSON.stringify(body),
       mode: 'cors',
     });
+
+    if (res.status === 401) handle401Error();
 
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
@@ -120,6 +143,8 @@ export async function asyncPut(api: string, { body, headers = {} }: { body: any,
       body: body instanceof FormData ? body : JSON.stringify(body),
       mode: 'cors',
     });
+    
+    if (res.status === 401) handle401Error();
 
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
