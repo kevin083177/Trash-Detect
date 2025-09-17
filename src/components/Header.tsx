@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './styles/Header.css';
 import { useAuth } from '../context/AuthContext';
-import { IoPersonSharp } from "react-icons/io5";
 import { MdOutlineLogout } from "react-icons/md";
 import { FaChevronDown } from "react-icons/fa6";
 
@@ -12,19 +11,26 @@ const routes = [
   { path: '/users', name: '使用者管理' },
   { path: '/theme', name: '商品管理' },
   { path: '/voucher', name: '票券管理' },
-  { path: '/game', name: '遊戲管理' }
+  { 
+    path: '/game', 
+    name: '遊戲管理',
+    children: [
+      { path: '/game', name: '題目管理' },
+      { path: '/levels', name: '關卡管理' }
+    ]
+  }
 ];
 
 export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
   const { username } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeNavDropdown, setActiveNavDropdown] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   
   const { logout } = useAuth();
 
-  // 監聽滾動事件
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -33,7 +39,6 @@ export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
 
     window.addEventListener('scroll', handleScroll);
     
-    // 初始化檢查
     handleScroll();
 
     return () => {
@@ -41,21 +46,54 @@ export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
     };
   }, []);
 
-  const handleProfileClick = () => {
-    setIsDropdownOpen(false);
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveNavDropdown(null);
+      setIsDropdownOpen(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  const handleUserMenuClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsDropdownOpen(!isDropdownOpen);
+    setActiveNavDropdown(null);
   };
-  
+
   const handleLogoutClick = () => {
     logout();
     setIsDropdownOpen(false);
   };
 
-  const handleNavClick = (path: string) => {
+  const handleNavClick = (path: string, hasChildren: boolean = false, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    if (hasChildren) {
+      setActiveNavDropdown(activeNavDropdown === path ? null : path);
+      setIsDropdownOpen(false);
+    } else {
+      navigate(path);
+      setActiveNavDropdown(null);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleSubNavClick = (path: string) => {
     navigate(path);
+    setActiveNavDropdown(null);
+    setIsDropdownOpen(false);
   };
 
   const handleLogoClick = () => {
     navigate('/');
+    setActiveNavDropdown(null);
+    setIsDropdownOpen(false);
   };
 
   const isCurrentRoute = (path: string) => {
@@ -63,6 +101,13 @@ export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
       return location.pathname === '/';
     }
     return location.pathname.startsWith(path);
+  };
+
+  const isParentRouteActive = (route: any) => {
+    if (route.children) {
+      return route.children.some((child: any) => isCurrentRoute(child.path));
+    }
+    return isCurrentRoute(route.path);
   };
   
   return (
@@ -75,12 +120,34 @@ export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
         <nav className="header-nav">
           {routes.map((route, index) => (
             <React.Fragment key={route.path}>
-              <button
-                className={`nav-item ${isCurrentRoute(route.path) ? 'active' : ''}`}
-                onClick={() => handleNavClick(route.path)}
-              >
-                {route.name}
-              </button>
+              <div className="nav-item-container">
+                <button
+                  className={`nav-item ${isParentRouteActive(route) ? 'active' : ''} ${route.children ? 'has-children' : ''}`}
+                  onClick={(e) => handleNavClick(route.path, !!route.children, e)}
+                >
+                  {route.name}
+                  {route.children && (
+                    <FaChevronDown 
+                      className={`nav-chevron ${activeNavDropdown === route.path ? 'open' : ''}`}
+                      size={14}
+                    />
+                  )}
+                </button>
+                
+                {route.children && activeNavDropdown === route.path && (
+                  <div className="nav-dropdown">
+                    {route.children.map((child: any) => (
+                      <button
+                        key={child.path}
+                        className={`nav-dropdown-item ${isCurrentRoute(child.path) ? 'active' : ''}`}
+                        onClick={() => handleSubNavClick(child.path)}
+                      >
+                        {child.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {index < routes.length - 1 && (
                 <span className="nav-separator">/</span>
               )}
@@ -91,11 +158,15 @@ export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
 
       <div 
         className="user-menu"
-        onMouseEnter={() => setIsDropdownOpen(true)}
-        onMouseLeave={() => setIsDropdownOpen(false)}
+        onClick={handleUserMenuClick}
       >
         <span className="user-greeting">Hi, {username} </span>
-        <FaChevronDown style={{alignSelf: 'center', paddingTop: 4, cursor: 'pointer'}} size={20} color='#fff'/>
+        <FaChevronDown 
+          className={`user-chevron ${isDropdownOpen ? 'open' : ''}`}
+          style={{alignSelf: 'center', paddingTop: 4, cursor: 'pointer'}} 
+          size={20} 
+          color='#fff'
+        />
         
         {isDropdownOpen && (
           <div className="dropdown-menu">

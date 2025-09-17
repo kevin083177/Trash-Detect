@@ -9,8 +9,10 @@ const THEME_URL = `${API_BASE_URL}${API_VERSION}/theme`;
 const PRODUCT_URL = `${API_BASE_URL}${API_VERSION}/product`;
 const CHAPTER_URL = `${API_BASE_URL}${API_VERSION}/chapter`;
 const QUESTION_URL = `${API_BASE_URL}${API_VERSION}/question`;
+const QUESTION_CATEGORY_URL = `${QUESTION_URL}/category`;
 const FEEDBACK_URL = `${API_BASE_URL}${API_VERSION}/feedback`;
 const VOUCHER_URL = `${API_BASE_URL}${API_VERSION}/voucher/types`;
+const LEVEL_URL = `${API_BASE_URL}${API_VERSION}/level`;
 
 export const admin_api = {
     get_all_users_info: `${ADMIN_URL}/users/all`,
@@ -35,6 +37,9 @@ export const theme_api = {
 
 export const chapter_api = {
     get_all_chapters: `${CHAPTER_URL}/all`,
+    add_chapter: `${CHAPTER_URL}/add_chapter`,
+    delete_chapter: `${CHAPTER_URL}/delete_chapter`,
+    update_chapter: `${CHAPTER_URL}/update_chapter`
 }
 
 export const product_api = {
@@ -50,6 +55,13 @@ export const question_api = {
     get_question_by_category: `${QUESTION_URL}/all` // + chapter name slice(0, -2);
 }
 
+export const question_category_api = {
+    add_category: `${QUESTION_CATEGORY_URL}/add_category`,
+    delete_category: `${QUESTION_CATEGORY_URL}/delete_category`,
+    update_category: `${QUESTION_CATEGORY_URL}/update_category`,
+    get_category: `${QUESTION_CATEGORY_URL}/all`
+}
+
 export const feedback_api = {
     all: `${FEEDBACK_URL}/all`,
     update_status: `${FEEDBACK_URL}/update`,
@@ -61,4 +73,11 @@ export const voucher_api = {
     add: `${VOUCHER_URL}/create`,
     delete: `${VOUCHER_URL}/delete`,
     update: `${VOUCHER_URL}/update`
+}
+
+export const level_api = {
+    all: `${LEVEL_URL}/all`,
+    add: `${LEVEL_URL}/add_level`,
+    delete: `${LEVEL_URL}/delete_level`,
+    update: `${LEVEL_URL}/update_level`
 }
