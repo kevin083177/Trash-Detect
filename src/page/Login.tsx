@@ -14,19 +14,19 @@ export const Login: React.FC = () => {
   const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
-    setIsLoading(true);
-    e.preventDefault();
-    setError(null);
-
-    if (!email.trim()) {
-      setError("請輸入帳號");
-      return;
-    } else if (!password.trim()) {
-      setError("請輸入密碼");
-      return
-    }
-    
     try {
+      setIsLoading(true);
+      e.preventDefault();
+      setError(null);
+
+      if (!email.trim()) {
+        setError("請輸入帳號");
+        return;
+      } else if (!password.trim()) {
+        setError("請輸入密碼");
+        return
+      }
+    
       const response = await asyncPost(auth_api.login, {
           body: {
               email,
