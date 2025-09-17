@@ -98,17 +98,6 @@
   padding-bottom: 30px;
 }
 
-.users-no-data {
-  text-align: center;
-  color: #999;
-  font-style: italic;
-  font-size: 1.1rem;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
 .users-loading {
   display: flex;
   justify-content: center;

@@ -100,7 +100,7 @@ export const TrashPieChart: React.FC<TrashPieChartProps> = ({
                             fill="#8884d8"
                             dataKey="value"
                         >
-                            {trashData.map((entry, index) => (
+                            {trashData.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>

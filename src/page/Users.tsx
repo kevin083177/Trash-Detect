@@ -22,7 +22,6 @@ export const Users: React.FC = () => {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -51,17 +50,6 @@ export const Users: React.FC = () => {
 
     fetchUsers();
   }, []);
-
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredUsers(filtered);
-    }
-  }, [searchTerm, users]);
 
   const getActivityStatus = (lastActive: string | null): 'today' | 'yesterday' | 'week' | 'offline' => {
     if (!lastActive) return 'offline';
@@ -170,12 +158,6 @@ export const Users: React.FC = () => {
               />
             ))}
           </div>
-
-          {filteredUsers.length === 0 && searchTerm && (
-            <div className="users-no-data">
-              找不到符合 "{searchTerm}" 的使用者
-            </div>
-          )}
 
           <UserModal
             user={selectedUser}

@@ -27,15 +27,6 @@ export const ProductPage: React.FC = () => {
     const [showEditProductModal, setShowEditProductModal] = useState(false);
     const [editProduct, setEditProduct] = useState<Product | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newItem, setNewItem] = useState({
-        name: "",
-        price: 0,
-        theme_name: name,
-        type: "",
-        description: "", 
-        image: "",
-    });
-
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -51,7 +42,6 @@ export const ProductPage: React.FC = () => {
                     image 
                 });
                 setProducts(Array.isArray(stateProducts) ? stateProducts : []);
-                setNewItem(prev => ({ ...prev, theme_name: name }));
                 setLoading(false);
                 return;
             } else {
@@ -66,18 +56,6 @@ export const ProductPage: React.FC = () => {
     }, [theme_id, name, stateProducts, description, image, theme_name]);
 
     
-    const handleOpenAddModal = () => {
-        setNewItem({
-            name: "",
-            price: 0,
-            theme_name: themeInfo?.name || "",
-            type: "",
-            description: "",
-            image: "",
-        });
-        setShowAddModal(true);
-    };
-
     const handleThemeSave = (updatedTheme: Theme) => {
         setThemeInfo(updatedTheme);
     };
@@ -143,7 +121,7 @@ export const ProductPage: React.FC = () => {
                     <div className="products-header">
                         <h2 className="products-section-title">商品列表</h2>
                         {products.length > 0 && (
-                            <button className="add-product-btn" onClick={handleOpenAddModal}>
+                            <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
                                 <BiImageAdd size={20}/>
                                 <p>新增商品</p>
                             </button>
@@ -152,7 +130,7 @@ export const ProductPage: React.FC = () => {
                     {products.length === 0 && (
                         <div className="empty-products">
                             <p>這個主題還沒有商品</p>
-                            <button className="add-product-btn" onClick={handleOpenAddModal}>
+                            <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
                                 新增第一個商品
                             </button>
                         </div>

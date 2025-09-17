@@ -17,7 +17,7 @@ interface ConnectionStatus {
   error: string | null;
 }
 
-export const Monitor: React.FC<MonitorProps> = ({ isActive, onToggle }) => {
+export const Monitor: React.FC<MonitorProps> = ({ onToggle }) => {
     const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
         connected: false,

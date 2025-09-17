@@ -23,10 +23,10 @@ class SocketService {
                     resolve(this.socket!);
                 });
 
-                this.socket.on('disconnect', (reason) => {
+                this.socket.on('disconnect', (_reason) => {
                 })
 
-                this.socket.on('connect_error', (error) => {
+                this.socket.on('connect_error', (_error) => {
                 })
             } catch (error) {
                 reject(error);
@@ -42,7 +42,7 @@ class SocketService {
             }
 
             this.socket.emit('start_monitoring', { token });
-            this.socket.once('monitoring started', (data) => {
+            this.socket.once('monitoring started', (_data) => {
                 resolve();
             })
 

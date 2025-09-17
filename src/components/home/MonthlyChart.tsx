@@ -71,7 +71,7 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
 
     const Tooltips = ({ active, payload, label, selectedMonth }: any) => {
         if (active && payload && payload.length) {
-            const [year, month] = selectedMonth.split('-');
+            const [_year, month] = selectedMonth.split('-');
             const monthNumber = parseInt(month, 10);
             const dayNumber = parseInt(label as string, 10);
             

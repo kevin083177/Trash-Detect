@@ -108,7 +108,7 @@ export const Game: React.FC = () => {
                 </div>
             ) : (
                 <div className="game-chapter">
-                    {filteredChapters.map((chapter, index) => {
+                    {filteredChapters.map((chapter, _) => {
                         const originalIndex = chapters.findIndex(c => c.name === chapter.name);
                         
                         return (
