@@ -11,7 +11,6 @@ def start_server(port, detection_service: DetectionService=None):
     socket_app = Flask(__name__)
     CORS(socket_app, resources={r"/*": {"origins": "*"}})
     
-    # 創建SocketIO
     socketio = SocketIO(socket_app, cors_allowed_origins="*", logger=False, engineio_logger=False)
     
     system_service = SystemService(socketio)
@@ -23,7 +22,6 @@ def start_server(port, detection_service: DetectionService=None):
         except Exception as e:
             return f"測試頁面載入失敗: {str(e)}"
     
-    # SocketIO 事件處理
     @socketio.on('connect')
     def handle_connect():
         client_id = str(uuid.uuid4())
@@ -32,7 +30,8 @@ def start_server(port, detection_service: DetectionService=None):
     
     @socketio.on('disconnect')
     def handle_disconnect():
-        logger.info("Client disconnected")
+        client_id = str(uuid.uuid4())
+        logger.info(f"Client disconnected: {client_id}")
         if hasattr(request, 'sid'):
             system_service.remove_admin_connection(request.sid)
     
@@ -46,10 +45,8 @@ def start_server(port, detection_service: DetectionService=None):
             emit('error', {'message': 'No image data'})
             return
         
-        # 執行檢測
         detection_response = detection_service.detect_objects(image_data)
         
-        # 準備結果
         result = {
             'timestamp': timestamp,
             'detections': [
@@ -63,10 +60,7 @@ def start_server(port, detection_service: DetectionService=None):
             'image_size': detection_response.image_size
         }
         
-        # 發送結果
         emit('detection_result', result)
-        
-        # logger.info(f"Detection completed: {len(detection_response.detections)} objects")
         
     @socketio.on('start_monitoring')
     def handle_start_monitoring(data):

@@ -1,7 +1,6 @@
 from functools import wraps
 from flask import request
 from datetime import datetime
-import json
 from utils import logger
 
 def log_request(f):
@@ -9,37 +8,37 @@ def log_request(f):
     def decorated(*args, **kwargs):
         start_time = datetime.now()
         
-        request_data = {
-            'method': request.method,
-            'url': request.url,
-            'path': request.path,
-        }
-
-        if request.is_json:
-            try:
-                request_data['body'] = request.get_json()
-            except Exception as e:
-                request_data['body'] = str(e)
-        
         try:
             response = f(*args, **kwargs)
             
-            duration = (datetime.now() - start_time).total_seconds()
-
-            response_data = {
-                'status_code': response[1] if isinstance(response, tuple) else 200,
-                'duration': f"{duration:.3f}s"
-            }
-
-            logger.info(f"Response: {json.dumps(response_data, ensure_ascii=False)}")
+            status_code = response[1] if isinstance(response, tuple) else 200
+            
+            timestamp = start_time.strftime('%d/%b/%Y %H:%M:%S')
+            
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
+            
+            log_msg = f'{client_ip} - - [{timestamp}] "{request.method} {request.path} HTTP/1.1" {status_code} -'
+            
+            logger.info(log_msg)
             
             return response
-
+            
         except Exception as e:
-            logger.error(f"Error: {str(e)}", exc_info=True)
+            timestamp = start_time.strftime('%d/%b/%Y %H:%M:%S')
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
+                
+            log_msg = f'{client_ip} - - [{timestamp}] "{request.method} {request.path} HTTP/1.1" 500 -'
+            logger.info(log_msg)
+            
+            logger.error(f"Error in {request.method} {request.path}: {str(e)}", exc_info=True)
+            
             return {
                 "message": "伺服器錯誤",
                 "error": str(e)
             }, 500
-
+    
     return decorated
