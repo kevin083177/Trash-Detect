@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import "../styles/Game.css";
 import type { Chapter } from "../interfaces/chapter";
 import { asyncGet } from "../utils/fetch";
@@ -19,6 +19,12 @@ export const Game: React.FC = () => {
     const { showError } = useNotification();
 
     const navigate = useNavigate();
+
+    const filteredChapters = useMemo(() => {
+        return chapters.filter((chapter) =>
+            chapter.name.includes(search)
+        );
+    }, [chapters, search]);
 
     useEffect(() => {
         const fetchChapters = async () => {
@@ -46,10 +52,6 @@ export const Game: React.FC = () => {
         fetchChapters();
     }, []);
 
-    const filteredChapters = chapters.filter((chapter) =>
-        chapter.name.includes(search)
-    );
-
     const handleOpenAddModal = () => {
         setShowModal(true);
     };
@@ -60,6 +62,16 @@ export const Game: React.FC = () => {
 
     const handleSaveChapter = (newChapter: Chapter) => {
         setChapters(prevChapters => [...prevChapters, newChapter]);
+    };
+
+    const handleChapterClick = (chapter: Chapter, index: number) => {
+        const isLastChapter = index === chapters.length - 1;
+        
+        navigate(`/questions/${chapter.name}`, {
+            state: {
+                isLastChapter: isLastChapter,
+            }
+        });
     };
 
     return (
@@ -96,17 +108,21 @@ export const Game: React.FC = () => {
                 </div>
             ) : (
                 <div className="game-chapter">
-                    {filteredChapters.map((chapter) => (
-                        <div
-                            className="game-chapter-card"
-                            key={chapter.name}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/questions/${chapter.name}`)}
-                        >
-                            <img src={chapter.image.url} className="chapter-image" />
-                            <div className="game-chapter-name">{chapter.name}</div>
-                        </div>
-                    ))}
+                    {filteredChapters.map((chapter, index) => {
+                        const originalIndex = chapters.findIndex(c => c.name === chapter.name);
+                        
+                        return (
+                            <div
+                                className="game-chapter-card"
+                                key={chapter.name}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleChapterClick(chapter, originalIndex)}
+                            >
+                                <img src={chapter.image.url} className="chapter-image" />
+                                <div className="game-chapter-name">{chapter.name}</div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 

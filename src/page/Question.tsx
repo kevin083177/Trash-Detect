@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import '../styles/Question.css';
 import type { TempQuestion } from "../interfaces/question";
 import { asyncGet, asyncPost, asyncDelete, asyncPut } from "../utils/fetch";
@@ -7,6 +7,12 @@ import { chapter_api, question_api } from "../api/api";
 import { QuestionCard } from "../components/question/QuestionCard";
 import { IoGameController } from "react-icons/io5";
 import { useNotification } from "../context/NotificationContext";
+
+interface LocationState {
+  isLastChapter?: boolean;
+  totalChapters?: number;
+  currentChapterIndex?: number;
+}
 
 export const Question: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -16,13 +22,30 @@ export const Question: React.FC = () => {
   const [deletingChapter, setDeletingChapter] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const { chapter_name } = useParams();
+  const location = useLocation();
+  
+  const { isLastChapter } = (location.state as LocationState) || {};
 
   const QUESTIONS_PER_PAGE = 20;
 
-  const totalPages = Math.max(1, Math.ceil(questions.length / QUESTIONS_PER_PAGE));
-
   const { showError, showSuccess } = useNotification();
   const navigate = useNavigate();
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(questions.length / QUESTIONS_PER_PAGE));
+  }, [questions.length]);
+
+  const getCurrentPageQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
+    const endIndex = startIndex + QUESTIONS_PER_PAGE;
+    return questions.slice(startIndex, endIndex);
+  }, [questions, currentPage]);
+
+  const filteredQuestions = useMemo(() => {
+    return getCurrentPageQuestions.filter(q =>
+      q.content.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [getCurrentPageQuestions, search]);
   
   const loadQuestions = async () => {
     setLoading(true);
@@ -252,16 +275,6 @@ export const Question: React.FC = () => {
     }
   };
 
-  const getCurrentPageQuestions = () => {
-    const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
-    const endIndex = startIndex + QUESTIONS_PER_PAGE;
-    return questions.slice(startIndex, endIndex);
-  };
-
-  const filteredQuestions = getCurrentPageQuestions().filter(q =>
-    q.content.toLowerCase().includes(search.toLowerCase())
-  );
-
   const handlePageChange = (page: number) => {
     if (editingQuestionId) {
       const confirmCancel = window.confirm(
@@ -356,7 +369,7 @@ export const Question: React.FC = () => {
         </div>
       )}
 
-      {!search && (
+      {!search && isLastChapter && (
         <div className="question-remove-chapter-container">
           <button 
             className="question-remove-chapter-btn" 

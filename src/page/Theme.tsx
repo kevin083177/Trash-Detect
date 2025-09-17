@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Theme.css";
 import { asyncGet } from "../utils/fetch";
@@ -15,10 +15,13 @@ export const Themes: React.FC = () => {
     const navigate = useNavigate();
     const [showAddModal, setShowAddModal] = useState(false);
     const [themes, setThemes] = useState<Theme[]>([]);
-    const filteredThemes = themes.filter(theme => theme.name.includes(search));
     const [error, setError] = useState<string | null>(null);
 
     const { showError } = useNotification();
+
+    const filteredThemes = useMemo(() => {
+        return themes.filter(theme => theme.name.includes(search));
+    }, [themes, search]);
 
     useEffect(() => {
         const fetchThemes = async () => {
@@ -116,4 +119,4 @@ export const Themes: React.FC = () => {
             />
         </div>
     );
-}
+};

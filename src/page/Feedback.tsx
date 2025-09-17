@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import type { Feedback } from "../interfaces/feedback";
 import "../styles/Feedback.css";
-import { Header } from "../components/Header";
 import { feedback_api } from "../api/api";
 import { asyncGet, asyncPut } from "../utils/fetch";
 import { ImageModal } from "../components/feedback/ImageModal";
@@ -24,6 +23,26 @@ export const FeedbackPage: React.FC = () => {
     const { showSuccess, showError } = useNotification();
     const { username } = useAuth();
 
+    const sortedFeedbackData = useMemo(() => {
+        const statusOrder = { 'pending': 1, 'processing': 2, 'resolved': 3, 'closed': 4 };
+        
+        return feedbackData.sort((a, b) => {
+            const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+            if (statusDiff !== 0) return statusDiff;
+            
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+    }, [feedbackData]);
+
+    const statusStats = useMemo(() => {
+        return {
+            pending: feedbackData.filter(item => item.status === 'pending').length,
+            processing: feedbackData.filter(item => item.status === 'processing').length,
+            resolved: feedbackData.filter(item => item.status === 'resolved').length,
+            closed: feedbackData.filter(item => item.status === 'closed').length
+        };
+    }, [feedbackData]);
+
     const sortFeedback = (feedbackList: Feedback[]) => {
         const statusOrder = { 'pending': 1, 'processing': 2, 'resolved': 3, 'closed': 4 };
         
@@ -33,16 +52,6 @@ export const FeedbackPage: React.FC = () => {
             
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
-    };
-
-    const getStatusStats = () => {
-        const stats = {
-            pending: feedbackData.filter(item => item.status === 'pending').length,
-            processing: feedbackData.filter(item => item.status === 'processing').length,
-            resolved: feedbackData.filter(item => item.status === 'resolved').length,
-            closed: feedbackData.filter(item => item.status === 'closed').length
-        };
-        return stats;
     };
 
     useEffect(() => {
@@ -268,28 +277,28 @@ export const FeedbackPage: React.FC = () => {
                 <div className="feedback-status-cards">
                     <StatusCard
                         title="待處理訊息"
-                        value={getStatusStats().pending}
+                        value={statusStats.pending}
                         icon={<FaClock size={18}/>}
                         color="#007bff"
                         isLoading={isLoading}
                     />
                     <StatusCard
                         title="已回覆訊息"
-                        value={getStatusStats().processing}
+                        value={statusStats.processing}
                         icon={<LuReply size={18} />}
                         color="#fd7e14"
                         isLoading={isLoading}
                     />
                     <StatusCard
                         title="已解決訊息"
-                        value={getStatusStats().resolved}
+                        value={statusStats.resolved}
                         icon={<FaCheck size={18} />}
                         color="#28a745"
                         isLoading={isLoading}
                     />
                     <StatusCard
                         title="已關閉訊息"
-                        value={getStatusStats().closed}
+                        value={statusStats.closed}
                         icon={<FaTimes size={18} />}
                         color="#6c757d"
                         isLoading={isLoading}
@@ -320,7 +329,7 @@ export const FeedbackPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {feedbackData.map((item) => (
+                                {sortedFeedbackData.map((item) => (
                                     <React.Fragment key={item._id}>
                                         <tr 
                                             className={`feedback-table-row ${expandedRow === item._id ? 'expanded' : ''}`}

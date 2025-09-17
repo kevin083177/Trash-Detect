@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { asyncGet } from "../utils/fetch";
 import { voucher_api } from "../api/api";
 import { type Voucher } from "../interfaces/vocher";
@@ -20,9 +20,11 @@ export const VoucherPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const { showError } = useNotification();
 
-    const filteredVouchers = vouchers.filter(voucher =>
-        voucher.name.includes(search) || voucher.description.includes(search)
-    );
+    const filteredVouchers = useMemo(() => {
+        return vouchers.filter(voucher =>
+            voucher.name.includes(search) || voucher.description.includes(search)
+        );
+    }, [vouchers, search]);
     
     useEffect(() => {
         const fetchVouchers = async () => {
