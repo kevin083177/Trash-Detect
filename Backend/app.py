@@ -1,5 +1,6 @@
+import os
 import threading
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from sockets import start_server
 from config import Config
@@ -9,12 +10,14 @@ from gevent import pywsgi
 import sys, signal
 from services import DetectionService
 
-app = Flask(__name__)
+ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", "Admin")
+
+app = Flask(__name__, static_folder=ADMIN_DIST, static_url_path="/")
 CORS(app)
 
 @app.route('/')
 def index():
-    return "Hello"
+    return send_from_directory(app.static_folder, "index.html")
 
 def signal_handler(sig, frame):
     logger.info("Server shutting down...")
