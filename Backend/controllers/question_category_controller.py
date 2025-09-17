@@ -11,7 +11,7 @@ class QuestionCategoryController:
         try:
             data = request.get_json()
             
-            required_fields = ['name', 'description']
+            required_fields = ['name']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -24,10 +24,7 @@ class QuestionCategoryController:
                     "message": "題目類別已存在",
                 }, 409
             
-            category_data = {
-                "name": data["name"],
-                "description": data["description"]
-            }
+            category_data = {"name": data["name"]}
 
             result = question_category_service.add_category(category_data)
             return {
@@ -92,7 +89,7 @@ class QuestionCategoryController:
         try:
             data = request.get_json()
             
-            required_fields = ['_id', 'name', 'description']
+            required_fields = ['_id', 'name']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -112,7 +109,6 @@ class QuestionCategoryController:
                         "message": "題目類別不存在",
                     }, 404
                 
-                # 將 _id 轉換為字符串
                 original_category["_id"] = str(original_category["_id"])
                 
             except Exception as e:
@@ -120,24 +116,18 @@ class QuestionCategoryController:
                     "message": f"獲取題目類別失敗: {str(e)}",
                 }, 500
                 
-            # 準備更新資料 - 只包含需要更新的欄位
             update_data = {}
             if data["name"] != original_category["name"]:
                 update_data["name"] = data["name"]
-            if data["description"] != original_category["description"]:
-                update_data["description"] = data["description"]
                 
-            # 如果沒有資料需要更新
             if not update_data:
                 return {
                     "message": "沒有資料需要更新",
                     "body": {
                         "name": original_category["name"],
-                        "description": original_category["description"]
                     }
                 }, 200
                     
-            # 如果要更新名稱，檢查新名稱是否已存在
             if "name" in update_data:
                 if question_category_service._check_category_exists(update_data["name"]):
                     return {
@@ -145,12 +135,11 @@ class QuestionCategoryController:
                     }, 409
                 
             result = question_category_service.update_category(category_id, update_data)
-            if result or result == 0:  # 0 表示沒有題目需要更新類別名稱
+            if result or result == 0:
                 return {
                     "message": f"成功更新題目類別 已修改 {result} 筆題目資料",
                     "body": {
                         "name": update_data.get("name", original_category["name"]),
-                        "description": update_data.get("description", original_category["description"])
                     }
                 }, 200
             else:
