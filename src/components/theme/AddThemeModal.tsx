@@ -5,6 +5,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { asyncPost } from '../../utils/fetch';
 import { theme_api } from '../../api/api';
 import type { Theme } from '../../interfaces/theme';
+import { createPortal } from "react-dom";
 
 interface AddThemeModalProps {
   isOpen: boolean;
@@ -144,7 +145,7 @@ export const AddThemeModal: React.FC<AddThemeModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="add-theme-modal-overlay" onClick={handleCancel}>
       <div className="add-theme-modal-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="add-theme-modal-header">
@@ -244,6 +245,7 @@ export const AddThemeModal: React.FC<AddThemeModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -6,6 +6,7 @@ import { asyncDelete, asyncPut } from '../../utils/fetch';
 import { theme_api } from '../../api/api';
 import type { Theme } from '../../interfaces/theme';
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 
 interface EditThemeModalProps {
   isOpen: boolean;
@@ -192,7 +193,7 @@ export const EditThemeModal: React.FC<EditThemeModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="edit-theme-modal-overlay" onClick={handleCancel}>
       <div className="edit-theme-modal-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="edit-theme-modal-header">
@@ -302,6 +303,7 @@ export const EditThemeModal: React.FC<EditThemeModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

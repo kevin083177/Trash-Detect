@@ -4,6 +4,7 @@ import './styles/UserModal.css';
 import type { User } from '../../interfaces/user';
 import type { Trash } from '../../interfaces/Trash';
 import type { QuestionStats } from '../../interfaces/question';
+import { createPortal } from 'react-dom';
 
 interface UserModalProps {
   user: User | null;
@@ -194,7 +195,7 @@ export const UserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose }) =
     return null;
   };
 
-  return (
+  return createPortal(
     <div className="user-modal-backdrop" onClick={handleBackdropClick}>
       <div className="user-modal-container">
         <div className="user-modal-header">
@@ -305,6 +306,7 @@ export const UserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose }) =
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

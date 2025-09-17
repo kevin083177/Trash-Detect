@@ -5,6 +5,7 @@ import { asyncPut, asyncDelete } from '../../utils/fetch';
 import { voucher_api } from '../../api/api';
 import { useNotification } from '../../context/NotificationContext';
 import type { Voucher } from '../../interfaces/vocher';
+import { createPortal } from "react-dom";
 
 interface EditVoucherModalProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export const EditVoucherModal: React.FC<EditVoucherModalProps> = ({
         },
         body: formData
       });
-      
+
       if (response.status === 200) {
         onSave(editVoucher);
         showSuccess("更新電子票券成功");
@@ -173,7 +174,7 @@ export const EditVoucherModal: React.FC<EditVoucherModalProps> = ({
 
   if (!isOpen || !editVoucher) return null;
 
-  return (
+  return createPortal(
     <div className="edit-voucher-modal-overlay" onClick={handleCancel}>
       <div className="edit-voucher-modal-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="edit-voucher-modal-header">
@@ -319,6 +320,7 @@ export const EditVoucherModal: React.FC<EditVoucherModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

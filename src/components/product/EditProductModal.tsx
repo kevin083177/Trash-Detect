@@ -5,6 +5,7 @@ import { IoImagesSharp } from "react-icons/io5";
 import { asyncPut } from '../../utils/fetch';
 import { product_api } from '../../api/api';
 import { useNotification } from '../../context/NotificationContext';
+import { createPortal } from "react-dom";
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -169,7 +170,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const availableTypeOptions = getAvailableProductTypeOptions();
 
-  return (
+  return createPortal(
     <div className="edit-product-modal-overlay" onClick={onClose}>
       <div className="edit-product-modal-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="edit-product-modal-header">
@@ -300,6 +301,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

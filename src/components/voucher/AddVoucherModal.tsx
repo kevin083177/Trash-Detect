@@ -5,6 +5,7 @@ import { asyncPost } from "../../utils/fetch";
 import { voucher_api } from "../../api/api";
 import { useNotification } from "../../context/NotificationContext";
 import type { Voucher } from "../../interfaces/vocher";
+import { createPortal } from "react-dom";
 
 interface AddVoucherModalProps {
   isOpen: boolean;
@@ -165,7 +166,7 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="add-voucher-modal-overlay" onClick={handleCancel}>
       <div className="add-voucher-modal-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="add-voucher-modal-header">
@@ -289,6 +290,7 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
