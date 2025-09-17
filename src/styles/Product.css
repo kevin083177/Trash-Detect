@@ -1,5 +1,4 @@
 .theme-products-container {
-  padding: 32px;
   margin: 0 auto;
   height: 90vh;
 }
@@ -185,7 +184,7 @@
 }
 
 .loading,
-.error {
+.product-error {
   text-align: center;
   padding: 60px;
   font-size: 18px;
@@ -199,7 +198,7 @@
   animation: pulse 2s infinite;
 }
 
-.error {
+.product-error {
   color: #e74c3c;
 }
 

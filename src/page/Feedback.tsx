@@ -61,7 +61,7 @@ export const FeedbackPage: React.FC = () => {
                     setError('無法載入回饋訊息資料');
                 }
             } catch (error) {
-                setError('載入回饋訊息失敗');
+                setError('載入資料時發生錯誤');
                 showError('載入回饋訊息失敗');
             } finally {
                 setIsLoading(false);

@@ -99,6 +99,14 @@
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
+.delete-btn:hover .product-card-delete-icon {
+  color: white;
+}
+
+.product-card-delete-icon {
+  color: #ef4444;
+}
+
 .product-card-container-grid {
   flex: 1;
   display: flex;

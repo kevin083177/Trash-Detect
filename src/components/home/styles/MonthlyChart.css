@@ -11,6 +11,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .monthly-chart-title {
@@ -85,6 +87,36 @@
 @keyframes monthly-chart-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.monthly-chart-tooltip {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.monthly-chart-tooltip-label {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+    margin-top: 0;
+    font-size: 15px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+}
+
+.monthly-chart-tooltip-item {
+    margin: 6px 0;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 100px;
 }
 
 .monthly-chart-no-data-container {

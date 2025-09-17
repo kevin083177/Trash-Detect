@@ -69,6 +69,32 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
         return `${year}年${month}月`;
     };
 
+    const Tooltips = ({ active, payload, label, selectedMonth }: any) => {
+        if (active && payload && payload.length) {
+            const [year, month] = selectedMonth.split('-');
+            const monthNumber = parseInt(month, 10);
+            const dayNumber = parseInt(label as string, 10);
+            
+            return (
+                <div className="monthly-chart-tooltip">
+                    <p className="monthly-chart-tooltip-label">
+                        {`${monthNumber}月${dayNumber}日`}
+                    </p>
+                    {payload.map((entry: any, index: any) => (
+                        <p 
+                            key={index}
+                            className="monthly-chart-tooltip-item" 
+                            style={{ color: entry.color }}
+                        >
+                            {entry.dataKey === 'trash' ? '掃描量' : '活躍人數'}: {entry.value}
+                        </p>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
+
     if (isLoading) {
         return (
             <div className="monthly-chart-section">
@@ -84,7 +110,7 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
     return (
         <div className="monthly-chart-section">
             <div className="monthly-chart-header">
-                <div className="monthly-chart-title">垃圾掃描量 / 活耀人數</div>
+                <div className="monthly-chart-title">垃圾掃描量 / 活躍人數</div>
                 <div className="monthly-chart-month-navigation">
                     <button 
                         className={`monthly-chart-nav-button ${!hasPrevMonth ? 'disabled' : ''}`}
@@ -113,7 +139,9 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
                             <CartesianGrid stroke="#ccc" strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip 
+                                content={(props) => <Tooltips {...props} selectedMonth={selectedMonth} />}
+                            />
                             <Bar dataKey="trash" barSize={20} fill="#90EE90" />
                             <Line type="monotone" dataKey="logins" stroke="#8884d8" strokeWidth={2} />
                         </ComposedChart>

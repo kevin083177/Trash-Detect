@@ -3,10 +3,11 @@
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
-  z-index: 10000;
-  transition: all 0.3s;
+  z-index: 10001;
+  transition: all 0.3s ease;
   opacity: 0;
   pointer-events: none;
+  isolation: isolate;
 }
 
 .notification.show {
@@ -27,9 +28,10 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  animation: slideUp 0.3s;
+  animation: slideUp 0.3s ease;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .notification-content::before {
@@ -38,18 +40,22 @@
   left: 0;
   right: 0;
   height: 1px;
+  z-index: -1;
 }
 
 .notification-content.success {
-  background: #309c55;
+  background: linear-gradient(135deg, #309c55 0%, #27a85f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .notification-content.error {
-  background: #ba3232;
+  background: linear-gradient(135deg, #ba3232 0%, #d63447 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .notification-content.warning {
-  background: #eb8f34;
+  background: linear-gradient(135deg, #eb8f34 0%, #f39c42 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .notification-message {
@@ -58,6 +64,8 @@
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: -0.01em;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .notification-close {
@@ -74,11 +82,13 @@
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
 }
 
 .notification-close:hover {
   background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
   transform: scale(1.1);
 }
 
@@ -90,10 +100,12 @@
   from {
     transform: translateY(20px);
     opacity: 0;
+    filter: blur(4px);
   }
   to {
     transform: translateY(0);
     opacity: 1;
+    filter: blur(0);
   }
 }
 
@@ -103,6 +115,7 @@
     left: 16px;
     right: 16px;
     transform: translateY(100px);
+    z-index: 10001;
   }
   
   .notification.show {
@@ -112,8 +125,9 @@
   .notification-content {
     min-width: auto;
     max-width: none;
-    width: 100%;
+    width: calc(100% - 32px);
     padding: 14px 20px;
+    margin: 0 auto;
   }
   
   .notification-message {
@@ -132,10 +146,22 @@
     bottom: 16px;
     left: 12px;
     right: 12px;
+    z-index: 10001; 
   }
   
   .notification-content {
     padding: 12px 16px;
     gap: 12px;
+    width: calc(100% - 24px);
+  }
+  
+  .notification-message {
+    font-size: 13px;
+  }
+  
+  .notification-close {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
   }
 }

@@ -53,6 +53,8 @@
     font-size: 18px;
     font-weight: 600;
     color: #333;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;;
 }
 
 .home-monitor-section {

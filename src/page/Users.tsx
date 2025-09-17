@@ -8,6 +8,7 @@ import { UserModal } from '../components/user/UserModal';
 import { StatusCard } from '../components/home/StatusCard';
 import { IoPersonSharp, IoStatsChart, IoCalendarSharp, IoTrendingUp } from 'react-icons/io5';
 import { FaSpinner } from 'react-icons/fa';
+import { useNotification } from '../context/NotificationContext';
 
 interface DashboardStats {
   totalUsers: number;
@@ -25,6 +26,8 @@ export const Users: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { showError } = useNotification();
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -36,11 +39,10 @@ export const Users: React.FC = () => {
         if (response && response.body) {
           setUsers(response.body);
           setFilteredUsers(response.body);
-        } else {
-          setError('無法載入使用者資料');
         }
       } catch (err) {
         setError('載入資料時發生錯誤');
+        showError('獲取使用者資料失敗');
         console.error('Error fetching users:', err);
       } finally {
         setLoading(false);

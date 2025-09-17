@@ -60,7 +60,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               title="刪除"
               aria-label={`刪除產品 ${name}`}
             >
-              <FaTrashAlt color='#ea4888'/>
+              <FaTrashAlt className="product-card-delete-icon"/>
             </button>
           )}
         </div>

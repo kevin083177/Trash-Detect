@@ -106,7 +106,7 @@ export const ProductPage: React.FC = () => {
         showError("找不到主題資料");
         return (
             <div className="theme-products-container">
-                <div className="error">{error || "找不到主題資料"}</div>
+                <div className="product-error">{error}</div>
             </div>
         );
     }

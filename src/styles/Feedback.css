@@ -4,7 +4,7 @@
 
 .feedback-status-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 24px;
     margin-bottom: 30px;
 }
@@ -253,8 +253,7 @@
 
 .feedback-detail-row {
     display: grid;
-    grid-template-columns: 50% 50%;
-    padding: 0 16px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 16px;
     margin-bottom: 24px;
     justify-content: center;
