@@ -25,25 +25,21 @@ class QuestionController:
                     "message": "題目類別不存在",
                 }, 404 
             
-            # 檢查選項 ID 是否為 A、B、C、D
             expected_ids = ['A', 'B', 'C', 'D']
             option_ids = [option.get('id') for option in data['options']]
             
-            # 檢查所有必要的選項 ID 是否都存在
             missing_ids = set(expected_ids) - set(option_ids)
             if missing_ids:
                 return {
                     "message": f"缺少必要的選項 ID: {', '.join(missing_ids)}",
                 }, 400
                 
-            # 檢查是否有額外的選項 ID
             extra_ids = set(option_ids) - set(expected_ids)
             if extra_ids:
                 return {
                     "message": f"包含不允許的選項 ID: {', '.join(extra_ids)}",
                 }, 400
                 
-            # 檢查正確答案是否在選項中
             if data['correct_answer'] not in expected_ids:
                 return {
                     "message": f"正確答案必須是: {', '.join(expected_ids)}",
@@ -158,51 +154,43 @@ class QuestionController:
                     "message": "缺少: _id",
                 }, 400
             
-            question_id = data["_id"]  # 先儲存 ID 供後續使用
+            question_id = data["_id"]
             
-            # 獲取原始題目資訊
             original_question = question_service.get_question(question_id)
             if not original_question:
                 return {
                     "message": "題目不存在",
                 }, 404
             
-            # 如果有提供類別，檢查類別是否存在
             if 'category' in data and data['category'] != original_question['category']:
                 if not question_category_service._check_category_exists(data['category']):
                     return {
-                        "message": "新題目類別不存在",
+                        "message": "題目類別不存在",
                     }, 404
             
-            # 檢查選項 ID 是否為 A、B、C、D
             if 'options' in data:
                 expected_ids = ['A', 'B', 'C', 'D']
                 option_ids = [option.get('id') for option in data['options']]
                 
-                # 檢查所有必要的選項 ID 是否都存在
                 missing_ids = set(expected_ids) - set(option_ids)
                 if missing_ids:
                     return {
                         "message": f"缺少必要的選項 ID: {', '.join(missing_ids)}",
                     }, 400
                     
-                # 檢查是否有額外的選項 ID
                 extra_ids = set(option_ids) - set(expected_ids)
                 if extra_ids:
                     return {
                         "message": f"包含不允許的選項 ID: {', '.join(extra_ids)}",
                     }, 400
             
-            # 檢查正確答案是否在選項中
             if 'correct_answer' in data:
                 if data['correct_answer'] not in expected_ids:
                     return {
                         "message": f"正確答案必須是: {', '.join(expected_ids)}",
                     }, 400
 
-            # 處理類別變更
             if 'category' in data and data['category'] != original_question['category']:
-                # 從舊類別中移除題目
                 old_category_result = question_category_service._remove_question_from_category(
                     original_question['category'], question_id
                 )
@@ -211,12 +199,10 @@ class QuestionController:
                         "message": "從原題目類別中移除題目失敗"
                     }, 500
                     
-                # 將題目添加到新類別
                 new_category_result = question_category_service._add_question_to_category(
                     data['category'], ObjectId(question_id)
                 )
                 if not new_category_result:
-                    # 嘗試恢復原始狀態
                     question_category_service._add_question_to_category(
                         original_question['category'], ObjectId(question_id)
                     )
@@ -224,11 +210,25 @@ class QuestionController:
                         "message": "添加題目到新類別失敗"
                     }, 500
 
-            # 從資料中移除 _id 欄位，避免嘗試更新不可變欄位
             update_data = data.copy()
             update_data.pop('_id', None)
 
-            # 更新題目
+            has_changes = False
+            for key, value in update_data.items():
+                if key in original_question:
+                    if original_question[key] != value:
+                        has_changes = True
+                        break
+                else:
+                    has_changes = True
+                    break
+
+            if not has_changes:
+                return {
+                    "message": "沒有要更新的數據",
+                    "body": original_question
+                }, 200
+            
             result = question_service.update_question(question_id, update_data)
             if result:
                 return {
@@ -237,7 +237,7 @@ class QuestionController:
                 }, 200
             else:
                 return {
-                    "message": "更新題目失敗(題目未做更動)"
+                    "message": "更新題目失敗"
                 }, 500
         except Exception as e:
             return {

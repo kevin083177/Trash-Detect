@@ -144,12 +144,10 @@ class VoucherController:
                 new_image_file=new_image_file
             )
             
-            if result:
-                return {
-                    "message": "票券更新成功",
-                    "body": result
-                }, 200
-                
+            return {
+                "message": "票券更新成功",
+                "body": result if result else None
+            }, 200
         except ValueError as e:
             return {
                 "message": str(e)

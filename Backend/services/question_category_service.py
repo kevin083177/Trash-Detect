@@ -14,7 +14,6 @@ class QuestionCategoryService(DatabaseService):
         try:
             category = {
                 "name": category_data["name"],
-                "description": category_data["description"],
                 "questions": [],
                 "created_at": datetime.now()
             }
@@ -37,24 +36,19 @@ class QuestionCategoryService(DatabaseService):
     def update_category(self, category_id: str, category_data: dict) -> bool:
         """更新題目類別"""
         try:
-            # 獲取原始類別資訊
             original_category = self.question_categories.find_one({"_id": ObjectId(category_id)})
             if not original_category:
-                return False  # 類別不存在
+                return False
                 
-            # 如果類別名稱有變更，需要更新所有使用該類別的題目
             if "name" in category_data and category_data["name"] != original_category["name"]:
                 original_name = original_category["name"]
                 
-                # 更新類別
                 result = self.question_categories.update_one(
                     {"_id": ObjectId(category_id)},
                     {"$set": category_data}
                 )
                 
-                # 如果有成功更新類別名稱，還需要更新所有使用該類別的題目
                 if result.modified_count > 0:
-                    # 更新所有相關題目的類別名稱
                     questions = self.questions.update_many(
                         {"category": original_name},
                         {"$set": {"category": category_data["name"]}}
@@ -62,7 +56,6 @@ class QuestionCategoryService(DatabaseService):
                 
                 return questions.modified_count
             else:
-                # 如果沒有要更改名稱，直接更新其他欄位
                 result = self.question_categories.update_one(
                     {"_id": ObjectId(category_id)},
                     {"$set": category_data}
@@ -79,10 +72,8 @@ class QuestionCategoryService(DatabaseService):
             categories = list(self.question_categories.find())
             
             for category in categories:
-                # 將 _id 轉換為字符串
                 category['_id'] = str(category['_id'])
                 
-                # 移除 questions 欄位，避免 ObjectId 序列化問題
                 if 'questions' in category:
                     category.pop('questions', None)
                 
@@ -96,7 +87,6 @@ class QuestionCategoryService(DatabaseService):
         """獲取所有題目分類名稱列表"""
         try:
             categories = self.question_categories.find()
-            # 只提取每個類別的名稱
             category_names = [category["name"] for category in categories]
             return category_names
             

@@ -11,7 +11,6 @@ class ChapterController:
     @staticmethod
     def add_chapter():
         try:
-            # 檢查必要的圖片檔案是否上傳
             if 'image' not in request.files:
                 return {
                     "message": "缺少章節背景圖片"
@@ -24,21 +23,18 @@ class ChapterController:
                     "message": "未選擇背景圖片"
                 }, 400
             
-            # 檢查檔案類型
             if not ImageService._allowed_file(image.filename):
                 return {
                     "message": f"不支援的背景圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
                 }, 400
                 
-            # 檢查檔案大小
             if request.content_length > ImageService.MAX_FILE_SIZE:
                 return {
                     "message": f"圖片大小超過限制（最大 {ImageService.MAX_FILE_SIZE // 1024 // 1024}MB）"
                 }, 400
             
-            # 從表單獲取章節數據
             data = request.form.to_dict()
-            required_fields = ['name', 'trash_requirement'] # description
+            required_fields = ['name', 'trash_requirement']
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
@@ -47,18 +43,14 @@ class ChapterController:
                 }, 400
             
             name = request.form.get('name')
-            # description = request.form.get('description')
             trash_requirement = request.form.get('trash_requirement', type=int)
             
-            # 創建章節數據字典
             chapter_data = {
                 'name': name,
-                # 'description': description,
                 'trash_requirement': trash_requirement,
                 'image': image
             }
             
-            # 新增章節（包含圖片上傳）
             result = chapter_service.add_chapter(chapter_data)
             
             if result:
@@ -117,7 +109,6 @@ class ChapterController:
                     "message": f"成功刪除章節 {name}",
                 }, 200
             else:
-                # 檢查是否因為章節不存在而失敗
                 if "不存在" in result.get("error", ""):
                     return {
                         "message": result["error"]
@@ -146,26 +137,16 @@ class ChapterController:
                     "message": "請提供章節名稱"
                 }, 400
                 
-            # 準備更新數據
             update_data = {}
             
-            # 獲取描述更新
-            # if 'description' in request.form:
-            #     description = request.form.get('description')
-            #     if description:
-            #         update_data["description"] = description
-            
-            # 獲取所需回收量
             if 'trash_requirement' in request.form:
                 trash_requirement = request.form.get('trash_requirement')
                 if trash_requirement:
                     update_data["trash_requirement"] = trash_requirement
                     
-            # 處理圖片更新
             if 'image' in request.files and request.files['image'].filename != '':
                 image = request.files['image']
                 
-                # 檢查檔案類型
                 if not ImageService._allowed_file(image.filename):
                     return {
                         "message": f"不支援的背景圖片格式，允許的格式：{', '.join(ImageService.ALLOWED_EXTENSIONS)}"
@@ -173,7 +154,6 @@ class ChapterController:
                     
                 update_data["image"] = image
             
-            # 如果沒有更新的數據
             if not update_data:
                 return {
                     "message": "未提供任何更新數據",
@@ -181,7 +161,6 @@ class ChapterController:
                 }, 200
             
             try:
-                # 更新章節
                 updated_chapter = chapter_service.update_chapter(name, update_data)
                 
                 if updated_chapter:
