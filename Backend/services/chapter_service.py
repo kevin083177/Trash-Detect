@@ -7,103 +7,123 @@ class ChapterService(DatabaseService):
     def __init__(self, mongo_uri, image_service=None):
         super().__init__(mongo_uri)
         self.chapters = self.collections['chapters']
+        self.levels = self.collections['levels']
         
         if image_service is not None and not isinstance(image_service, ImageService):
             raise TypeError("image_service 必須是 ImageService")
         self.image_service = image_service
         
-    def _get_next_sequence(self):
-        """
-        獲取下一個可用的 sequence 值
-        
-        Returns:
-            int: 下一個可用的 sequence 值
-        """
-        # 獲取當前的最大 sequence 值
+    def _get_next_chapter_sequence(self):
+        """獲取下一個章節可用的 sequence 值"""
         max_sequence_chapter = self.chapters.find_one(
             {},
-            sort=[("sequence", -1)]  # 按 sequence 降序排序
+            sort=[("sequence", -1)]
         )
         
-        # 如果沒有章節，或章節沒有 sequence 值，則從 1 開始
         if not max_sequence_chapter or "sequence" not in max_sequence_chapter:
             return 1
             
         return max_sequence_chapter["sequence"] + 1
+    
+    def _get_next_level_sequence(self):
+        """獲取下一個可用的關卡 sequence 值"""
+        max_sequence_level = self.levels.find_one(
+            {},
+            sort=[("sequence", -1)]
+        )
         
+        if not max_sequence_level or "sequence" not in max_sequence_level:
+            return 1
+            
+        return max_sequence_level["sequence"] + 1
+    
+    def _create_chapter_levels(self, chapter_name: str, chapter_sequence: int):
+        level_ids = []
+        
+        start_level_number = (chapter_sequence - 1) * 5 + 1
+        current_level_sequence = self._get_next_level_sequence()
+        
+        for i in range(5):
+            level_number = start_level_number + i
+            level_name = f"Level {level_number}"
+            
+            if chapter_sequence == 1 and i == 0:
+                unlock = 0
+            else:
+                unlock = current_level_sequence - 1
+                
+            level_data = {
+                'sequence': current_level_sequence,
+                'chapter': chapter_name,
+                'name': level_name,
+                'description': None,
+                'unlock_requirement': unlock
+            }
+            
+            result = self.levels.insert_one(level_data)
+            level_ids.append(result.inserted_id)
+            
+            current_level_sequence += 1
+            
+        return level_ids
+            
     def add_chapter(self, chapter_data: Chapter):
-        """
-        新增章節
-        
-        Args:
-            chapter_data: Chapter 對象或包含章節資訊的字典
-                
-        Returns:
-            Dict: 創建成功的章節資訊
-                
-        Raises:
-            ValueError: 如果章節名稱已存在或 ImageService 未初始化
-            Exception: 其他處理過程中的錯誤
-        """
+        """新增章節並自動創建 5 個關卡"""
         image_result = None
+        created_level_ids = []
         
         try:
-            # 檢查是否有 image_service
             if not self.image_service:
                 raise ValueError("ImageService 沒有初始化")
             
-            # 獲取章節名稱和描述
             name = chapter_data.name if hasattr(chapter_data, 'name') else chapter_data.get('name')
-            # description = chapter_data.description if hasattr(chapter_data, 'description') else chapter_data.get('description')
             trash_requirement = chapter_data.trash_requirement if hasattr(chapter_data, 'trash_requirement') else chapter_data.get('trash_requirement')
             
-            # 檢查章節名稱是否已存在
             existing_chapter = self.chapters.find_one({"name": name})
             if existing_chapter:
                 raise ValueError("章節名稱已存在")
             
-            # 獲取圖片檔案
             image = chapter_data.image if hasattr(chapter_data, 'image') else chapter_data.get('image')
                        
-            # 上傳背景圖片
             image_result = self.image_service.upload_image(
                 image_file=image,
                 public_id=name + '_image',
                 folder='chapters/image'
             )
             
-            # 獲取下一個可用的 sequence 值
-            next_sequence = self._get_next_sequence()
+            next_sequence = self._get_next_chapter_sequence()
             
-            # 創建章節字典，確保包含空的 levels 陣列
+            created_level_ids = self._create_chapter_levels(name, next_sequence)
+            
             chapter_dict = {
                 'name': name,
-                # 'description': description,
                 'trash_requirement': trash_requirement,
                 'image': image_result,
-                'levels': [],  # 初始化空的關卡陣列
-                'sequence': next_sequence  # 設置 sequence 值
+                'levels': created_level_ids,
+                'sequence': next_sequence
             }
             
-            # 插入到數據庫
             result = self.chapters.insert_one(chapter_dict)
             
             if result.inserted_id:
                 created_chapter = self.chapters.find_one({"_id": result.inserted_id})
                 if created_chapter:
-                    created_chapter["_id"] = str(created_chapter["_id"])  # 轉換 ObjectId 為字符串
+                    created_chapter["_id"] = str(created_chapter["_id"]) 
+                    created_chapter["levels"] = [str(level_id) for level_id in created_chapter["levels"]]
                     return created_chapter
             
             return None
 
         except Exception as e:
-            # 如果在新增章節過程中發生錯誤，刪除已上傳的圖片
-            if hasattr(self, 'image_service') and self.image_service:
-                if image_result:
-                    try:
-                        self.image_service.delete_image(image_result['public_id'])
-                    except:
-                        print(f"failed to delete image: {str(e)}")
+            try:
+                if created_level_ids:
+                    self.levels.delete_many({"_id": {"$in": created_level_ids}})
+                
+                if hasattr(self, 'image_service') and self.image_service and image_result:
+                    self.image_service.delete_image(image_result['public_id'])
+            except Exception as cleanup_error:
+                print(f"Cleanup image error: {str(cleanup_error)}")
+            
             raise e
         
     def get_chapter_by_name(self, name):
@@ -121,34 +141,22 @@ class ChapterService(DatabaseService):
             if chapter:
                 chapter["_id"] = str(chapter["_id"])
                 
-                # 將 levels 陣列中的 ObjectId 轉換為字符串
                 if "levels" in chapter and chapter["levels"]:
                     chapter["levels"] = [str(level_id) for level_id in chapter["levels"]]
                     
                 return chapter
             return None
         except Exception as e:
-            print(f"failed to get chapter info: {str(e)}")
+            print(f"Failed to get chapter info: {str(e)}")
             return None
         
     def _reorder_sequences_after_delete(self, deleted_sequence):
-        """
-        重新排序所有 sequence 大於被刪除章節 sequence 的章節
-        
-        Args:
-            deleted_sequence: 被刪除章節的 sequence 值
-            
-        Returns:
-            bool: 如果重新排序成功則返回 True，否則返回 False
-        """
         try:
-            # 找出所有 sequence 大於被刪除 sequence 的章節
             chapters_to_update = list(self.chapters.find(
                 {"sequence": {"$gt": deleted_sequence}},
-                sort=[("sequence", 1)]  # 按 sequence 升序排序
+                sort=[("sequence", 1)]
             ))
             
-            # 更新每個章節的 sequence，減 1
             for chapter in chapters_to_update:
                 self.chapters.update_one(
                     {"_id": chapter["_id"]},
@@ -157,12 +165,24 @@ class ChapterService(DatabaseService):
                 
             return True
         except Exception as e:
-            print(f"重新排序 sequence 時出錯: {str(e)}")
             return False
-        
+    
+    def _remove_level_from_chapter(self, chapter_name: str, level_id: str):
+        try:
+            level_object_id = ObjectId(level_id)
+            
+            result = self.chapters.update_one(
+                {"name": chapter_name},
+                {"$pull": {"levels": level_object_id}}
+            )
+            return result.modified_count > 0 or result.matched_count > 0
+        except Exception as e:
+            print(f"Failed to remove level from chapter: {str(e)}")
+            return False
+    
     def delete_chapter(self, name):
         """
-        刪除章節
+        刪除章節及其相關的所有關卡
         
         Args:
             name: 章節名稱
@@ -171,7 +191,6 @@ class ChapterService(DatabaseService):
             Dict: 包含刪除結果的字典
         """
         try:
-            # 檢查章節是否存在
             chapter = self.chapters.find_one({"name": name})
             if not chapter:
                 return {
@@ -179,33 +198,48 @@ class ChapterService(DatabaseService):
                     "error": f"章節 {name} 不存在"
                 }
                 
-            # 保存被刪除章節的 sequence 值，用於後續重新排序
-            deleted_sequence = chapter.get("sequence")
+            chapter_sequence = chapter.get("sequence")
+            
+            max_sequence_chapter = self.chapters.find_one(
+                {},
+                sort=[("sequence", -1)]
+            )
+            
+            if not max_sequence_chapter:
+                return {
+                    "success": False,
+                    "error": "無法找到最大序號章節"
+                }
+            
+            max_sequence = max_sequence_chapter.get("sequence")
+            
+            if chapter_sequence != max_sequence:
+                return {
+                    "success": False,
+                    "error": f"只能刪除最後創建的章節（序號 {max_sequence}），無法刪除序號 {chapter_sequence} 的章節"
+                }
+            
+            deleted_levels = self.levels.delete_many({"chapter": name})
                 
-            # 刪除與章節關聯的圖片
             if self.image_service:
                 if "image" in chapter and "public_id" in chapter["image"]:
                     try:
                         self.image_service.delete_image(chapter["image"]["public_id"])
                     except Exception as e:
-                        print(f"刪除背景圖片時出錯: {str(e)}")
+                        print(f"Delete image error: {str(e)}")
             
-            # 刪除章節記錄
             result = self.chapters.delete_one({"name": name})
             
             if result.deleted_count > 0:
-                # 重新排序後續章節的 sequence 值
-                if deleted_sequence is not None:
-                    self._reorder_sequences_after_delete(deleted_sequence)
-                    
                 return {
                     "success": True,
-                    "deleted_chapter": name
+                    "deleted_chapter": name,
+                    "deleted_levels_count": deleted_levels.deleted_count
                 }
             else:
                 return {
                     "success": False,
-                    "error": f"刪除章節「{name}」失敗"
+                    "error": f"刪除章節失敗"
                 }
                 
         except Exception as e:
@@ -232,18 +266,11 @@ class ChapterService(DatabaseService):
         image_result = None
         
         try:
-            # 獲取現有章節
             existing_chapter = self.chapters.find_one({"name": name})
             if not existing_chapter:
                 raise ValueError(f"章節「{name}」不存在")
                 
             updates: Chapter = {}
-            
-            # 處理描述更新
-            # if "description" in update_data:
-            #     description = update_data.description if hasattr(update_data, 'description') else update_data.get('description')
-            #     if description:
-            #         updates["description"] = description
             
             if "trash_requirement" in update_data:
                 trash_requirement = int(update_data.get('trash_requirement'))
@@ -251,10 +278,8 @@ class ChapterService(DatabaseService):
                     updates["trash_requirement"] = trash_requirement
                     
             if "image" in update_data and update_data["image"]:
-                # 獲取圖片檔案
                 image = update_data.image if hasattr(update_data, 'image') else update_data.get('image')
                 
-                # 上傳新的背景圖片
                 public_id = f"{name}_image"
                 image_result = self.image_service.upload_image(
                     image_file=image,
@@ -262,27 +287,23 @@ class ChapterService(DatabaseService):
                     folder='chapters/image'
                 )
                 
-                # 刪除舊的背景圖片
                 try:
                     self.image_service.delete_image(existing_chapter["image"]["public_id"])
                 except Exception as e:
-                    print(f"刪除舊背景圖片時出錯: {str(e)}")
+                    print(f"Delete image error: {str(e)}")
                         
                 updates["image"] = image_result
             
-            # 如果沒有需要更新的內容
             if not updates:
                 existing_chapter["_id"] = str(existing_chapter["_id"])
                 return existing_chapter
                 
-            # 執行更新
             result = self.chapters.update_one(
                 {"name": name},
                 {"$set": updates}
             )
             
             if result.modified_count > 0 or result.matched_count > 0:
-                # 獲取更新後的章節
                 updated_chapter = self.chapters.find_one({"name": name})
                 updated_chapter["_id"] = str(updated_chapter["_id"])
                 if "levels" in  updated_chapter and  updated_chapter["levels"]:
@@ -292,7 +313,6 @@ class ChapterService(DatabaseService):
             return None
                 
         except Exception as e:
-            # 處理錯誤，刪除已上傳的新圖片
             if hasattr(self, 'image_service') and self.image_service:
                 if image_result and "public_id" in image_result:
                     try:
@@ -302,50 +322,25 @@ class ChapterService(DatabaseService):
             raise e
         
     def get_all_chapters(self):
-        """
-        獲取所有章節
-        
-        Returns:
-            List[Dict]: 包含所有章節資訊的列表
-        """
+        """獲取所有章節"""
         try:
-            # 按 sequence 排序章節
             chapters = list(self.chapters.find().sort("sequence", 1))
             for chapter in chapters:
                 chapter["_id"] = str(chapter["_id"])
                 
-                # 將 levels 陣列中的 ObjectId 轉換為字符串
                 if "levels" in chapter and chapter["levels"]:
                     chapter["levels"] = [str(level_id) for level_id in chapter["levels"]]
                     
             return chapters
         except Exception as e:
-            print(f"failed to get all chapters: {str(e)}")
+            print(f"Failed to get all chapters: {str(e)}")
             return []
         
     def _check_chapter_exists(self, name):
-        """
-        檢查章節是否存在
-        
-        Args:
-            name: 章節名稱
-            
-        Returns:
-            bool: 如果章節存在則返回 True，否則返回 False
-        """
         return self.chapters.find_one({"name": name}) is not None
     
     def _add_level_to_chapter(self, chapter_name: str, level_id: str):
-        """
-        將關卡添加到章節
-        
-        Args:
-            chapter_name: 章節名稱
-            level_id: 關卡 ID (字符串)
-            
-        Returns:
-            bool: 如果添加成功則返回 True，否則返回 False
-        """
+        """添加關卡到章節"""
         try:
             level_object_id = ObjectId(level_id)
             
@@ -355,22 +350,12 @@ class ChapterService(DatabaseService):
             )
             return result.modified_count > 0 or result.matched_count > 0
         except Exception as e:
-            print(f"failed to add level to chapter: {str(e)}")
+            print(f"Failed to add level to chapter: {str(e)}")
             return False
             
     def _remove_level_from_chapter(self, chapter_name: str, level_id: str):
-        """
-        從章節中移除關卡
-        
-        Args:
-            chapter_name: 章節名稱
-            level_id: 關卡 ID (字符串)
-            
-        Returns:
-            bool: 如果刪除成功則返回 True，否則返回 False
-        """
+        """移除章節中關卡"""
         try:
-            # 將字符串 ID 轉換為 ObjectId
             level_object_id = ObjectId(level_id)
             
             result = self.chapters.update_one(
@@ -379,31 +364,13 @@ class ChapterService(DatabaseService):
             )
             return result.modified_count > 0 or result.matched_count > 0
         except Exception as e:
-            print(f"failed to remove level from chapter: {str(e)}")
+            print(f"Failed to remove level from chapter: {str(e)}")
             return False
         
     def _get_chapter_name_by_sequence(self, sequence: int):
-        """
-        根據 sequence 獲取章節名稱
-        
-        Args:
-            sequence: 章節的 sequence 值
-            
-        Returns:
-            str: 章節名稱，若不存在則返回 None
-        """
         chapter = self.chapters.find_one({"sequence": sequence})
         return chapter["name"] if chapter else None
     
     def _get_sequence_by_chapter_name(self, name):
-        """
-        根據 chapter_name 獲取 sequence
-        
-        Args:
-            chapter_name: 章節名稱
-            
-        Returns:
-            int: 章節序列 ，若不存在則返回 None
-        """
         chapter = self.chapters.find_one({"name": name})
         return int(chapter["sequence"]) if chapter else None
