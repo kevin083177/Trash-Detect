@@ -24,13 +24,13 @@ def start_server(port, detection_service: DetectionService=None):
     
     @socketio.on('connect')
     def handle_connect():
-        client_id = str(uuid.uuid4())
+        client_id = request.sid
         logger.info(f"Client connected: {client_id}")
         emit('connected', {'client_id': client_id})
     
     @socketio.on('disconnect')
     def handle_disconnect():
-        client_id = str(uuid.uuid4())
+        client_id = request.sid
         logger.info(f"Client disconnected: {client_id}")
         if hasattr(request, 'sid'):
             system_service.remove_admin_connection(request.sid)
