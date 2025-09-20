@@ -37,7 +37,8 @@ class DailyTrashService(DatabaseService):
                 cans = total_trash.get("cans"),
                 bottles = total_trash.get("bottles"),
                 containers = total_trash.get("containers"),
-                active_users = 0
+                active_users = 0,
+                new_registered = 0
             )
             
             result = self.daily_trash.insert_one(daily_trash.to_dict())
