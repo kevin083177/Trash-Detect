@@ -402,9 +402,7 @@ export function UserProvider({ children }: UserProviderProps) {
             switch (response.status) {
                 case 200:
                     await fetchUserProfile();
-                    return { success: true, message: '簽到成功！' };
-                case 400:
-                    return { success: false, message: '今天已經簽到過了！', alreadyCheckedIn: true };
+                    return { success: true, message: '簽到成功！獲得 50 狗狗幣' };
                 case 500:
                     return { success: false, message: '伺服器異常，請稍後再試' };
                 default:

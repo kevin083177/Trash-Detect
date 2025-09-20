@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { recycleTips } from '@/constants/recycleTips';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const detectSpeed = 100; // 1000 divide detectSpeed = fps
+const detectSpeed = 50; // 1000 divide detectSpeed = fps
 const detectTime = 2;
 
 export default function Scanner() {
@@ -448,7 +448,7 @@ export default function Scanner() {
             </View>
           )}
           
-          {autoDetection && boundingBoxEnabled && detectionResults.map((detection, index) => (
+          {autoDetection && boundingBoxEnabled && !notification.visible && detectionResults.map((detection, index) => (
             <BoundingBox 
               key={index} 
               detection={detection}
@@ -465,13 +465,6 @@ export default function Scanner() {
 
           <SafeAreaView style={styles.rightControlsContainer}>
             <View style={styles.controlButtonsColumn}>
-              <ControlButton 
-                iconOn="toggle"
-                iconOff="toggle-outline" 
-                name="辨識"
-                status={autoDetection} 
-                onPress={handleAutoDetection}
-              />
               <ControlButton
                 iconOn="cloud-upload"
                 iconOff="cloud-upload-outline"
@@ -496,7 +489,7 @@ export default function Scanner() {
             </View>
           </SafeAreaView>
 
-          <ResultDisplay detections={detectionResults} />
+         {!notification.visible && <ResultDisplay detections={detectionResults} />}
 
           <Toast
             visible={notification.visible}

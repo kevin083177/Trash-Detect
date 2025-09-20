@@ -13,7 +13,7 @@ import { HelpModal } from '@/components/profile/HelpModal';
 import { RecycleValues } from '@/interface/Recycle';
 import { clearRoom } from '@/utils/roomStorage';
 import { asyncGet } from '@/utils/fetch';
-import { feedback_api, user_api } from '@/api/api';
+import { feedback_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
 import { QuestionStats } from '@/interface/Question';
 import { Coin } from '@/components/Coin';
@@ -38,7 +38,8 @@ export default function Profile() {
     getUsername,
     getMoney,
     getTrashStats,
-    updateProfile
+    updateProfile,
+    getQuestionStats
   } = useUser();
 
   const { logout } = useAuth();
@@ -66,22 +67,16 @@ export default function Profile() {
   }, [getTrashStats]);
 
   const fetchQuestionStats = useCallback(async () => {
-    if (!token) return;
-
     try {
-      const response = await asyncGet(user_api.get_question_stats, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
-
-      if (response && response.body) {
-        const apiData = response.body;
+      const result = await getQuestionStats();
+      
+      if (result.success && result.data) {
+        const apiData = result.data;
         
         const transformedData: QuestionStats = {
           bottles: apiData.bottles || { correct: 0, total: 0 },
           cans: apiData.cans || { correct: 0, total: 0 },
-          containers: apiData.container || { correct: 0, total: 0 },
+          containers: apiData.containers || { correct: 0, total: 0 },
           paper: apiData.paper || { correct: 0, total: 0 },
           plastic: apiData.plastic || { correct: 0, total: 0 }
         };
@@ -91,7 +86,7 @@ export default function Profile() {
     } catch (error) {
       console.error('Error fetching question stats:', error);
     }
-  }, [token]);
+  }, [getQuestionStats]);
 
   const getCurrentModalType = (): 'recycle' | 'question' => {
     return currentPage === 0 ? 'recycle' : 'question';
@@ -388,11 +383,13 @@ export default function Profile() {
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
-        fetchUserProfile();
-        fetchQuestionStats();
-      }
-    }, [token, fetchUserProfile, fetchQuestionStats])
+      const refreshData = async () => {
+        await fetchUserProfile();
+        await fetchQuestionStats();
+      };
+      
+      refreshData();
+    }, [fetchUserProfile, fetchQuestionStats])
   );
 
   return (
