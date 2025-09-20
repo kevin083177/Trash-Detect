@@ -151,18 +151,10 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
     });
   };
 
+  
   const handleNext = async () => {
     const step = steps[currentStep];
     setErrorMessage('');
-
-    if (step.requiresInput && keyboardVisible) {
-      Keyboard.dismiss();
-      setTimeout(() => {
-        proceedToNextStep();
-      }, 100);
-    } else {
-      proceedToNextStep();
-    }
 
     if (step.requiresInput && step.id === 'dog') {
       if (!inputValue.trim()) {
@@ -178,17 +170,31 @@ export function Tutorial({ visible, steps, onComplete }: TutorialProps) {
       setIsProcessing(true);
       try {
         await saveUsername(inputValue.trim());
-        setTimeout(() => {
-          setIsProcessing(false);
+        setIsProcessing(false);
+        
+        if (keyboardVisible) {
+          Keyboard.dismiss();
+          setTimeout(() => {
+            proceedToNextStep();
+          }, 100);
+        } else {
           proceedToNextStep();
-        }, 500);
+        }
+        
       } catch (error) {
         setIsProcessing(false);
         setErrorMessage('網路錯誤，請重新嘗試');
         return;
       }
     } else {
-      proceedToNextStep();
+      if (step.requiresInput && keyboardVisible) {
+        Keyboard.dismiss();
+        setTimeout(() => {
+          proceedToNextStep();
+        }, 100);
+      } else {
+        proceedToNextStep();
+      }
     }
   };
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Animated, StyleSheet, StyleProp, ViewStyle, Text } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop, ClipPath, Path } from 'react-native-svg';
-import LinearGradient from 'react-native-linear-gradient';
+import { View, Animated, StyleSheet, StyleProp, ViewStyle, Text, Easing } from 'react-native';
+import Svg, { Circle, Defs, ClipPath, Path, Stop, LinearGradient } from 'react-native-svg';
 
 interface TimerScoreProps {
   duration: number;
@@ -46,37 +45,16 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
 
   const getGradientColors = (currentScore: number) => {
     const percentage = (currentScore / maxScore) * 100;
-    
+
     const colorStops = [
-      { percent: 0, colors: ['#ffffff', '#98c5ffff']},
-      { percent: 20, colors: ['#d5e0fc', '#88b1eaff']},
-      { percent: 40, colors: ['#abc1fa', '#709ddc']},
-      { percent: 60, colors: ['#81a2f7', '#2d6fcb']},
-      { percent: 80, colors: ['#78a7ffff', '#0077ffff']},
+      { percent: 0, colors: ['#a2c7ff', '#7cb1ffff'] },
+      { percent: 40, colors: ['#89b8ff', '#65a2feff'] },
+      { percent: 80, colors: ['#71a9feff', '#4891ffff'] },
     ];
 
-    let lowerStop = colorStops[0];
-    let upperStop = colorStops[1];
-
-    for (let i = 0; i < colorStops.length - 1; i++) {
-      if (percentage >= colorStops[i].percent && percentage <= colorStops[i + 1].percent) {
-        lowerStop = colorStops[i];
-        upperStop = colorStops[i + 1];
-        break;
-      }
-    }
-
-    const range = upperStop.percent - lowerStop.percent;
-    const localPercent = range === 0 ? 0 : (percentage - lowerStop.percent) / range;
-
-    const interpolateColor = (color1: string, color2: string, factor: number) => {
-      return factor < 0.5 ? color1 : color2;
-    };
-
-    const startColor = interpolateColor(lowerStop.colors[0], upperStop.colors[0], localPercent);
-    const endColor = interpolateColor(lowerStop.colors[1], upperStop.colors[1], localPercent);
-
-    return [startColor, endColor];
+    if (percentage < 40) return colorStops[0].colors;
+    if (percentage < 80) return colorStops[1].colors;
+    return colorStops[2].colors;
   };
 
   const interpolateColor = (color1: string, color2: string, factor: number) => {
@@ -175,6 +153,7 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
         Animated.timing(animValue, {
           toValue: 1,
           duration,
+          easing: Easing.linear,
           useNativeDriver: true,
         })
       );
@@ -288,19 +267,12 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 bottom: 0,
                 height: waterLevelAnimation.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [size * 0.1, size],
+                  outputRange: [size * 0.2, size],
                 }),
                 overflow: 'hidden',
               }
             ]}
           >
-            <LinearGradient
-              colors={gradientColors}
-              style={StyleSheet.absoluteFillObject}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            />
-            
             <Svg width={size} height={size} style={StyleSheet.absoluteFillObject}>
               <Defs>
                 <ClipPath id="circleClip">
@@ -319,9 +291,16 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 }}
               >
                 <Svg width={size * 2} height={size}>
+                  <Defs>
+                    <LinearGradient id="waveGradient" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0%" stopColor={gradientColors[0]} />
+                      <Stop offset="100%" stopColor={gradientColors[1]} />
+                    </LinearGradient>
+                  </Defs>
+
                   <Path
                     d={`M0,${size * 0.08} Q${size * 0.25},0 ${size * 0.5},${size * 0.08} T${size},${size * 0.08} T${size * 1.5},${size * 0.08} T${size * 2},${size * 0.08} V${size} H0 Z`}
-                    fill="rgba(255,255,255,0.5)"
+                    fill="url(#waveGradient)"
                     clipPath="url(#circleClip)"
                   />
                 </Svg>
@@ -337,13 +316,7 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                   }]
                 }}
               >
-                <Svg width={size * 2} height={size}>
-                  <Path
-                    d={`M0,${size * 0.06} Q${size * 0.2},${size * 0.12} ${size * 0.4},${size * 0.06} T${size * 0.8},${size * 0.06} T${size * 1.2},${size * 0.06} T${size * 1.6},${size * 0.06} T${size * 2},${size * 0.06} V${size} H0 Z`}
-                    fill="rgba(135,206,250,0.4)"
-                    clipPath="url(#circleClip)"
-                  />
-                </Svg>
+   
               </Animated.View>
             </Svg>
           </Animated.View>
@@ -355,7 +328,7 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 { 
                   fontSize: size * 0.18,
                   color: waterLevel >= 0.55 ? 'white' : '#1890FF',
-                  textShadowColor: waterLevel > 0.55 ? 'rgba(0,0,0,0.6)' : 'transparent',
+                  textShadowColor: waterLevel >= 0.55 ? 'rgba(0,0,0,0.6)' : 'transparent',
                   textShadowOffset: { width: 0, height: 1 },
                   textShadowRadius: 3,
                 }
@@ -368,8 +341,8 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 styles.labelText, 
                 { 
                   fontSize: size * 0.1,
-                  color: waterLevel > 0.3 ? 'rgba(255,255,255,0.9)' : '#1890FF',
-                  textShadowColor: waterLevel > 0.3 ? 'rgba(0,0,0,0.6)' : 'transparent',
+                  color: waterLevel >= 0.3 ? 'rgba(255,255,255,0.9)' : '#1890FF',
+                  textShadowColor: waterLevel >= 0.3 ? 'rgba(0,0,0,0.6)' : 'transparent',
                   textShadowOffset: { width: 0, height: 1 },
                   textShadowRadius: 3,
                 }

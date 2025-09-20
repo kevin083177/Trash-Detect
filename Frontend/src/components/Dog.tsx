@@ -131,10 +131,7 @@ export const Dog = forwardRef<View, DogProps>(({
       currentAnimationRef.current = null;
     }
 
-    translateX.stopAnimation((currentDelta) => {
-      baseXRef.current = baseXRef.current + (currentDelta || 0);
-      translateX.setOffset(baseXRef.current);
-      translateX.setValue(0);
+    translateX.stopAnimation(() => {
       setDogState('paused');
     });
   }, [translateX, clearIdleTimer]);
@@ -154,20 +151,18 @@ export const Dog = forwardRef<View, DogProps>(({
   }, [startWalking, autoWalk, paused, generateRandomIdleDuration]);
 
   useEffect(() => {
-    setTimeout(() => {
-      if (paused) {
-        clearIdleTimer();
-        if (dogState === 'walking') {
-            pauseMovement();
-        } else if (dogState === 'idle') {
-            setDogState('paused');
-        }
-      } else {
-        if (dogState === 'paused') {
-          resumeMovement();
-        }
+    if (paused) {
+      clearIdleTimer();
+      if (dogState === 'walking') {
+          pauseMovement();
+      } else if (dogState === 'idle') {
+          setDogState('paused');
       }
-    }, 1000);
+    } else {
+      if (dogState === 'paused') {
+        resumeMovement();
+      }
+    }
   }, [paused, dogState, pauseMovement, resumeMovement, clearIdleTimer]);
 
   useEffect(() => {
@@ -212,10 +207,10 @@ export const Dog = forwardRef<View, DogProps>(({
   const lottieRef = useRef<LottieView | null>(null);
   useEffect(() => {
     if (!lottieRef.current) return;
-    if (dogState === 'walking' && !paused) {
-      lottieRef.current.play();
-    } else {
+    if (paused || dogState !== 'walking') {
       lottieRef.current.pause();
+    } else if (dogState === 'walking' && !paused) {
+      lottieRef.current.play();
     }
   }, [dogState, paused]);
 

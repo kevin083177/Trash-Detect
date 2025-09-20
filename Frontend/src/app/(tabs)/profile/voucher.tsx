@@ -42,6 +42,11 @@ export default function VoucherManagement(): ReactNode {
     }
   }, [fetchUserVouchers]);
 
+  const handleEmptyPress = () => {
+    router.dismissAll();
+    router.replace('/(tabs)/shop');
+  }
+
   const groupVouchersByType = useCallback((vouchers: Voucher[]): GroupedVoucher[] => {
     const grouped: { [key: string]: GroupedVoucher } = {};
 
@@ -166,7 +171,10 @@ export default function VoucherManagement(): ReactNode {
         data={filteredVouchers()}
         renderItem={renderVoucherItem}
         keyExtractor={(item, index) => `${item.voucherType.name}-${index}`}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[
+          styles.listContainer,
+          filteredVouchers().length === 0 && styles.emptyListContainer
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -174,6 +182,18 @@ export default function VoucherManagement(): ReactNode {
           />
         }
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={(
+          <View style={styles.emptyContainer}>
+            <Ionicons style={styles.emptyIcon} name="ticket" size={40}></Ionicons>
+            <Text style={styles.emptyText}>目前沒有任何票券</Text>
+            <TouchableOpacity
+              style={styles.shopButton}
+              onPress={handleEmptyPress}
+            >
+              <Text style={styles.shopButtonText}>前往商城</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       />
 
       <VoucherDetailModal
@@ -237,6 +257,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  emptyListContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   voucherCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -299,5 +323,29 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 12,
     color: '#666',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyIcon: {
+    color: '#888',
+    marginBottom: 12
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+  },
+  shopButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  shopButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

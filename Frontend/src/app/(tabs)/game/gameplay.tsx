@@ -215,7 +215,6 @@ export default function Gameplay() {
         useNativeDriver: true 
       });
     } else if (phase === 'show-options') {
-      console.log(currentQuestion.correctOptionIndex);
       anim = Animated.timing(optionsFade, { 
         toValue: 1, 
         duration: 400, 
@@ -330,7 +329,8 @@ export default function Gameplay() {
   
     const correct = optionIndex === currentQuestion?.correctOptionIndex;
     if (correct) {
-      const gained = 200 - (8 - timer - 1) * 25;
+      const raw = 200 - (8 - (typeof timer === 'number' ? timer : 0)) * 25;
+      const gained = Math.max(0, Math.min(200, Math.round(raw)));
       
       const newScore = score + gained;
       setScore(newScore);

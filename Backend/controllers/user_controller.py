@@ -144,7 +144,6 @@ class UserController:
                 # 發送驗證郵件
                 success, message = verification_service.create_verification(
                     email=new_email,
-                    username=updated_user['username'],
                     password="",
                     user_role=updated_user['userRole']
                 )
