@@ -42,6 +42,11 @@ export default function VoucherManagement(): ReactNode {
     }
   }, [fetchUserVouchers]);
 
+  const handleEmptyPress = () => {
+    router.dismissAll();
+    router.replace('/(tabs)/shop');
+  }
+
   const groupVouchersByType = useCallback((vouchers: Voucher[]): GroupedVoucher[] => {
     const grouped: { [key: string]: GroupedVoucher } = {};
 
@@ -174,6 +179,18 @@ export default function VoucherManagement(): ReactNode {
           />
         }
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={(
+          <View style={styles.emptyContainer}>
+            <Ionicons style={styles.emptyIcon} name="ticket" size={40}></Ionicons>
+            <Text style={styles.emptyText}>目前沒有任何票券</Text>
+            <TouchableOpacity
+              style={styles.shopButton}
+              onPress={handleEmptyPress}
+            >
+              <Text style={styles.shopButtonText}>前往商城</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       />
 
       <VoucherDetailModal
@@ -300,4 +317,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+  emptyContainer: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 24,
+},
+emptyIcon: {
+  color: '#888',
+  marginBottom: 12
+},
+emptyText: {
+  fontSize: 16,
+  color: '#666',
+  marginBottom: 20,
+},
+shopButton: {
+  backgroundColor: '#007AFF',
+  paddingHorizontal: 24,
+  paddingVertical: 12,
+  borderRadius: 24,
+},
+shopButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
 });
