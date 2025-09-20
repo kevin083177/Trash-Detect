@@ -35,6 +35,9 @@ export default function Shop(): ReactNode {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [furnitureLoading, setFurnitureLoading] = useState(false);
+
    const [notification, setNotification] = useState<{
       visible: boolean;
       message: string;
@@ -154,10 +157,17 @@ export default function Shop(): ReactNode {
     
     try {
       await fetchUserProfile();
-      activeTab === 'furniture' ? await refreshProducts() : refreshVouchers();
+      if (activeTab === 'furniture') {
+        setFurnitureLoading(true);
+        await refreshProducts();
+        setFurnitureLoading(false);
+      } else {
+        await refreshVouchers();
+      }
     } catch (error) {
       console.error('Refresh error:', error);
       Alert.alert('刷新失敗', '請檢查網絡連接後重試');
+      setFurnitureLoading(false);
     } finally {
       setRefreshing(false);
     }
@@ -165,6 +175,7 @@ export default function Shop(): ReactNode {
 
   useEffect(() => {
     const initializeShop = async () => {
+      setIsInitialLoading(true);
       try {
         await Promise.all([
           fetchThemes(),
@@ -174,11 +185,32 @@ export default function Shop(): ReactNode {
         ]);
       } catch (error) {
         console.error('Failed to initialize shop:', error);
+        Alert.alert('載入失敗', '請檢查網絡連接後重試');
+      } finally {
+        setIsInitialLoading(false);
       }
     };
     
     initializeShop();
   }, [fetchThemes, fetchUserProfile, fetchPurchasedProducts, fetchVoucherTypes]);
+
+  const handleTabSwitch = async (tab: 'furniture' | 'voucher') => {
+    if (tab === activeTab) return;
+    
+    setActiveTab(tab);
+    
+    if (tab === 'furniture' && themes.length === 0) {
+      setFurnitureLoading(true);
+      try {
+        await fetchThemes();
+        await fetchPurchasedProducts();
+      } catch (error) {
+        console.error('Error loading furniture:', error);
+      } finally {
+        setFurnitureLoading(false);
+      }
+    }
+  };
 
   const handleToastHide = () => {
     setNotification(prev => ({ ...prev, visible: false }));
@@ -348,6 +380,7 @@ export default function Shop(): ReactNode {
         {isThemeLoading ? (
           <View style={styles.noProductsContainer}>
             <ActivityIndicator size="small" color="#007AFF" />
+            <Text style={styles.themeLoadingText}>載入商品中...</Text>
           </View>
         ) : products.length === 0 ? (
           <View style={styles.noProductsContainer}>
@@ -367,20 +400,31 @@ export default function Shop(): ReactNode {
     );
   };
 
-  const renderFurnitureContent = () => (
-    <FlatList
-      data={themes}
-      renderItem={renderThemeSection}
-      keyExtractor={(item, index) => `theme-${index}`}
-      contentContainerStyle={styles.mainContent}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        /> 
-      }
-    />
-  );
+  const renderFurnitureContent = () => {
+    if (furnitureLoading || (themes.length === 0 && !isInitialLoading)) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>載入家具中...</Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={themes}
+        renderItem={renderThemeSection}
+        keyExtractor={(item, index) => `theme-${index}`}
+        contentContainerStyle={styles.mainContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          /> 
+        }
+      />
+    );
+  };
 
   const renderVoucherContent = () => {
     if (voucherLoading) {
@@ -440,6 +484,24 @@ export default function Shop(): ReactNode {
     );
   };
 
+  if (isInitialLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.replace('/')} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Coin size="medium" value={getMoney()} />
+        </View>
+        
+        <View style={styles.initialLoadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.initialLoadingText}>載入商店中...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -452,7 +514,7 @@ export default function Shop(): ReactNode {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={styles.tab}
-          onPress={() => setActiveTab('furniture')}
+          onPress={() => handleTabSwitch('furniture')}
         >
           <Text style={[styles.tabText, activeTab === 'furniture' && styles.activeTabText]}>
             家具
@@ -460,7 +522,7 @@ export default function Shop(): ReactNode {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tab}
-          onPress={() => setActiveTab('voucher')}
+          onPress={() => handleTabSwitch('voucher')}
         >
           <Text style={[styles.tabText, activeTab === 'voucher' && styles.activeTabText]}>
             電子票券
@@ -559,6 +621,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#007AFF',
     borderBottomWidth: 2,
   },
+  initialLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 40,
+  },
+  initialLoadingText: {
+    marginTop: 20,
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -568,6 +643,11 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
+    color: '#666',
+  },
+  themeLoadingText: {
+    marginTop: 8,
+    fontSize: 14,
     color: '#666',
   },
   mainContent: {

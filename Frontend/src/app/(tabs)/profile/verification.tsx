@@ -109,17 +109,12 @@ export default function EmailVerification() {
       });
 
       if (response.status === 200) {
+        router.dismissAll();
+        router.push('/(tabs)/profile/settings');
         Alert.alert(
-          '成功',
-          'Email 更新成功！',
-          [
-            {
-              text: '確定',
-              onPress: () => {
-                router.replace('/(tabs)/profile/settings');
-              }
-            }
-          ]
+          'Email 更新成功',
+          `已成功修改您的Email`,
+          [{text: '確定',}]
         );
       } else {
         setErrorMessage(response.message);
