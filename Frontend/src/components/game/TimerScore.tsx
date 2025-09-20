@@ -48,12 +48,11 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
     const percentage = (currentScore / maxScore) * 100;
     
     const colorStops = [
-      { percent: 0, colors: ['#ffffffff', '#4e95e0ff'] },
-      { percent: 20, colors: ['#ffffffff', '#8fb2dd'] },
-      { percent: 40, colors: ['#ffffffff', '#2667b8ff'] },
-      { percent: 60, colors: ['#ffffffff', '#638ece'] },
-      { percent: 80, colors: ['#ffffffff', '#2f68b8'] },
-      { percent: 100, colors: ['#ffffffff', '#0d62c4'] }
+      { percent: 0, colors: ['#ffffff', '#98c5ffff']},
+      { percent: 20, colors: ['#d5e0fc', '#88b1eaff']},
+      { percent: 40, colors: ['#abc1fa', '#709ddc']},
+      { percent: 60, colors: ['#81a2f7', '#2d6fcb']},
+      { percent: 80, colors: ['#78a7ffff', '#0077ffff']},
     ];
 
     let lowerStop = colorStops[0];
@@ -181,10 +180,10 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
       );
     };
 
-    const wave1Anim = createWaveAnimation(waveAnimation1, 3000);
-    const wave2Anim = createWaveAnimation(waveAnimation2, 3000);
+    const wave1Anim = createWaveAnimation(waveAnimation1, 1800);
+    const wave2Anim = createWaveAnimation(waveAnimation2, 1500);
 
-    waveAnimation2.setValue(0.7);
+    waveAnimation2.setValue(0.5);
     
     wave1Anim.start();
     wave2Anim.start();
@@ -355,8 +354,8 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 styles.scoreText, 
                 { 
                   fontSize: size * 0.18,
-                  color: waterLevel > 0.4 ? 'white' : '#2c3e50',
-                  textShadowColor: waterLevel > 0.4 ? 'rgba(0,0,0,0.4)' : 'transparent',
+                  color: waterLevel >= 0.55 ? 'white' : '#1890FF',
+                  textShadowColor: waterLevel > 0.55 ? 'rgba(0,0,0,0.6)' : 'transparent',
                   textShadowOffset: { width: 0, height: 1 },
                   textShadowRadius: 3,
                 }
@@ -369,7 +368,10 @@ export const TimerScore: React.FC<TimerScoreProps> = ({
                 styles.labelText, 
                 { 
                   fontSize: size * 0.1,
-                  color: waterLevel > 0.4 ? 'rgba(255,255,255,0.9)' : '#7f8c8d',
+                  color: waterLevel > 0.3 ? 'rgba(255,255,255,0.9)' : '#1890FF',
+                  textShadowColor: waterLevel > 0.3 ? 'rgba(0,0,0,0.6)' : 'transparent',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 3,
                 }
               ]}
             >

@@ -215,6 +215,7 @@ export default function Gameplay() {
         useNativeDriver: true 
       });
     } else if (phase === 'show-options') {
+      console.log(currentQuestion.correctOptionIndex);
       anim = Animated.timing(optionsFade, { 
         toValue: 1, 
         duration: 400, 
@@ -340,7 +341,7 @@ export default function Gameplay() {
           duration: 300, 
           useNativeDriver: true 
         }),
-        Animated.delay(1400),
+        Animated.delay(1500),
         Animated.timing(scoreAnimRef, { 
           toValue: 0, 
           duration: 300, 
