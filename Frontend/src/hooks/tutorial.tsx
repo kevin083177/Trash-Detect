@@ -12,7 +12,7 @@ interface TutorialContextType {
   startTutorial: (username: string | null, hasUsername: boolean) => Promise<void>;
   completeTutorial: () => void;
   registerElement: (id: string, ref: any) => void;
-  checkAndShowTutorial: (username?: string | null, hasUsername?: boolean) => Promise<void>;
+  checkAndShowTutorial: (username?: string | null, hasUsername?: boolean, userEmail?: string) => Promise<void>;
   resetTutorial: () => Promise<void>;
   saveUsername: (name: string) => Promise<void>;
 }
@@ -23,6 +23,13 @@ const TUTORIAL_COMPLETED_KEY = 'tutorial_completed';
 const TUTORIAL_PROGRESS_KEY = 'tutorial_progress';
 const USERNAME_KEY = 'username';
 
+const getUserKey = (baseKey: string, userEmail?: string) => {
+  if (userEmail) {
+    return `${baseKey}_${userEmail}`;
+  }
+  return baseKey;
+};
+
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
   const [tutorialSteps, setTutorialSteps] = useState<TutorialStep[]>([]);
@@ -31,8 +38,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const elementRefs = useRef<ElementRefs>({});
   
   const [hasCheckedTutorial, setHasCheckedTutorial] = useState(false);
+  const currentUserEmailRef = useRef<string>('');
 
-  const { updateUsername, getUsername } = useUser();
+  const { updateUsername, user, fetchUserProfile } = useUser();
 
   const registerElement = useCallback((id: string, ref: any) => {
     if (ref?.current) {
@@ -44,8 +52,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const saveUsername = useCallback(async (name: string) => {
     try {
-      await AsyncStorage.setItem(USERNAME_KEY, name);
-      await AsyncStorage.setItem(TUTORIAL_PROGRESS_KEY, 'username_saved');
+      const userEmail = currentUserEmailRef.current;
+      await AsyncStorage.setItem(getUserKey(USERNAME_KEY, userEmail), name);
+      await AsyncStorage.setItem(getUserKey(TUTORIAL_PROGRESS_KEY, userEmail), 'username_saved');
       setUsername(name);
       
       const { success } = await updateUsername(name);
@@ -62,17 +71,19 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const startTutorial = useCallback(async (username: string | null, hasUsername: boolean) => {
     try {
+      const userEmail = currentUserEmailRef.current;
+      
       if (hasUsername && username) {
         setUsername(username);
         setInitialStep(1);
-        await AsyncStorage.setItem(USERNAME_KEY, username);
-        await AsyncStorage.setItem(TUTORIAL_PROGRESS_KEY, 'username_saved');
+        await AsyncStorage.setItem(getUserKey(USERNAME_KEY, userEmail), username);
+        await AsyncStorage.setItem(getUserKey(TUTORIAL_PROGRESS_KEY, userEmail), 'username_saved');
         
         const steps = await getTutorialSteps(elementRefs.current, username);
         setTutorialSteps(steps);
       } else {
-        const savedUsername = await AsyncStorage.getItem(USERNAME_KEY);
-        const progress = await AsyncStorage.getItem(TUTORIAL_PROGRESS_KEY);
+        const savedUsername = await AsyncStorage.getItem(getUserKey(USERNAME_KEY, userEmail));
+        const progress = await AsyncStorage.getItem(getUserKey(TUTORIAL_PROGRESS_KEY, userEmail));
 
         if (savedUsername && progress === 'username_saved') {
           setUsername(savedUsername);
@@ -99,8 +110,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setIsTutorialVisible(false);
     setHasCheckedTutorial(true);
     try {
-      await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
-      await AsyncStorage.removeItem(TUTORIAL_PROGRESS_KEY);
+      const userEmail = currentUserEmailRef.current;
+      await AsyncStorage.setItem(getUserKey(TUTORIAL_COMPLETED_KEY, userEmail), 'true');
+      await AsyncStorage.removeItem(getUserKey(TUTORIAL_PROGRESS_KEY, userEmail));
     } catch (error) {
       console.warn('Failed to save tutorial completion:', error);
     }
@@ -108,9 +120,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const resetTutorial = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(TUTORIAL_COMPLETED_KEY);
-      await AsyncStorage.removeItem(TUTORIAL_PROGRESS_KEY);
-      await AsyncStorage.removeItem(USERNAME_KEY);
+      const userEmail = currentUserEmailRef.current;
+      await AsyncStorage.removeItem(getUserKey(TUTORIAL_COMPLETED_KEY, userEmail));
+      await AsyncStorage.removeItem(getUserKey(TUTORIAL_PROGRESS_KEY, userEmail));
+      await AsyncStorage.removeItem(getUserKey(USERNAME_KEY, userEmail));
       setUsername('');
       setHasCheckedTutorial(false);
     } catch (error) {
@@ -118,13 +131,29 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
   
-  const checkAndShowTutorial = useCallback(async (providedUsername?: string | null, providedHasUsername?: boolean) => {
+  const checkAndShowTutorial = useCallback(async (
+    providedUsername?: string | null, 
+    providedHasUsername?: boolean,
+    userEmail?: string
+  ) => {
+    if (userEmail) {
+      currentUserEmailRef.current = userEmail;
+    } else {
+      try {
+        await fetchUserProfile();
+        currentUserEmailRef.current = user?.email || ''; 
+      } catch (error) {
+        console.warn('Failed to get user profile:', error);
+      }
+    }
+    
     if (hasCheckedTutorial) {
       return;
     }
     
     try {
-      const completed = await AsyncStorage.getItem(TUTORIAL_COMPLETED_KEY);
+      const currentEmail = currentUserEmailRef.current;
+      const completed = await AsyncStorage.getItem(getUserKey(TUTORIAL_COMPLETED_KEY, currentEmail));
       if (completed === 'true') {
         setHasCheckedTutorial(true);
         return;
@@ -136,7 +165,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       if (providedUsername !== undefined && providedHasUsername !== undefined) {
         username = providedUsername;
         hasUsername = providedHasUsername;
-      } 
+      } else {
+        username = null;
+        hasUsername = false;
+      }
 
       setHasCheckedTutorial(true);
 
@@ -150,7 +182,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         startTutorial(null, false);
       }, 500);
     }
-  }, [hasCheckedTutorial, getUsername, startTutorial]);
+  }, [hasCheckedTutorial, fetchUserProfile, startTutorial]);
 
   return (
     <TutorialContext.Provider value={{
