@@ -18,5 +18,5 @@ interface CategoryStats { // 定義 QuestionStats 中需要的內容
 }
 
 export type QuestionStats = {
-  [K in RecycleType]: CategoryStats;
+  [K in RecycleType]?: CategoryStats;
 };
