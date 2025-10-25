@@ -1,17 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ImageBackground, 
-  Image, 
-  TouchableOpacity, 
-  Dimensions,
-} from 'react-native';
+import React, { useState, useEffect, forwardRef } from 'react';
+import { View, StyleSheet, ImageBackground, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Product, ProductCategory } from '@/interface/Product';
 import { ItemTransform } from '@/utils/roomStorage';
 import EditableProduct from './EditableProduct';
 import { ImageSize } from '@/interface/Image';
 import { ITEM_Z_INDEX } from '@/interface/Product';
+import Logo from '../auth/Logo';
+import { Dog } from '../Dog';
 
 interface RoomPreviewProps {
   selectedItems: Partial<Record<ProductCategory, Product>>;
@@ -21,6 +16,7 @@ interface RoomPreviewProps {
   containerHeight?: number;
   itemTransforms: Partial<Record<ProductCategory, ItemTransform>>;
   onTransformUpdate: (category: ProductCategory, transform: ItemTransform) => void;
+  showWatermark?: boolean;
 }
 
 const { width, height } = Dimensions.get('window');
@@ -36,15 +32,16 @@ const getDefaultPositions = (containerHeight: number): Record<ProductCategory, {
   wallpaper: { x: 0, y: 0 },
 });
 
-export default function RoomPreview({ 
+const RoomPreview = forwardRef<View, RoomPreviewProps>(({ 
   selectedItems, 
   onItemPress,
   editingCategory = null,
   onStartEdit,
   containerHeight,
   itemTransforms,
-  onTransformUpdate
-}: RoomPreviewProps) {
+  onTransformUpdate,
+  showWatermark = false,
+}, ref) => {
 
   const [imageSizes, setImageSizes] = useState<Partial<Record<ProductCategory, ImageSize>>>({});
   const [currentEditingTransform, setCurrentEditingTransform] = useState<ItemTransform | null>(null);
@@ -222,7 +219,7 @@ export default function RoomPreview({
   };
 
   return (
-    <View style={[styles.container, containerHeight ? { height: containerHeight } : {}]}>      
+    <View ref={ref} collapsable={false} style={[styles.container, containerHeight ? { height: containerHeight } : {}]}>      
       <View style={styles.previewContainer}>
         <ImageBackground
           source={{ uri: currentBackground }}
@@ -259,11 +256,29 @@ export default function RoomPreview({
             
             return renderStaticItem(categoryKey, item, transform);
           })}
+
+          {showWatermark && (
+            <View style={styles.watermarkContainer}>
+              <Dog
+                source={require('@/assets/images/walking.json')}
+                size={180}
+                initialY={height - 220}
+                autoWalk={false}
+              />
+              <View style={styles.logo}>
+                <Logo fontColor='white'/>
+              </View>
+            </View>
+          )}
         </ImageBackground>
       </View>
     </View>
   );
-}
+});
+
+RoomPreview.displayName = 'RoomPreview';
+
+export default RoomPreview;
 
 const styles = StyleSheet.create({
   container: {
@@ -298,4 +313,16 @@ const styles = StyleSheet.create({
   dimmedItem: {
     opacity: 0.3,
   },
+  
+  watermarkContainer: {
+    flex: 1,
+    width: '100%',
+    overflow:'hidden',
+    zIndex: 1000,
+  },
+  logo: {
+    position: 'absolute',
+    bottom: -12,
+    left: 8
+  }
 });
