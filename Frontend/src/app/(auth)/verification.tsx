@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/hooks/auth';
 import { Ionicons } from '@expo/vector-icons';
+import Logo from '@/components/auth/Logo';
 
 export default function Verification() {
   const { email, type } = useLocalSearchParams<{ email: string, type: "forget" | "register" }>();
@@ -32,7 +33,6 @@ export default function Verification() {
     }
   }, [countdown]);
 
-  // 檢查驗證狀態
   useEffect(() => {
     if (email) {
       checkVerificationStatus();
@@ -76,7 +76,6 @@ export default function Verification() {
       
       setVerificationCode(newCode);
       
-      // 自動提交如果是6位數
       if (pastedCode.length === 6) {
         setErrorMessage('');
         setTimeout(() => handleVerify(newCode), 100);
@@ -91,12 +90,10 @@ export default function Verification() {
     newCode[index] = value;
     setVerificationCode(newCode);
 
-    // 自動跳到下一個輸入框
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // 如果所有位數都填滿，自動提交
     if (newCode.every(digit => digit !== '') && newCode.join('').length === 6) {
       setTimeout(() => handleVerify(newCode), 100);
     }
@@ -167,33 +164,27 @@ export default function Verification() {
   };
 
   const getTitle = () => {
-    return type === 'forget' ? '重設密碼驗證' : '驗證您的電子郵件';
+    return type === 'forget' ? '重新設定密碼' : '完成註冊';
   };
 
   const getDescription = () => {
     return type === 'forget' 
-      ? '請輸入發送到您郵箱的驗證碼以重設密碼' 
-      : '請輸入發送到您郵箱的驗證碼以完成註冊';
+      ? '輸入驗證碼以重新設定您的密碼' 
+      : '輸入驗證碼以完成註冊驗證';
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#007AFF" />
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <Ionicons 
-          name={type === 'forget' ? "lock-closed-outline" : "mail-outline"} 
-          size={80} 
-          color="#007AFF" 
-          style={styles.icon} 
-        />
-        
+      <View style={styles.header}>
         <Text style={styles.title}>{getTitle()}</Text>
         
-        <Text style={styles.subtitle}>我們已發送驗證碼至</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.subtitle}>
+          我們已寄送驗證碼至您的信箱{'\n'}
+          <Text style={styles.emailText}>{email}</Text>
+        </Text>
+      </View>
+
+      <View style={styles.formContainer}>
         <Text style={styles.description}>{getDescription()}</Text>
         
         <View style={styles.codeContainer}>
@@ -233,12 +224,12 @@ export default function Verification() {
           disabled={isLoading || verificationCode.join('').length !== 6}
         >
           <Text style={styles.verifyButtonText}>
-            {isLoading ? '驗證中...' : '驗證'}
+            {isLoading && !isResending ? '送出中...' : '送出'}
           </Text>
         </TouchableOpacity>
 
         <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>沒有收到驗證碼？</Text>
+          <Text style={styles.resendText}>沒有收到驗證碼 ? </Text>
           <TouchableOpacity
             onPress={handleResendCode}
             disabled={countdown > 0 || isResending}
@@ -249,13 +240,17 @@ export default function Verification() {
               (countdown > 0 || isResending) && styles.resendButtonDisabled
             ]}>
               {isResending ? '發送中...' : 
-               countdown > 0 ? `重新發送 (${countdown}s)` : '重新發送'}
+               countdown > 0 ? `00:${Number(countdown).toPrecision(2)}` : '重新發送'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.note}>驗證碼將在5分鐘後過期</Text>
+        <View style={styles.noteContainer}>
+          <Ionicons name="time-outline" size={16} color="#f11b1b" />
+          <Text style={styles.note}>驗證碼將在 5 分鐘內過期</Text>
+        </View>
       </View>
+      <Logo />
     </View>
   );
 }
@@ -263,122 +258,127 @@ export default function Verification() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 1,
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  icon: {
-    marginBottom: 30,
+  header: {
+    backgroundColor: '#1C1C1C',
+    paddingTop: 48,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 5,
+    fontSize: 15,
+    color: '#D1D5DB',
+    lineHeight: 22,
   },
-  email: {
-    fontSize: 16,
+  emailText: {
+    color: '#60A5FA',
     fontWeight: '600',
-    color: '#007AFF',
-    textAlign: 'center',
-    marginBottom: 10,
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    alignItems: 'center',
   },
   description: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
+    color: '#6B7280',
+    marginBottom: 32,
     lineHeight: 20,
   },
   codeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   codeInput: {
-    width: 45,
-    height: 55,
+    width: 48,
+    height: 56,
     borderWidth: 2,
-    borderColor: '#E1E5E9',
+    borderColor: '#E5E7EB',
     borderRadius: 8,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
   },
   codeInputFilled: {
     borderColor: '#007AFF',
-    backgroundColor: '#F0F8FF',
+    backgroundColor: '#EFF6FF',
   },
   errorMessage: {
     marginBottom: 20,
-    color: 'red',
+    color: '#DC3545',
     textAlign: 'center',
+    fontSize: 14,
   },
   successMessage: {
-    color: '#1c8020'
+    color: '#28A745',
   },
   verifyButton: {
     backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
+    height: 50,
     borderRadius: 8,
-    marginBottom: 30,
-    minWidth: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 24,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#999',
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
   },
   verifyButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: '600',
   },
   resendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   resendText: {
     fontSize: 14,
-    color: '#666',
-    marginRight: 5,
+    color: '#6B7280',
   },
   resendButton: {
-    padding: 5,
+    marginTop: 4,
+    marginLeft: 6,
   },
   resendButtonText: {
     fontSize: 14,
     color: '#007AFF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   resendButtonDisabled: {
-    color: '#999',
+    color: '#9CA3AF',
+  },
+  noteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
   note: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontSize: 14,
+    color: '#f11b1b',
   },
 });

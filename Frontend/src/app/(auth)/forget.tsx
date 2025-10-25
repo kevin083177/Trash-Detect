@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TouchableNativeFeedback } from 'react-native';
 import { Link, router } from 'expo-router';
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import ClearableInput from '@/components/auth/ClearableInput';
 import { Ionicons } from '@expo/vector-icons';
+import Logo from '@/components/auth/Logo';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState<string>('');
@@ -48,21 +49,26 @@ export default function ForgotPassword() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#007AFF" />
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <Ionicons name="lock-open-outline" size={80} color="#007AFF" style={styles.icon} />
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
         
         <Text style={styles.title}>忘記密碼</Text>
         
         <Text style={styles.subtitle}>
-            輸入電子郵件獲取驗證碼
+          輸入您的電子郵件獲取驗證碼
         </Text>
-        
+      </View>
+
+      <View style={styles.formContainer}>
         <ClearableInput
-          placeholder="電子郵件"
+          label="電子郵件"
+          icon='mail-outline'
+          placeholder="請輸入您的電子郵件"
           autoCapitalize="none"
           value={email}
           onChangeText={(text) => {
@@ -89,10 +95,18 @@ export default function ForgotPassword() {
           disabled={isLoading}
         >
           <Text style={styles.buttonText}>
-            {isLoading ? '發送中...' : '發送驗證碼'}
+            {isLoading ? '寄送中...' : '寄送驗證碼'}
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>記得密碼嗎 ? </Text>
+          <TouchableNativeFeedback onPress={() => router.back()}>
+            <Text style={styles.loginLink}>登入</Text>
+          </TouchableNativeFeedback>
+        </View>
       </View>
+      <Logo />
     </View>
   );
 }
@@ -100,62 +114,83 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    backgroundColor: '#1C1C1C',
+    paddingTop: 32,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
   },
   backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 1,
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  icon: {
-    marginBottom: 30,
+    marginBottom: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center'
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
+    fontSize: 15,
+    color: '#D1D5DB',
+    lineHeight: 22,
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32,
   },
   errorMessage: {
     color: '#DC3545',
+    fontSize: 14,
+    marginBottom: 16,
     textAlign: 'center',
-    marginBottom: 15,
   },
   successMessage: {
     color: '#28A745',
+    fontSize: 14,
+    marginBottom: 16,
     textAlign: 'center',
-    marginBottom: 15,
   },
   button: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    height: 50,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
     marginBottom: 20,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#999',
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
   },
   buttonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loginText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  loginLink: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

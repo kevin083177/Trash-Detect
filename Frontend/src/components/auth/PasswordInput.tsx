@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, TextInputProps, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface PasswordInputProps extends Omit<TextInputProps, 'secureTextEntry'> {
   value: string;
   onChangeText: (text: string) => void;
   hasError?: boolean;
+  label?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 const PasswordInput: React.FC<PasswordInputProps> = ({
@@ -13,64 +15,96 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   onChangeText,
   style,
   hasError = false,
+  label,
+  icon,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState(false);
   
-  const getInputBorderColor = (value: string, hasError: boolean) => {
-    if (hasError) return '#DC3545';  // 錯誤時為紅色
-    if (!value) return '#ddd';       // 未輸入時為灰色
-    return '#007AFF';                // 有輸入時為藍色
+  const getInputBorderColor = () => {
+    if (hasError) return '#DC3545';
+    if (isFocused) return '#007AFF';
+    return '#E5E7EB';
   };
 
   return (
-    <View style={styles.passwordContainer}>
-      <TextInput
-        {...props}
-        style={[
-          styles.passwordInput,
-          { borderColor: getInputBorderColor(value, hasError) },
-          style
-        ]}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={!showPassword}
-      />
-      {value.length > 0 && (
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={() => setShowPassword(!showPassword)}
-        >
-          <Ionicons
-            name={showPassword ? "eye-off" : "eye"}
-            size={24}
-            color="#666"
-          />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      {label && (
+        <View style={styles.labelContainer}>
+          {icon && (
+            <Ionicons name={icon} size={16} color="#6B7280" />
+          )}
+          <Text style={styles.label}>{label}</Text>
+        </View>
       )}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          {...props}
+          style={[
+            styles.passwordInput,
+            { 
+              borderColor: getInputBorderColor(),
+              backgroundColor: '#F9FAFB'
+            },
+            style
+          ]}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={!showPassword}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholderTextColor="#9CA3AF"
+        />
+        {value.length > 0 && (
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Ionicons
+              name={showPassword ? "eye-outline" : "eye-off-outline"}
+              size={22}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  passwordContainer: {
+  container: {
+    marginBottom: 20,
+  },
+  labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    gap: 6,
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  passwordContainer: {
+    position: 'relative',
   },
   passwordInput: {
-    flex: 1,
     height: 50,
-    paddingRight: 40, 
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingRight: 40,
+    borderWidth: 1.5,
     borderRadius: 8,
+    fontSize: 15,
+    color: '#111827',
   },
   eyeIcon: {
     position: 'absolute',
     right: 12,
-    height: '100%',
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
   },
 });

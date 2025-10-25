@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, TouchableOpacity, StyleSheet, TextInputProps, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ClearableInputProps extends Omit<TextInputProps, 'style'> {
@@ -9,6 +9,8 @@ interface ClearableInputProps extends Omit<TextInputProps, 'style'> {
   containerStyle?: object;
   inputStyle?: object;
   hasError?: boolean;
+  label?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 const ClearableInput: React.FC<ClearableInputProps> = ({
@@ -18,12 +20,16 @@ const ClearableInput: React.FC<ClearableInputProps> = ({
   containerStyle,
   inputStyle,
   hasError = false,
+  label,
+  icon,
   ...textInputProps
 }) => {
-  const getInputBorderColor = (value: string, hasError: boolean) => {
-    if (hasError) return '#DC3545';  // 錯誤時為紅色
-    if (!value) return '#ddd';       // 未輸入時為灰色
-    return '#007AFF';                // 有輸入時為藍色
+  const [isFocused, setIsFocused] = useState(false);
+
+  const getInputBorderColor = () => {
+    if (hasError) return '#DC3545';
+    if (isFocused) return '#007AFF';
+    return '#E5E7EB';
   };
 
   const handleClear = () => {
@@ -32,48 +38,77 @@ const ClearableInput: React.FC<ClearableInputProps> = ({
   };
 
   return (
-    <View style={[styles.inputContainer, containerStyle]}>
-      <TextInput
-        {...textInputProps}
-        style={[
-          styles.input,
-          { borderColor: getInputBorderColor(value, hasError) },
-          inputStyle
-        ]}
-        value={value}
-        onChangeText={onChangeText}
-      />
-      {value.length > 0 && (
-        <TouchableOpacity
-          style={styles.clearButton}
-          onPress={handleClear}
-        >
-          <Ionicons name="close-circle" size={20} color="#666" />
-        </TouchableOpacity>
+    <View style={[styles.container, containerStyle]}>
+      {label && (
+        <View style={styles.labelContainer}>
+          {icon && (
+            <Ionicons name={icon} size={16} color="#6B7280" />
+          )}
+          <Text style={styles.label}>{label}</Text>
+        </View>
       )}
+      <View style={styles.inputContainer}>
+        <TextInput
+          {...textInputProps}
+          style={[
+            styles.input,
+            { 
+              borderColor: getInputBorderColor(),
+              backgroundColor: '#F9FAFB'
+            },
+            inputStyle
+          ]}
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholderTextColor="#9CA3AF"
+        />
+        {value.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClear}
+          >
+            <Ionicons name="close-outline" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  container: {
+    marginBottom: 20,
+  },
+  labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    gap: 6,
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  inputContainer: {
+    position: 'relative',
   },
   input: {
-    flex: 1,
     height: 50,
-    paddingRight: 40, 
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingRight: 40,
+    borderWidth: 1.5,
     borderRadius: 8,
+    fontSize: 15,
+    color: '#111827',
   },
   clearButton: {
     position: 'absolute',
     right: 12,
-    height: '100%',
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
   },
 });
