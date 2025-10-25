@@ -1,4 +1,4 @@
-export type RecycleType = 'paper' | 'plastic' | 'containers' | 'bottles' | 'cans';
+export type RecycleType = 'paper' | 'plastic' | 'containers' | 'bottles' | 'cans' | 'battery';
 export type RecycleRequirement = Partial<Record<RecycleType, number>>;
 
 export type RecycleTipsType = {
@@ -23,6 +23,7 @@ export const RECYCLE_TYPE_LABELS: Record<RecycleType, string> = {
   containers: '紙容器',
   bottles: '寶特瓶',
   cans: '鐵鋁罐',
+  battery: '電池',
 };
 
 export function convertRecycleType(chinese: string): RecycleType {

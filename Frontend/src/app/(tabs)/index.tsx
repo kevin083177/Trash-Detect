@@ -305,6 +305,19 @@ export default function Index() {
     >
       <TouchableOpacity 
         ref={roomDecorationRef}
+        style={[styles.iconContainer, {top: 20, left: 20}]} 
+        onPress={() => router.push('/map')}
+        testID="room-decoration-button"
+      >
+        <Image
+          style={styles.icon}
+          source={require("@/assets/icons/map.png")}
+          resizeMode='contain'
+        />
+        <Text style={styles.iconText}>回收站點</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        ref={roomDecorationRef}
         style={[styles.iconContainer, {top: 20, right: 20}]} 
         onPress={() => router.push('/backpack')}
         testID="room-decoration-button"
@@ -333,7 +346,6 @@ export default function Index() {
           ref={dogRef}
           source={require('@/assets/images/walking.json')}
           size={180}
-          initialX={width / 2}
           initialY={height - 220}
           autoWalk={true}
           paused={isTutorialVisible}
