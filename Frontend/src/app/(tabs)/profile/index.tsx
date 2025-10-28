@@ -11,7 +11,6 @@ import RecyclePieChart from '@/components/profile/RecyclePieChart';
 import PentagonChart from '@/components/profile/PentagonChart';
 import { HelpModal } from '@/components/profile/HelpModal';
 import { RecycleValues } from '@/interface/Recycle';
-import { clearRoom } from '@/utils/roomStorage';
 import { asyncGet } from '@/utils/fetch';
 import { feedback_api } from '@/api/api';
 import * as ImagePicker from 'expo-image-picker';
@@ -43,8 +42,6 @@ export default function Profile() {
   } = useUser();
 
   const { logout } = useAuth();
-
-  const { resetTutorial } = useTutorial();
 
   useEffect(() => {
     const getToken = async () => {
@@ -95,7 +92,7 @@ export default function Profile() {
   const handleLogout = () => {
     Alert.alert(
       '確定要登出嗎？',
-      '登出將會遺失所有的佈置設定',
+      '變更帳號將會遺失所有設定',
       [
         {
           text: '取消',
@@ -106,8 +103,6 @@ export default function Profile() {
           onPress: async () => {
             try {
               await logout();
-              await clearRoom();
-              await resetTutorial();
               clearUser();
             } catch (error) {
               console.error('Logout failed:', error);

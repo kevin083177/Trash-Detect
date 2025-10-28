@@ -13,6 +13,7 @@ from .image_model import Image
 from .daily_trash_model import DailyTrash
 from .feedback_model import Feedback
 from .voucher_model import Voucher, VoucherType
+from .station_model import Station, StationType, RecycleType
 
 __all__ = [
     'User',
@@ -29,5 +30,6 @@ __all__ = [
     'Image',
     'DailyTrash',
     'Feedback',
-    'Voucher', 'VoucherType'
+    'Voucher', 'VoucherType',
+    'Station', 'RecycleType', 'StationType'
 ]

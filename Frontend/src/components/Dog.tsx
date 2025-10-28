@@ -32,6 +32,8 @@ export const Dog = forwardRef<View, DogProps>(({
 
   const currentAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
   const targetXRef = useRef<number | null>(null);
+  
+  const prevPausedRef = useRef(paused);
 
   const boundaries = useMemo(() => {
     const maxX = width - size - 20;
@@ -136,34 +138,29 @@ export const Dog = forwardRef<View, DogProps>(({
     });
   }, [translateX, clearIdleTimer]);
 
-  const resumeMovement = useCallback(() => {
-    const pending = targetXRef.current;
-    if (typeof pending === 'number' && !paused) {
-      startWalking(pending);
-    } else {
-      setDogState('idle');
-      if (autoWalk && !paused) {
-        setTimeout(() => {
-          startWalking();
-        }, generateRandomIdleDuration());
-      }
-    }
-  }, [startWalking, autoWalk, paused, generateRandomIdleDuration]);
-
   useEffect(() => {
+    if (prevPausedRef.current === paused) return;
+    
+    prevPausedRef.current = paused;
+    
     if (paused) {
       clearIdleTimer();
       if (dogState === 'walking') {
-          pauseMovement();
+        pauseMovement();
       } else if (dogState === 'idle') {
-          setDogState('paused');
+        setDogState('paused');
       }
     } else {
-      if (dogState === 'paused') {
-        resumeMovement();
-      }
+      setTimeout(() => {
+        setDogState((currentState) => {
+          if (currentState === 'paused') {
+            return 'idle';
+          }
+          return currentState;
+        });
+      }, 0);
     }
-  }, [paused, dogState, pauseMovement, resumeMovement, clearIdleTimer]);
+  }, [paused, pauseMovement, clearIdleTimer]);
 
   useEffect(() => {
     if (autoWalk && dogState === 'idle' && !paused) {

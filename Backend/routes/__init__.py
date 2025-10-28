@@ -13,6 +13,7 @@ from .question_route import question_blueprint
 from .question_category_route import question_category_blueprint
 from .feedback_route import feedback_blueprint
 from .voucher_route import voucher_blueprint
+from .station_route import station_blueprint
 
 api_prefix = '/api/v1/'
 
@@ -30,3 +31,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(question_category_blueprint, url_prefix=f"{api_prefix}question/category")
     app.register_blueprint(feedback_blueprint, url_prefix=f"{api_prefix}feedback")
     app.register_blueprint(voucher_blueprint, url_prefix=f"{api_prefix}voucher")
+    app.register_blueprint(station_blueprint, url_prefix=f"{api_prefix}station")

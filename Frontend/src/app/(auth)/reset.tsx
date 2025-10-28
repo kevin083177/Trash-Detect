@@ -3,7 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import PasswordInput from '@/components/auth/PasswordInput';
-import { Ionicons } from '@expo/vector-icons';
+import Logo from '@/components/auth/Logo';
 
 export default function ResetPassword() {
   const { reset_token, email } = useLocalSearchParams<{ reset_token: string; email: string }>();
@@ -73,17 +73,20 @@ export default function ResetPassword() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Ionicons name="lock-open" size={80} color="#007AFF" style={styles.icon} />
-        
+      <View style={styles.header}>
         <Text style={styles.title}>重設密碼</Text>
         
         <Text style={styles.subtitle}>
-          請為 {email} 設定新的密碼
+          請為該帳號重新設定密碼{'\n'}
+          <Text style={styles.emailText}>{email}</Text>
         </Text>
-        
+      </View>
+
+      <View style={styles.formContainer}>
         <PasswordInput
-          placeholder="新密碼"
+          label="新密碼"
+          icon="lock-closed-outline"
+          placeholder="請輸入您的新密碼"
           value={newPassword}
           onChangeText={(text) => {
             setNewPassword(text);
@@ -95,7 +98,9 @@ export default function ResetPassword() {
         />
         
         <PasswordInput
-          placeholder="確認新密碼"
+          label="確認新密碼"
+          icon='shield-outline'
+          placeholder="請再次輸入您的新密碼"
           value={confirmPassword}
           onChangeText={(text) => {
             setConfirmPassword(text);
@@ -110,13 +115,6 @@ export default function ResetPassword() {
           <Text style={styles.errorMessage}>{errorMessage}</Text>
         }
 
-        {success && 
-          <Text style={styles.successMessage}>
-            {success}
-            {'\n'}正在跳轉到登入頁面...
-          </Text>
-        }
-
         <TouchableOpacity 
           style={[
             styles.button, 
@@ -126,10 +124,11 @@ export default function ResetPassword() {
           disabled={isLoading || !!success}
         >
           <Text style={styles.buttonText}>
-            {isLoading ? '重設中...' : success ? '重設成功' : '重設密碼'}
+            {isLoading ? '發送中...' : success ? '密碼重設成功' : '確認重設密碼'}
           </Text>
         </TouchableOpacity>
       </View>
+      <Logo />
     </View>
   );
 }
@@ -137,56 +136,59 @@ export default function ResetPassword() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  icon: {
-    marginBottom: 30,
+  header: {
+    backgroundColor: '#1C1C1C',
+    paddingTop: 48,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-    textAlign: 'center',
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
+    fontSize: 15,
+    color: '#D1D5DB',
+    lineHeight: 22,
+  },
+  emailText: {
+    color: '#60A5FA',
+    fontWeight: '600',
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32,
   },
   errorMessage: {
     color: '#DC3545',
+    fontSize: 14,
+    marginBottom: 16,
     textAlign: 'center',
-    marginBottom: 15,
-  },
-  successMessage: {
-    color: '#28A745',
-    textAlign: 'center',
-    marginBottom: 15,
-    lineHeight: 20,
   },
   button: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    height: 50,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#999',
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
   },
   buttonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

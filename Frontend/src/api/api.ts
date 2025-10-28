@@ -18,6 +18,7 @@ const question_url = `${api_url}/question`;
 const question_category_url = `${api_url}/question/category`;
 const feedback_url = `${api_url}/feedback`
 const voucher_url = `${api_url}/voucher`
+const station_url = `${api_url}/station`
 
 export const auth_api = {
     login: `${auth_url}/login`,
@@ -110,15 +111,20 @@ export const user_level_api = {
     get_user_level: `${user_level_url}/`,
     update_level: `${user_level_url}/update_level`,
     update_completed_chapter: `${user_level_url}/update_completed`
-}
+} as const;
 
 export const feedback_api = {
     create_feedback: `${feedback_url}/add`,
     get_user_feedbacks: `${feedback_url}/user`
-}
+} as const;
 
 export const voucher_api = {
     get_voucher: `${voucher_url}/types`,
     redeem: `${voucher_url}/redeem`,
     get_user_redeem: `${voucher_url}/my`
+} as const;
+
+export const station_api = {
+    get_stations: `${station_url}/`,
+    get_station_types: `${station_url}/types/`,
 }

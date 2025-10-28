@@ -20,7 +20,9 @@ class DatabaseService:
             'daily_trash': self.db.daily_trash,
             'feedbacks': self.db.feedbacks,
             'voucher_types': self.db.voucher_types,
-            'vouchers': self.db.vouchers
+            'vouchers': self.db.vouchers,
+            'station_types': self.db.station_types,
+            'stations': self.db.stations
         }
     
     def get_collection(self, collection_name):

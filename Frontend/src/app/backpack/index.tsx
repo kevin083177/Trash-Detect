@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Alert, Text, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Alert, Text, TouchableOpacity, Dimensions, Animated, Easing, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Product, ProductCategory } from '@/interface/Product';
 import CategorySelector from '@/components/backpack/CategorySelector';
@@ -9,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useProduct } from '@/hooks/product';
 import { saveRoom, loadRoom, ItemTransform } from '@/utils/roomStorage';
+import { captureRef } from 'react-native-view-shot';
+import Share from 'react-native-share';
 
 const { height } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
@@ -23,6 +25,10 @@ export default function Backpack() {
 
   const [isPanelExpanded, setIsPanelExpanded] = useState<boolean>(false);
   const panelTranslateY = useRef(new Animated.Value(PRODUCT_PANEL_HEIGHT)).current;
+  
+  const roomPreviewRef = useRef<View>(null);
+  
+  const [showWatermark, setShowWatermark] = useState<boolean>(false);
 
   const {
     purchasedProductsByType,
@@ -59,6 +65,53 @@ export default function Backpack() {
     } else {
       await saveRoom(selectedRoomItems, itemTransforms);
       router.back();
+    }
+  };
+
+  const handleShareRoom = async () => {
+    try {
+      if (!roomPreviewRef.current) {
+        Alert.alert('錯誤', '無法獲取房間預覽');
+        return;
+      }
+
+      if (editingCategory) {
+        Alert.alert('提示', '請先完成當前商品的編輯');
+        return;
+      }
+
+      setShowWatermark(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const uri = await captureRef(roomPreviewRef, {
+        format: 'png',
+        quality: 1,
+      });
+
+      const shareOptions = {
+        title: '快來看看我的設計！',
+        message: '我透過 Garbi App 設計出好看的設計，快來跟我一起邊玩邊做環保吧',
+        url: Platform.OS === 'android' ? `file://${uri}` : uri,
+        type: 'image/png',
+        failOnCancel: false,
+      };
+
+      try {
+        await Share.open(shareOptions);
+        setShowWatermark(false);
+        
+      } catch (error: any) {
+        setShowWatermark(false);
+        if (error.message && error.message.includes('User did not share')) {
+        } else {
+          console.error('分享錯誤:', error);
+          Alert.alert('錯誤', error.message || '分享失敗，請稍後再試');
+        }
+      }
+    } catch (error) {
+      console.error('截圖失敗:', error);
+      Alert.alert('錯誤', '截圖失敗，請稍後再試');
+      setShowWatermark(false);
     }
   };
 
@@ -160,10 +213,14 @@ export default function Backpack() {
         <View style={styles.titleContainer}>
           <Text style={styles.titleText}>房間預覽</Text>
         </View>
+        <TouchableOpacity style={styles.shareButton} onPress={() => handleShareRoom()}>
+          <Ionicons name="share-outline" size={24} color={"#ffffff"}></Ionicons>
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.roomPreviewContainer, { height: roomPreviewHeight }]}>
         <RoomPreview
+          ref={roomPreviewRef}
           selectedItems={selectedRoomItems}
           onItemPress={handleRemoveFromRoom}
           editingCategory={editingCategory}
@@ -171,6 +228,7 @@ export default function Backpack() {
           itemTransforms={itemTransforms}
           onTransformUpdate={handleTransformUpdate}
           containerHeight={roomPreviewHeight}
+          showWatermark={showWatermark}
         />
       </View>
 
@@ -226,9 +284,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     top: 16,
     left: 16,
-    zIndex: 100
+    right: 16,
+    zIndex: 100,
+    justifyContent: 'space-between',
   },
   backButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    width: 50,
+    height: 50,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareButton: {
     backgroundColor: "rgba(0, 0, 0, 0.85)",
     width: 50,
     height: 50,
@@ -239,7 +307,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     backgroundColor: "rgba(0, 0, 0, 0.85)",
     borderRadius: 20,
-    marginLeft: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -248,7 +315,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 40,
     paddingVertical: 12
   },
   roomPreviewContainer: {

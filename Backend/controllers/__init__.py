@@ -12,6 +12,7 @@ from .daily_trash_controller import DailyTrashController
 from .feedback_controller import FeedbackController
 from .voucher_controller import VoucherController
 from .system_controller import SystemController
+from .station_controller import StationController
 
 __all__ = [
     'AuthController',
@@ -28,5 +29,6 @@ __all__ = [
     'DailyTrashController',
     'FeedbackController',
     'VoucherController',
-    'SystemController'
+    'SystemController',
+    'StationController'
 ]

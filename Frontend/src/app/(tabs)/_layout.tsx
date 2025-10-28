@@ -33,11 +33,13 @@ function TabsWithTutorial() {
       fetchUserProfile()
         .then((userData) => {
           const hasUsername = !!(userData?.username);
+          const userEmail = userData?.email || '';
           setTimeout(() => {
-            checkAndShowTutorial(userData?.username || null, hasUsername);
+            checkAndShowTutorial(userData?.username || null, hasUsername, userEmail);
           }, 500);
         })
         .catch((error) => {
+          console.warn('Failed to fetch user profile:', error);
           setTimeout(() => {
             checkAndShowTutorial(null, false);
           }, 500);
