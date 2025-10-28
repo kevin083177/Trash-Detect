@@ -133,7 +133,7 @@ export const Users: React.FC = () => {
           value={stats.activeThisWeek}
           icon={<IoTrendingUp size={18}/>}
           color="#8b5cf6"
-          subtitle="近7天內有登入的使用"
+          subtitle="近7天內有登入的使用者"
           isLoading={loading}
         />
       </div>
