@@ -197,13 +197,13 @@ class DailyTrashService(DatabaseService):
             total_days = len(all_trash)
             
             totals = {
-                "plastic": sum(stat.get("plastic") for stat in all_trash),
-                "paper": sum(stat.get("paper") for stat in all_trash),
-                "cans": sum(stat.get("cans") for stat in all_trash),
-                "bottles": sum(stat.get("bottles") for stat in all_trash),
-                "containers": sum(stat.get("containers") for stat in all_trash),
-                "active_users": sum(stat.get("active_users") for stat in all_trash),
-                "new_registered": sum(stat.get("new_registered") for stat in all_trash)
+                "plastic": sum(stat.get("plastic", 0) for stat in all_trash),
+                "paper": sum(stat.get("paper", 0) for stat in all_trash),
+                "cans": sum(stat.get("cans", 0) for stat in all_trash),
+                "bottles": sum(stat.get("bottles", 0) for stat in all_trash),
+                "containers": sum(stat.get("containers", 0) for stat in all_trash),
+                "active_users": sum(stat.get("active_users", 0) for stat in all_trash),
+                "new_registered": sum(stat.get("new_registered", 0) for stat in all_trash)
             }
             
             date_range = {
