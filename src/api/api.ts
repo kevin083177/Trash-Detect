@@ -13,6 +13,7 @@ const QUESTION_CATEGORY_URL = `${QUESTION_URL}/category`;
 const FEEDBACK_URL = `${API_BASE_URL}${API_VERSION}/feedback`;
 const VOUCHER_URL = `${API_BASE_URL}${API_VERSION}/voucher/types`;
 const LEVEL_URL = `${API_BASE_URL}${API_VERSION}/level`;
+const STATION_URL = `${API_BASE_URL}${API_VERSION}/station`;
 
 export const admin_api = {
     get_all_users_info: `${ADMIN_URL}/users/all`,
@@ -80,4 +81,15 @@ export const level_api = {
     add: `${LEVEL_URL}/add_level`,
     delete: `${LEVEL_URL}/delete_level`,
     update: `${LEVEL_URL}/update_level`
+}
+
+export const station_api = {
+    all: `${STATION_URL}/`,
+    add: `${STATION_URL}/create`,
+    delete: `${STATION_URL}/delete`,
+    update: `${STATION_URL}/update`,
+    all_types: `${STATION_URL}/types`,
+    add_types: `${STATION_URL}/types/create`,
+    delete_types: `${STATION_URL}/types/delete`,
+    update_types: `${STATION_URL}/types/update`
 }

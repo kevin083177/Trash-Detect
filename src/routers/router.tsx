@@ -11,6 +11,7 @@ import { Question } from "../page/Question";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { VoucherPage } from "../page/Voucher";
 import { LevelPage } from "../page/Level";
+import { MapsPage } from "../page/Maps";
 
 export const router = createHashRouter([
   { path: "login", element: <Login /> },
@@ -87,6 +88,14 @@ export const router = createHashRouter([
         element: (
           <ProtectedRoute>
             <VoucherPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "maps",
+        element: (
+          <ProtectedRoute>
+            <MapsPage />
           </ProtectedRoute>
         )
       }

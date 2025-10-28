@@ -7,6 +7,7 @@ import { FaChevronDown } from "react-icons/fa6";
 
 const routes = [
   { path: '/', name: '首頁' },
+  { path: '/maps', name: '站點管理'},
   { path: '/feedback', name: '訊息管理' },
   { path: '/users', name: '使用者管理' },
   { path: '/theme', name: '商品管理' },
@@ -18,7 +19,7 @@ const routes = [
       { path: '/game', name: '題目管理' },
       { path: '/levels', name: '關卡管理' }
     ]
-  }
+  },
 ];
 
 export const Header: React.FC<{className?: string}> = ({ className = "" }) => {
