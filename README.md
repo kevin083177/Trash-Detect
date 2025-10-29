@@ -1,5 +1,6 @@
 # Garbi App
 一款結合 AI 垃圾識別與環保教育的互動式應用程式
+
 <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Logo" width="300" height="300">
 
 ## 後端 (Backend)
