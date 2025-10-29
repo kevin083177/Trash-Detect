@@ -6,8 +6,7 @@ import { ProductCard } from "../components/product/ProductCard";
 import type { Theme } from "../interfaces/theme";
 import { asyncDelete } from "../utils/fetch";
 import { EditThemeModal } from "../components/product/EditThemeModal";
-import { EditProductModal } from "../components/product/EditProductModal";
-import { AddProductModal } from "../components/product/AddProductModal";
+import { ProductModal } from "../components/product/ProductModal";
 import { MdEdit } from "react-icons/md";
 import { BiImageAdd } from "react-icons/bi";
 import { product_api } from "../api/api";
@@ -24,9 +23,8 @@ export const ProductPage: React.FC = () => {
     const [themeInfo, setThemeInfo] = useState<Theme | null>(null);
     
     const [showEditThemeModal, setShowEditThemeModal] = useState(false);
-    const [showEditProductModal, setShowEditProductModal] = useState(false);
+    const [showProductModal, setShowProductModal] = useState(false);
     const [editProduct, setEditProduct] = useState<Product | null>(null);
-    const [showAddModal, setShowAddModal] = useState(false);
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -60,16 +58,26 @@ export const ProductPage: React.FC = () => {
         setThemeInfo(updatedTheme);
     };
 
-    const handleProductSave = (updatedProduct: Product) => {
-        setProducts(products.map(p => p._id === updatedProduct._id ? updatedProduct : p));
-    };
-
-    const handleAddProductSave = (newProduct: Product) => {
-        setProducts(prevProducts => [...prevProducts, newProduct]);
+    const handleProductSave = (savedProduct: Product) => {
+        if (editProduct) {
+            setProducts(products.map(p => p._id === savedProduct._id ? savedProduct : p));
+        } else {
+            setProducts(prevProducts => [...prevProducts, savedProduct]);
+        }
     };
 
     const handleThemeClick = () => {
         setShowEditThemeModal(true);
+    };
+
+    const handleAddProduct = () => {
+        setEditProduct(null);
+        setShowProductModal(true);
+    };
+
+    const handleEditProduct = (product: Product) => {
+        setEditProduct(product);
+        setShowProductModal(true);
     };
 
     if (loading) {
@@ -121,7 +129,7 @@ export const ProductPage: React.FC = () => {
                     <div className="products-header">
                         <h2 className="products-section-title">商品列表</h2>
                         {products.length > 0 && (
-                            <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
+                            <button className="add-product-btn" onClick={handleAddProduct}>
                                 <BiImageAdd size={20}/>
                                 <p>新增商品</p>
                             </button>
@@ -130,7 +138,7 @@ export const ProductPage: React.FC = () => {
                     {products.length === 0 && (
                         <div className="empty-products">
                             <p>這個主題還沒有商品</p>
-                            <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
+                            <button className="add-product-btn" onClick={handleAddProduct}>
                                 新增第一個商品
                             </button>
                         </div>
@@ -145,10 +153,7 @@ export const ProductPage: React.FC = () => {
                                     price={product.price}
                                     type={product.type}
                                     image={product.image?.url || ''}
-                                    onEdit={() => {
-                                        setEditProduct(product);
-                                        setShowEditProductModal(true);
-                                    }}
+                                    onEdit={() => handleEditProduct(product)}
                                     onDelete={async () => {
                                         if (window.confirm("確定要刪除這個商品嗎？")) {
                                             try {
@@ -176,12 +181,16 @@ export const ProductPage: React.FC = () => {
                 </div>
             </div>
 
-            <AddProductModal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
-                onSave={handleAddProductSave}
+            <ProductModal
+                isOpen={showProductModal}
+                onClose={() => {
+                    setShowProductModal(false);
+                    setEditProduct(null);
+                }}
+                onSave={handleProductSave}
                 themeName={themeInfo.name}
                 existingProducts={products}
+                product={editProduct}
             />
 
             <EditThemeModal
@@ -189,14 +198,6 @@ export const ProductPage: React.FC = () => {
                 onClose={() => setShowEditThemeModal(false)}
                 onSave={handleThemeSave}
                 initialData={themeInfo}
-            />
-
-            <EditProductModal
-                isOpen={showEditProductModal}
-                onClose={() => setShowEditProductModal(false)}
-                onSave={handleProductSave}
-                product={editProduct}
-                existingProducts={products}
             />
         </div>
     );

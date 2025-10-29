@@ -3,8 +3,7 @@ import { asyncGet } from "../utils/fetch";
 import { voucher_api } from "../api/api";
 import { type Voucher } from "../interfaces/vocher";
 import '../styles/Voucher.css';
-import { AddVoucherModal } from "../components/voucher/AddVoucherModal";
-import { EditVoucherModal } from "../components/voucher/EditVoucherModal";
+import { VoucherModal } from "../components/voucher/VoucherModal";
 import { VoucherCard } from "../components/voucher/VoucherCard";
 import { useNotification } from "../context/NotificationContext";
 import { IoTicket } from "react-icons/io5"; 
@@ -12,8 +11,7 @@ import { FaSpinner } from "react-icons/fa";
 
 export const VoucherPage: React.FC = () => {
     const [search, setSearch] = useState("");
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
     const [loading, setLoading] = useState(true);
@@ -54,20 +52,21 @@ export const VoucherPage: React.FC = () => {
     }, []);
 
     const handleOpenAddModal = () => {
-        setShowAddModal(true);
+        setSelectedVoucher(null);
+        setShowVoucherModal(true);
     };
 
-    const handleVoucherSave = (newVoucher: Voucher) => {
-        setVouchers(prev => [...prev, newVoucher]);
+    const handleVoucherSave = (savedVoucher: Voucher) => {
+        if (selectedVoucher) {
+            setVouchers(prev => prev.map(v => v._id === savedVoucher._id ? savedVoucher : v));
+        } else {
+            setVouchers(prev => [...prev, savedVoucher]);
+        }
     };
 
     const handleVoucherEdit = (voucher: Voucher) => {
         setSelectedVoucher(voucher);
-        setShowEditModal(true);
-    };
-
-    const handleVoucherUpdate = (updatedVoucher: Voucher) => {
-        setVouchers(prev => prev.map(v => v._id === updatedVoucher._id ? updatedVoucher : v));
+        setShowVoucherModal(true);
     };
 
     const handleVoucherDelete = (voucherId: string) => {
@@ -131,16 +130,13 @@ export const VoucherPage: React.FC = () => {
                 </div>
             )}
 
-            <AddVoucherModal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
+            <VoucherModal
+                isOpen={showVoucherModal}
+                onClose={() => {
+                    setShowVoucherModal(false);
+                    setSelectedVoucher(null);
+                }}
                 onSave={handleVoucherSave}
-            />
-
-            <EditVoucherModal
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                onSave={handleVoucherUpdate}
                 onDelete={handleVoucherDelete}
                 voucher={selectedVoucher}
             />

@@ -66,9 +66,11 @@
 .add-theme-modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 32px 40px 0;
   margin-bottom: 32px;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .add-theme-modal-header h3 {
@@ -124,9 +126,26 @@
   display: flex;
   gap: 40px;
   padding: 0 40px;
+  overflow-y: auto;
   flex: 1;
-  min-height: 0;
-  align-items: flex-start;
+  padding-bottom: 20px;
+}
+
+.add-theme-modal-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.add-theme-modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.add-theme-modal-card::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+}
+
+.add-theme-modal-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
 }
 
 .add-theme-modal-left {
@@ -349,64 +368,65 @@
 }
 
 .add-theme-modal-error {
-  color: #dc2626;
-  text-align: center;
-  font-size: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin: 0 40px;
+  font-size: 14px;
   font-weight: 600;
-  animation: errorFadeIn 0.3s ease;
-  padding: 20px 0px;
+  text-align: center;
+  animation: errorShake 0.4s ease;
 }
 
-@keyframes errorFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
   }
 }
 
 .add-theme-modal-actions {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  padding: 20px;
+  padding: 20px 40px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, transparent, #ffffff 10%);
 }
 
 .add-theme-modal-save-btn {
-  padding: 16px 32px;
+  padding: 16px 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
   border: none;
-  border-radius: 32px;
+  border-radius: 16px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 120px;
   letter-spacing: -0.01em;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  border: 2px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  min-width: 200px;
 }
 
 .add-theme-modal-save-btn:hover {
-  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
 .add-theme-modal-save-btn:active {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .add-theme-modal-save-btn:disabled {
   background: #9ca3af;
   color: #6b7280;
-  border: none;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -421,13 +441,16 @@
   .add-theme-modal-card {
     flex-direction: column;
     gap: 32px;
-    padding: 0 32px;
+    padding: 0 32px 20px;
   }
   
-  .add-theme-modal-header,
-  .add-theme-modal-actions {
+  .add-theme-modal-header {
     padding-left: 32px;
     padding-right: 32px;
+  }
+
+  .add-theme-modal-actions {
+    padding: 20px 32px;
   }
   
   .add-theme-modal-left {
@@ -459,14 +482,12 @@
   }
   
   .add-theme-modal-card {
-    padding: 0 24px;
+    padding: 0 24px 20px;
     overflow-y: auto;
   }
   
   .add-theme-modal-actions {
     padding: 24px;
-    flex-direction: column;
-    gap: 16px;
   }
   
   .add-theme-modal-save-btn {

@@ -66,9 +66,11 @@
 .edit-theme-modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 32px 40px 0;
   margin-bottom: 32px;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .edit-theme-modal-header h3 {
@@ -124,9 +126,26 @@
   display: flex;
   gap: 40px;
   padding: 0 40px;
+  overflow-y: auto;
   flex: 1;
-  min-height: 0;
-  align-items: flex-start;
+  padding-bottom: 20px;
+}
+
+.edit-theme-modal-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.edit-theme-modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.edit-theme-modal-card::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+}
+
+.edit-theme-modal-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
 }
 
 .edit-theme-modal-left {
@@ -326,30 +345,36 @@
 }
 
 .edit-theme-modal-error {
-  color: #dc2626;
-  text-align: center;
-  font-size: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin: 0 40px;
+  font-size: 14px;
   font-weight: 600;
-  animation: errorFadeIn 0.3s ease;
-  padding: 20px 0px;
+  text-align: center;
+  animation: errorShake 0.4s ease;
 }
 
-@keyframes errorFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
   }
 }
 
 .edit-theme-modal-actions {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  padding: 12px;
+  padding: 20px 40px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, transparent, #ffffff 10%);
 }
 
 .edit-theme-modal-delete-btn {

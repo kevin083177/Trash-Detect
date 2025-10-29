@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from "react";
-import "./styles/AddVoucherModal.css";
+import React, { useState, useEffect } from 'react';
+import './styles/VoucherModal.css';
 import { IoImagesSharp } from "react-icons/io5";
-import { asyncPost } from "../../utils/fetch";
-import { voucher_api } from "../../api/api";
-import { useNotification } from "../../context/NotificationContext";
-import type { Voucher } from "../../interfaces/vocher";
+import { asyncPost, asyncPut, asyncDelete } from '../../utils/fetch';
+import { voucher_api } from '../../api/api';
+import { useNotification } from '../../context/NotificationContext';
+import type { Voucher } from '../../interfaces/vocher';
 import { createPortal } from "react-dom";
 
-interface AddVoucherModalProps {
+interface VoucherModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (voucher: Voucher) => void;
+  onDelete?: (voucherId: string) => void;
+  voucher?: Voucher | null;
 }
 
-export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
+export const VoucherModal: React.FC<VoucherModalProps> = ({
   isOpen,
   onClose,
-  onSave
+  onSave,
+  onDelete,
+  voucher = null
 }) => {
+  const isEditMode = !!voucher;
+  
   const [formData, setFormData] = useState({
+    _id: '',
     name: "",
     description: "",
     price: 0,
@@ -34,17 +41,29 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        name: "",
-        description: "",
-        price: 0,
-        quantity: 0,
-        image: "",
-      });
+      if (isEditMode && voucher) {
+        setFormData({
+          _id: voucher._id,
+          name: voucher.name,
+          description: voucher.description,
+          price: voucher.price,
+          quantity: voucher.quantity,
+          image: voucher.image?.url || "",
+        });
+      } else {
+        setFormData({
+          _id: '',
+          name: "",
+          description: "",
+          price: 0,
+          quantity: 0,
+          image: "",
+        });
+      }
       setSelectedImageFile(null);
       setError('');
     }
-  }, [isOpen]);
+  }, [isOpen, voucher, isEditMode]);
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
@@ -62,12 +81,19 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
       return false;
     }
 
-    if (formData.quantity <= 0) {
-      setError('庫存數量必須大於0');
-      return false;
+    if (isEditMode) {
+      if (formData.quantity < 0) {
+        setError('庫存數量不能為負數');
+        return false;
+      }
+    } else {
+      if (formData.quantity <= 0) {
+        setError('庫存數量必須大於0');
+        return false;
+      }
     }
 
-    if (!selectedImageFile) {
+    if (!isEditMode && !selectedImageFile) {
       setError('請上傳電子票券圖片');
       return false;
     }
@@ -113,17 +139,31 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
       formDataToSend.append('description', formData.description);
       formDataToSend.append('price', formData.price.toString());
       formDataToSend.append('quantity', formData.quantity.toString());
-      formDataToSend.append('image', selectedImageFile!);
       
-      const response = await asyncPost(voucher_api.add, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formDataToSend
-      });
+      if (selectedImageFile) {
+        formDataToSend.append('image', selectedImageFile);
+      }
+
+      let response;
+      if (isEditMode) {
+        formDataToSend.append('voucher_type_id', formData._id);
+        response = await asyncPut(voucher_api.update, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataToSend
+        });
+      } else {
+        response = await asyncPost(voucher_api.add, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataToSend
+        });
+      }
       
       if (response.status === 200) {
-        const newVoucher: Voucher = {
+        const savedVoucher: Voucher = {
           _id: response.body._id,
           name: response.body.name,
           description: response.body.description,
@@ -132,22 +172,53 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
           image: response.body.image
         };
 
-        onSave(newVoucher);
+        onSave(savedVoucher);
         onClose();
-        showSuccess("新增電子票券成功");
+        showSuccess(isEditMode ? "更新電子票券成功" : "新增電子票券成功");
       } else {
-        showError(response.message || '新增電子票券失敗');
+        showError(response.message || (isEditMode ? '更新失敗' : '新增電子票券失敗'));
       }
     } catch (error) {
-      setError('新增電子票券時發生錯誤，請稍後再試');
-      showError("新增電子票券發生錯誤");
+      setError((isEditMode ? '更新' : '新增') + '電子票券時發生錯誤，請稍後再試');
+      showError((isEditMode ? "更新" : "新增") + "電子票券發生錯誤");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+    if (!isEditMode || !formData._id || !onDelete) return;
+
+    if (window.confirm(`確定要刪除「${formData.name}」嗎？此操作無法復原。`)) {
+      setIsLoading(true);
+      try {
+        const response = await asyncDelete(voucher_api.delete, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: {
+            voucher_type_id: formData._id
+          }
+        });
+        
+        if (response.status === 200) {
+          onDelete(formData._id);
+          showSuccess('票券刪除成功');
+          onClose();
+        } else {
+          showError(response.message || '刪除失敗');
+        }
+      } catch (error) {
+        showError('刪除票券時發生錯誤');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   const handleCancel = () => {
     setFormData({
+      _id: '',
       name: "",
       description: "",
       price: 0,
@@ -167,12 +238,12 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="add-voucher-modal-overlay" onClick={handleCancel}>
-      <div className="add-voucher-modal-wrapper" onClick={(e) => e.stopPropagation()}>
-        <div className="add-voucher-modal-header">
-          <h3>新增電子票券</h3>
+    <div className="voucher-modal-overlay" onClick={handleCancel}>
+      <div className="voucher-modal-wrapper" onClick={(e) => e.stopPropagation()}>
+        <div className="voucher-modal-header">
+          <h3>{isEditMode ? '編輯電子票券' : '新增電子票券'}</h3>
           <button
-            className="add-voucher-modal-close"
+            className="voucher-modal-close"
             onClick={handleCancel}
             disabled={isLoading}
           >
@@ -180,15 +251,15 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
           </button>
         </div>
         
-        <div className="add-voucher-modal-card">
-          <div className="add-voucher-modal-left">
-            <div className="add-voucher-modal-field">
+        <div className="voucher-modal-card">
+          <div className="voucher-modal-left">
+            <div className="voucher-modal-field">
               <label>票券圖片 <span className="required">*</span></label>
               {formData.image ? (
-                <div className="add-voucher-modal-image-container">
-                  <img src={formData.image} alt="預覽" className="add-voucher-modal-image" />
-                  <div className="add-voucher-modal-image-overlay">
-                    <div className="add-voucher-modal-change-icon">
+                <div className="voucher-modal-image-container">
+                  <img src={formData.image} alt="預覽" className="voucher-modal-image" />
+                  <div className="voucher-modal-image-overlay">
+                    <div className="voucher-modal-change-icon">
                       <IoImagesSharp />
                       <span>更換圖片</span>
                     </div>
@@ -197,13 +268,13 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="add-voucher-modal-image-input"
+                    className="voucher-modal-image-input"
                     disabled={isLoading}
                   />
                 </div>
               ) : (
-                <div className="add-voucher-modal-image-placeholder">
-                  <div className="add-voucher-modal-upload-icon">
+                <div className="voucher-modal-image-placeholder">
+                  <div className="voucher-modal-upload-icon">
                     <IoImagesSharp />
                   </div>
                   <label>上傳票券圖片</label>
@@ -216,13 +287,23 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
                 </div>
               )}
             </div>
+            
+            {isEditMode && (
+              <button
+                className="voucher-modal-delete-btn"
+                onClick={handleDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? '刪除中...' : '刪除票券'}
+              </button>
+            )}
           </div>
           
-          <div className="add-voucher-modal-right">
-            <div className="add-voucher-modal-field">
+          <div className="voucher-modal-right">
+            <div className="voucher-modal-field">
               <label>票券名稱 <span className="required">*</span></label>
               <input
-                className="add-voucher-modal-input"
+                className="voucher-modal-input"
                 placeholder="輸入票券名稱"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
@@ -231,10 +312,10 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
               />
             </div>
 
-            <div className="add-voucher-modal-field">
+            <div className="voucher-modal-field">
               <label>注意事項 <span className="required">*</span></label>
               <textarea
-                className="add-voucher-modal-textarea"
+                className="voucher-modal-textarea"
                 placeholder="輸入注意事項"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
@@ -244,11 +325,11 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
               />
             </div>
 
-            <div className="add-voucher-modal-row">
-              <div className="add-voucher-modal-field">
+            <div className="voucher-modal-row">
+              <div className="voucher-modal-field">
                 <label>狗狗幣 <span className="required">*</span></label>
                 <input
-                  className="add-voucher-modal-input"
+                  className="voucher-modal-input"
                   type="number"
                   placeholder="輸入狗狗幣"
                   min="1"
@@ -258,13 +339,13 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
                 />
               </div>
 
-              <div className="add-voucher-modal-field">
+              <div className="voucher-modal-field">
                 <label>庫存數量 <span className="required">*</span></label>
                 <input
-                  className="add-voucher-modal-input"
+                  className="voucher-modal-input"
                   type="number"
                   placeholder="輸入數量"
-                  min="1"
+                  min={isEditMode ? "0" : "1"}
                   value={formData.quantity}
                   onChange={(e) => handleInputChange('quantity', Number(e.target.value))}
                   disabled={isLoading}
@@ -275,18 +356,18 @@ export const AddVoucherModal: React.FC<AddVoucherModalProps> = ({
         </div>
         
         {error && (
-          <div className="add-voucher-modal-error">
+          <div className="voucher-modal-error">
             {error}
           </div>
         )}
 
-        <div className="add-voucher-modal-actions">
+        <div className="voucher-modal-actions">
           <button 
-            className="add-voucher-modal-save-btn" 
+            className="voucher-modal-save-btn" 
             onClick={handleSubmit}
             disabled={isLoading}
           >
-            {isLoading ? '新增中...' : '新增票券'}
+            {isLoading ? (isEditMode ? '更新中...' : '新增中...') : (isEditMode ? '儲存' : '新增票券')}
           </button>
         </div>
       </div>

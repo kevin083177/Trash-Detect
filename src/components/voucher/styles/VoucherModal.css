@@ -1,4 +1,4 @@
-.edit-voucher-modal-overlay {
+.voucher-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -25,7 +25,7 @@
   }
 }
 
-.edit-voucher-modal-wrapper {
+.voucher-modal-wrapper {
   background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
   border-radius: 28px;
   width: 800px;
@@ -42,7 +42,7 @@
   position: relative;
 }
 
-.edit-voucher-modal-wrapper::before {
+.voucher-modal-wrapper::before {
   content: '';
   position: absolute;
   top: 0;
@@ -63,16 +63,17 @@
   }
 }
 
-.edit-voucher-modal-header {
+.voucher-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   padding: 32px 40px 0;
   margin-bottom: 32px;
   position: relative;
+  flex-shrink: 0;
 }
 
-.edit-voucher-modal-header h3 {
+.voucher-modal-header h3 {
   font-size: 24px;
   font-weight: 600;
   color: #1C1C1C;
@@ -81,7 +82,7 @@
   position: relative;
 }
 
-.edit-voucher-modal-header h3::after {
+.voucher-modal-header h3::after {
   content: '';
   position: absolute;
   bottom: -8px;
@@ -92,7 +93,7 @@
   border-radius: 2px;
 }
 
-.edit-voucher-modal-close {
+.voucher-modal-close {
   background: rgba(148, 163, 184, 0.08);
   border: none;
   font-size: 20px;
@@ -108,29 +109,52 @@
   backdrop-filter: blur(8px);
 }
 
-.edit-voucher-modal-close:hover {
+.voucher-modal-close:hover {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
   transform: scale(1.05);
 }
 
-.edit-voucher-modal-card {
+.voucher-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voucher-modal-card {
   display: flex;
   gap: 40px;
   padding: 0 40px;
+  overflow-y: auto;
   flex: 1;
-  min-height: 0;
+  padding-bottom: 20px;
   align-items: flex-start;
 }
 
-.edit-voucher-modal-left {
+.voucher-modal-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.voucher-modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.voucher-modal-card::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+}
+
+.voucher-modal-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.voucher-modal-left {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   flex: 0 0 280px;
 }
 
-.edit-voucher-modal-right {
+.voucher-modal-right {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -138,13 +162,13 @@
   min-width: 0;
 }
 
-.edit-voucher-modal-field {
+.voucher-modal-field {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.edit-voucher-modal-field label {
+.voucher-modal-field label {
   font-weight: 600;
   font-size: 18px;
   color: #1C1C1C;
@@ -156,17 +180,17 @@
   font-weight: 700;
 }
 
-.edit-voucher-modal-image-container {
+.voucher-modal-image-container {
   position: relative;
   width: 100%;
   cursor: pointer;
 }
 
-.edit-voucher-modal-image-container:hover .edit-voucher-modal-image-overlay {
+.voucher-modal-image-container:hover .voucher-modal-image-overlay {
   opacity: 1;
 }
 
-.edit-voucher-modal-image-overlay {
+.voucher-modal-image-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -182,7 +206,7 @@
   pointer-events: none;
 }
 
-.edit-voucher-modal-image-input {
+.voucher-modal-image-input {
   position: absolute;
   top: 0;
   left: 0;
@@ -193,7 +217,7 @@
   z-index: 1;
 }
 
-.edit-voucher-modal-change-icon {
+.voucher-modal-change-icon {
   font-size: 32px;
   color: white;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -203,16 +227,36 @@
   gap: 8px;
 }
 
-.edit-voucher-modal-change-icon span {
+.voucher-modal-change-icon span {
   font-size: 14px;
   font-weight: 500;
 }
 
-.edit-voucher-modal-image {
+.voucher-modal-image-placeholder label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  margin: 0;
+}
+
+.voucher-modal-upload-icon {
+  font-size: 48px;
+  color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+.voucher-modal-image-placeholder:hover .voucher-modal-upload-icon {
+  color: #6366f1;
+}
+
+.voucher-modal-image {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 20px;
-  object-fit: contain;
+  object-fit: cover;
+  background: #f1f5f9;
+  border: 2px solid rgba(148, 163, 184, 0.1);
   box-shadow: 
     0 20px 40px rgba(15, 23, 42, 0.06),
     0 8px 16px rgba(15, 23, 42, 0.04);
@@ -221,15 +265,48 @@
   overflow: hidden;
 }
 
-.edit-voucher-modal-image:hover {
+.voucher-modal-image:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 
     0 32px 64px rgba(15, 23, 42, 0.1),
     0 16px 32px rgba(15, 23, 42, 0.06);
 }
 
-.edit-voucher-modal-input,
-.edit-voucher-modal-textarea {
+.voucher-modal-image-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  border: 3px dashed #cbd5e1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  flex-direction: column;
+  gap: 16px;
+  background: #f9fafb;
+}
+
+.voucher-modal-image-placeholder:hover {
+  background: #e2e8f0;
+  border-color: #667eea;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+}
+
+.voucher-modal-image-placeholder input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.voucher-modal-input,
+.voucher-modal-textarea {
   width: 100%;
   padding: 18px 24px;
   font-size: 16px;
@@ -244,8 +321,8 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
-.edit-voucher-modal-input:focus,
-.edit-voucher-modal-textarea:focus {
+.voucher-modal-input:focus,
+.voucher-modal-textarea:focus {
   outline: none;
   border-color: #6366f1;
   background: rgba(255, 255, 255, 0.95);
@@ -255,24 +332,30 @@
   transform: translateY(-2px);
 }
 
-.edit-voucher-modal-input:hover,
-.edit-voucher-modal-textarea:hover {
+.voucher-modal-input:hover,
+.voucher-modal-textarea:hover {
   border-color: rgba(99, 102, 241, 0.4);
   transform: translateY(-1px);
 }
 
-.edit-voucher-modal-input::placeholder,
-.edit-voucher-modal-textarea::placeholder {
+.voucher-modal-input::placeholder,
+.voucher-modal-textarea::placeholder {
   color: #9ca3af;
   font-weight: 400;
 }
 
-.edit-voucher-modal-input {
+.voucher-modal-input {
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
-.edit-voucher-modal-textarea {
+.voucher-modal-input:disabled,
+.voucher-modal-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.voucher-modal-textarea {
   height: 120px;
   resize: none;
   min-height: 100px;
@@ -280,9 +363,29 @@
   line-height: 1.6;
 }
 
-.edit-voucher-modal-delete-btn {
+.voucher-modal-input::-webkit-outer-spin-button,
+.voucher-modal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.voucher-modal-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.voucher-modal-row {
+  display: flex;
+  gap: 20px;
+}
+
+.voucher-modal-row .voucher-modal-field {
+  flex: 1;
+}
+
+.voucher-modal-delete-btn {
   color: rgb(196, 35, 35);
   border: 2px solid rgb(196, 35, 35);
+  background: transparent;
   padding: 12px;
   border-radius: 32px;
   font-size: 15px;
@@ -293,18 +396,18 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.edit-voucher-modal-delete-btn:active {
+.voucher-modal-delete-btn:active {
   transform: translateY(0) scale(1);
 }
 
-.edit-voucher-modal-delete-btn:hover {
+.voucher-modal-delete-btn:hover {
   background: rgb(196, 35, 35);
   color: white;
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 8px 24px rgba(241, 99, 99, 0.3);
 }
 
-.edit-voucher-modal-delete-btn:disabled {
+.voucher-modal-delete-btn:disabled {
   background: #9ca3af;
   border: none;
   color: #6b7280;
@@ -313,53 +416,41 @@
   box-shadow: none;
 }
 
-.edit-voucher-modal-input::-webkit-outer-spin-button,
-.edit-voucher-modal-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.edit-voucher-modal-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-.edit-voucher-modal-row {
-  display: flex;
-  gap: 20px;
-}
-
-.edit-voucher-modal-row .edit-voucher-modal-field {
-  flex: 1;
-}
-
-.edit-voucher-modal-error {
-  color: #dc2626;
-  text-align: center;
-  font-size: 16px;
+.voucher-modal-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin: 0 40px;
+  font-size: 14px;
   font-weight: 600;
-  animation: errorFadeIn 0.3s ease;
-  padding: 20px 0px;
+  text-align: center;
+  animation: errorShake 0.4s ease;
 }
 
-@keyframes errorFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
   }
 }
 
-.edit-voucher-modal-actions {
+.voucher-modal-actions {
   display: flex;
   justify-content: center;
   gap: 16px;
-  padding: 20px;
+  padding: 20px 40px;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, transparent, #ffffff 10%);
 }
 
-.edit-voucher-modal-save-btn {
+.voucher-modal-save-btn {
   padding: 16px 32px;
   border: none;
   border-radius: 32px;
@@ -377,17 +468,17 @@
   border: 2px solid rgba(99, 102, 241, 0.2);
 }
 
-.edit-voucher-modal-save-btn:hover {
+.voucher-modal-save-btn:hover {
   background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
-.edit-voucher-modal-save-btn:active {
+.voucher-modal-save-btn:active {
   transform: translateY(0) scale(1);
 }
 
-.edit-voucher-modal-save-btn:disabled {
+.voucher-modal-save-btn:disabled {
   background: #9ca3af;
   color: #6b7280;
   cursor: not-allowed;
@@ -396,71 +487,81 @@
 }
 
 @media (max-width: 768px) {
-  .edit-voucher-modal-wrapper {
+  .voucher-modal-wrapper {
     width: 95vw;
     max-height: 95vh;
   }
   
-  .edit-voucher-modal-card {
+  .voucher-modal-card {
     flex-direction: column;
     gap: 32px;
+    padding: 0 32px 20px;
+  }
+  
+  .voucher-modal-header {
+    padding: 24px 32px 0;
+    margin-bottom: 24px;
+  }
+  
+  .voucher-modal-actions {
+    padding: 20px 32px;
+  }
+  
+  .voucher-modal-error {
     padding: 0 32px;
   }
   
-  .edit-voucher-modal-header,
-  .edit-voucher-modal-actions {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-  
-  .edit-voucher-modal-left {
+  .voucher-modal-left {
     flex: none;
     align-items: center;
   }
   
-  .edit-voucher-modal-image {
+  .voucher-modal-image,
+  .voucher-modal-image-placeholder {
     width: 100%;
     max-width: 300px;
   }
 
-  .edit-voucher-modal-row {
+  .voucher-modal-row {
     flex-direction: column;
     gap: 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .edit-voucher-modal-wrapper {
+  .voucher-modal-wrapper {
     width: 100vw;
     height: 100vh;
     border-radius: 0;
     max-height: none;
   }
   
-  .edit-voucher-modal-header {
+  .voucher-modal-header {
     padding: 24px 24px 0;
   }
   
-  .edit-voucher-modal-header h3 {
+  .voucher-modal-header h3 {
     font-size: 22px;
   }
   
-  .edit-voucher-modal-card {
+  .voucher-modal-card {
+    padding: 0 24px 20px;
+  }
+  
+  .voucher-modal-actions {
+    padding: 20px 24px;
+  }
+  
+  .voucher-modal-error {
     padding: 0 24px;
-    overflow-y: auto;
   }
   
-  .edit-voucher-modal-actions {
-    padding: 24px;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .edit-voucher-modal-save-btn {
+  .voucher-modal-save-btn {
     width: 100%;
   }
   
-  .edit-voucher-modal-image {
+  .voucher-modal-image,
+  .voucher-modal-image-placeholder {
     max-width: 240px;
   }
 }

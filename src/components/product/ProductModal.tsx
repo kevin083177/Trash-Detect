@@ -1,28 +1,33 @@
-import React, { useState } from "react";
-import './styles/AddProductModal.css';
+import React, { useState, useEffect } from 'react';
+import './styles/ProductModal.css';
 import { PRODUCT_TYPE_LABELS, type Product, type ProductType } from '../../interfaces/product';
 import { IoImagesSharp } from "react-icons/io5";
-import { asyncPost } from "../../utils/fetch";
-import { product_api } from "../../api/api";
-import { useNotification } from "../../context/NotificationContext";
+import { asyncPost, asyncPut } from '../../utils/fetch';
+import { product_api } from '../../api/api';
+import { useNotification } from '../../context/NotificationContext';
 import { createPortal } from "react-dom";
 
-interface AddProductModalProps {
+interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (product: Product) => void;
   themeName: string;
   existingProducts?: Product[];
+  product?: Product | null;
 }
 
-export const AddProductModal: React.FC<AddProductModalProps> = ({
+export const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onClose,
   onSave,
   themeName,
-  existingProducts = []
+  existingProducts = [],
+  product = null
 }) => {
+  const isEditMode = !!product;
+  
   const [formData, setFormData] = useState({
+    _id: '',
     name: "",
     price: 0,
     theme: themeName,
@@ -37,10 +42,39 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
   const { showError, showSuccess } = useNotification();
 
+  useEffect(() => {
+    if (isOpen) {
+      if (isEditMode && product) {
+        setFormData({
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          theme: product.theme || themeName,
+          type: product.type,
+          description: product.description,
+          image: product.image?.url || "",
+        });
+      } else {
+        setFormData({
+          _id: '',
+          name: "",
+          price: 0,
+          theme: themeName,
+          type: "",
+          description: "",
+          image: "",
+        });
+      }
+      setSelectedImageFile(null);
+      setError('');
+    }
+  }, [isOpen, product, isEditMode, themeName]);
+
   const getAvailableProductTypeOptions = () => {
     const allTypes = Object.keys(PRODUCT_TYPE_LABELS) as ProductType[];
     const safeExistingProducts = Array.isArray(existingProducts) ? existingProducts : [];
     const existingTypes = safeExistingProducts
+      .filter(p => p._id !== formData._id)
       .map(p => p?.type)
       .filter(type => type && type.trim() !== '');
     
@@ -48,7 +82,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     
     if (availableTypes.length === 0) {
       return [
-        { value: '', label: '無' }
+        { value: '', label: '無可用類別' }
       ];
     }
     
@@ -77,18 +111,12 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       return false;
     }
 
-    const existingTypes = existingProducts.map(p => p.type);
-    if (existingTypes.includes(formData.type as ProductType)) {
-      setError('此商品類別已存在，請選擇其他類別');
-      return false;
-    }
-
     if (formData.price <= 0) {
       setError('狗狗幣必須大於0');
       return false;
     }
 
-    if (!selectedImageFile) {
+    if (!isEditMode && !selectedImageFile) {
       setError('請上傳商品圖片');
       return false;
     }
@@ -120,13 +148,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     }
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (!selectedImageFile) {
-      setError('請上傳商品圖片');
+    if (!validateForm()) {
       return;
     }
     
@@ -139,18 +164,32 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       formDataToSend.append('description', formData.description);
       formDataToSend.append('price', formData.price.toString());
       formDataToSend.append('theme', themeName);
-      formDataToSend.append('image', selectedImageFile);
       formDataToSend.append('type', formData.type);
       
-      const response = await asyncPost(product_api.add, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formDataToSend
-      });
+      if (selectedImageFile) {
+        formDataToSend.append('image', selectedImageFile);
+      }
+
+      let response;
+      if (isEditMode) {
+        formDataToSend.append('product_id', formData._id);
+        response = await asyncPut(product_api.update, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataToSend
+        });
+      } else {
+        response = await asyncPost(product_api.add, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataToSend
+        });
+      }
       
       if (response.status === 200) {
-        const newProduct: Product = {
+        const savedProduct: Product = {
           _id: response.body._id,
           name: response.body.name,
           description: response.body.description,
@@ -160,26 +199,15 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
           image: response.body.image
         };
 
-        onSave(newProduct);
-        
-        setFormData({
-          name: "",
-          price: 0,
-          theme: themeName,
-          type: "",
-          description: "",
-          image: "",
-        });
-        setSelectedImageFile(null);
-        setError('');
+        onSave(savedProduct);
         onClose();
-        showSuccess("新增商品成功");
+        showSuccess(isEditMode ? "更新商品成功" : "新增商品成功");
       } else {
-        showError(response.message || '新增商品失敗');
+        showError(response.message || (isEditMode ? '更新商品失敗' : '新增商品失敗'));
       }
     } catch (error) {
-      setError('新增商品時發生錯誤，請稍後再試');
-      showError("新增商品發生錯誤");
+      setError((isEditMode ? '更新' : '新增') + '商品時發生錯誤，請稍後再試');
+      showError((isEditMode ? "更新" : "新增") + "商品發生錯誤");
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +215,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
   const handleCancel = () => {
     setFormData({
+      _id: '',
       name: "",
       price: 0,
       theme: themeName,
@@ -209,28 +238,28 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const availableTypeOptions = getAvailableProductTypeOptions();
 
   return createPortal(
-    <div className="add-product-modal-overlay" onClick={handleCancel}>
-      <div className="add-product-modal-wrapper" onClick={(e) => e.stopPropagation()}>
-        <div className="add-product-modal-header">
-          <h3>新增商品</h3>
+    <div className="product-modal-overlay" onClick={handleCancel}>
+      <div className="product-modal-wrapper" onClick={(e) => e.stopPropagation()}>
+        <div className="product-modal-header">
+          <h3>{isEditMode ? '編輯商品' : '新增商品'}</h3>
           <button
-            className="add-product-modal-close"
+            className="product-modal-close"
             onClick={handleCancel}
             disabled={isLoading}
           >
             ×
           </button>
         </div>
-        
-        <div className="add-product-modal-card">
-          <div className="add-product-modal-left">
-            <div className="add-product-modal-field">
+
+        <form onSubmit={handleSubmit} className="product-modal-card">
+          <div className="product-modal-left">
+            <div className="product-modal-field">
               <label>商品照片 <span className="required">*</span></label>
               {formData.image ? (
-                <div className="add-product-modal-image-container">
-                  <img src={formData.image} alt="預覽" className="add-product-modal-image" />
-                  <div className="add-product-modal-image-overlay">
-                    <div className="add-product-modal-change-icon">
+                <div className="product-modal-image-container">
+                  <img src={formData.image} alt="預覽" className="product-modal-image" />
+                  <div className="product-modal-image-overlay">
+                    <div className="product-modal-change-icon">
                       <IoImagesSharp />
                       <span>更換圖片</span>
                     </div>
@@ -239,13 +268,13 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="add-product-modal-image-input"
+                    className="product-modal-image-input"
                     disabled={isLoading}
                   />
                 </div>
               ) : (
-                <div className="add-product-modal-image-placeholder">
-                  <div className="add-product-modal-upload-icon">
+                <div className="product-modal-image-placeholder">
+                  <div className="product-modal-upload-icon">
                     <IoImagesSharp />
                   </div>
                   <label>上傳商品圖片</label>
@@ -259,13 +288,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               )}
             </div>
 
-            <div className="add-product-modal-field">
+            <div className="product-modal-field">
               <label>商品類別 <span className="required">*</span></label>
               <select
-                className="add-product-modal-select"
+                className="product-modal-select"
                 value={formData.type}
                 onChange={e => handleInputChange('type', e.target.value)}
                 disabled={isLoading}
+                required
               >
                 {availableTypeOptions.map(type => (
                   <option key={type.value} value={type.value}>
@@ -275,62 +305,63 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               </select>
             </div>
           </div>
-          
-          <div className="add-product-modal-right">
-            <div className="add-product-modal-field">
+
+          <div className="product-modal-right">
+            <div className="product-modal-field">
               <label>商品名稱 <span className="required">*</span></label>
               <input
-                className="add-product-modal-input"
+                type="text"
+                className="product-modal-input"
                 placeholder="輸入商品名稱"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 disabled={isLoading}
+                required
               />
             </div>
 
-            <div className="add-product-modal-field">
+            <div className="product-modal-field">
               <label>商品介紹 <span className="required">*</span></label>
               <textarea
-                className="add-product-modal-textarea"
+                className="product-modal-textarea"
                 placeholder="輸入商品介紹"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 disabled={isLoading}
+                required
               />
             </div>
 
-            <div className="add-product-modal-field">
-              <div className="add-product-modal-price-container">
-                <div className="add-product-modal-price-label-container">
-                  <label>狗狗幣 <span className="required">*</span></label>
-                </div>
-              </div>
+            <div className="product-modal-field">
+              <label>狗狗幣 <span className="required">*</span></label>
               <input
-                className="add-product-modal-price-input"
-                placeholder="輸入狗狗幣"
                 type="number"
+                className="product-modal-input"
+                placeholder="輸入狗狗幣"
                 min="0"
                 value={formData.price}
                 onChange={(e) => handleInputChange('price', Number(e.target.value))}
                 disabled={isLoading}
+                required
               />
             </div>
           </div>
-        </div>
-        
+        </form>
+
         {error && (
-          <div className="add-product-modal-error">
+          <div className="product-modal-error">
             {error}
           </div>
         )}
 
-        <div className="add-product-modal-actions">
-          <button 
-            className="add-product-modal-save-btn" 
+        <div className="product-modal-actions">
+          <button
+            type="submit"
+            className="product-modal-save-btn"
             onClick={handleSubmit}
             disabled={isLoading}
           >
-            {isLoading ? '新增中...' : '新增商品'}
+            {isLoading ? (isEditMode ? '更新中...' : '新增中...') : (isEditMode ? '更新商品' : '新增商品')}
           </button>
         </div>
       </div>
