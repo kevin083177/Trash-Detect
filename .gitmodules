@@ -1,0 +1,4 @@
+[submodule "Admin"]
+	path = Admin
+	url = https://github.com/kevin083177/Trash-Detect
+	branch = admin
