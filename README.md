@@ -51,6 +51,9 @@ MONGO_OPTIONS="連線選項"       # MongoDB 連線選項 (例如: retryWrites=t
 # 日誌設定
 LogPath="logs"                # 日誌檔案儲存路徑
 
+# 管理員頁面設定
+AdminPath="Admin"
+
 # JWT 設定
 SECRET_KEY="密鑰"             # JWT 加密用密鑰，建議使用強密碼
 
@@ -81,7 +84,28 @@ EMAIL_FROM_NAME="Garbi"
 cd ./Backend/
 ```
 
-4. 啟動伺服器
+4. 放置 Admin page 檔案
+- 另開一個資料夾
+    ```bash
+    git checkout admin
+    ```
+
+- 設定 .env
+    ```bash
+    VITE_API_URL = "http://localhost:8000"
+    VITE_SOCKET_URL = "http://localhost:8001"
+    VITE_GOOGLE_MAPS_API_KEY = "A1B2C3D4E5F6G7H8I9J0K1L2"
+    ```
+
+- 建立靜態檔案
+    ```bash
+    npm run build
+    ```
+
+- 將資源放入 backend Admin folder(.env settings)
+    > assets, .html, .js, .css
+
+5. 啟動伺服器
 ```bash
 python app.py
 ```

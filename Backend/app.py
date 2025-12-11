@@ -10,7 +10,7 @@ from gevent import pywsgi
 import sys, signal
 from services import DetectionService
 
-ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", "Admin")
+ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", Config.ADMIN_PATH)
 
 app = Flask(__name__, static_folder=ADMIN_DIST, static_url_path="/")
 CORS(app)

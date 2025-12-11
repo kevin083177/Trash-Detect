@@ -20,6 +20,8 @@ class Config:
     ENV = os.getenv("FLASK_ENV")
     PORT = int(os.getenv("FLASK_PORT"))
 
+    ADMIN_PATH = os.getenv("AdminPath")
+    
     # Cloudinary 設定
     CLOUD_NAME = os.getenv('CLOUD_NAME')
     CLOUD_KEY = os.getenv('CLOUD_KEY')
@@ -30,7 +32,7 @@ class Config:
     
     # MongoDB 連接 URI
     MONGO_URI = (
-        f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}"
+        f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}"
         f"@{MONGO_HOST}/?{MONGO_OPTIONS}"
     )
     
