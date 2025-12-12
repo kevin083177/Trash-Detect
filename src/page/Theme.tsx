@@ -90,25 +90,40 @@ export const Themes: React.FC = () => {
                 </div>
             ) : (
                 <div className="themes">
-                    {filteredThemes.map((theme) => (
-                        <div
-                            key={theme._id}
-                            className="theme-card"
-                            style={{ background: "#fff", cursor: "pointer" }}
-                            onClick={() => navigate(`/product`, {
-                                state: {
-                                    _id: theme._id,
-                                    name: theme.name,
-                                    description: theme.description,
-                                    products: theme.products || [],
-                                    image: theme.image
-                                }
-                            })}
-                        >
-                            <img src={theme.image.url} className="theme-image" alt={theme.name} />
-                            <div className="theme-name">{theme.name}</div>
-                        </div>
-                    ))}
+                    {filteredThemes.length === 0 ? (
+                        search ? (
+                            <div className="theme-no-data">
+                                找不到符合 "{search}" 的電子票券
+                            </div>
+                        ) : (
+                            <div className="theme-empty">
+                                <p>目前沒有任何主題商品</p>
+                                <button className="theme-add-theme-btn" onClick={handleOpenAddModal}>
+                                    新增第一個主題
+                                </button>
+                            </div>
+                        )
+                    ) : (
+                        filteredThemes.map((theme) => (
+                            <div
+                                key={theme._id}
+                                className="theme-card"
+                                style={{ background: "#fff", cursor: "pointer" }}
+                                onClick={() => navigate(`/product`, {
+                                    state: {
+                                        _id: theme._id,
+                                        name: theme.name,
+                                        description: theme.description,
+                                        products: theme.products || [],
+                                        image: theme.image
+                                    }
+                                })}
+                            >
+                                <img src={theme.image.url} className="theme-image" alt={theme.name} />
+                                <div className="theme-name">{theme.name}</div>
+                            </div>
+                        ))
+                    )}
                 </div>
             )}
 

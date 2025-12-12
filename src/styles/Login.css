@@ -37,7 +37,7 @@
     transform: translateY(-50%);
     width: 100vh;
     height: 100vh;
-    background-image: url('dog.png');
+    background-image: url('/dog.png');
     background-size: contain;
     background-repeat: no-repeat;
     z-index: 1;

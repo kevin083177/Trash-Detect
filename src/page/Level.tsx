@@ -9,12 +9,15 @@ import { useNotification } from '../context/NotificationContext';
 import { BiDetail, BiListOl } from "react-icons/bi";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { FaSpinner } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
 
 export const LevelPage: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingLevelId, setEditingLevelId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   const { showError } = useNotification();
   
@@ -97,7 +100,7 @@ export const LevelPage: React.FC = () => {
         <StatusCard
           title="關卡管理操作須知"
           value={""}
-          subtitle={`若需要新增/刪除關卡 請至題目管理新增主題`}
+          subtitle={`若需新增/刪除關卡 請至題目管理進行相關操作`}
           icon={<RiErrorWarningFill size={18}/>}
           color='red'
           isLoading={loading}
@@ -129,7 +132,10 @@ export const LevelPage: React.FC = () => {
           
           {levels.length === 0 && (
             <div className="level-no-data">
-              尚無任何關卡
+              <p>目前沒有任何關卡</p>
+              <button className="game-add-chapter-btn" onClick={() => navigate('/game')}>
+                  新增第一個遊戲主題
+              </button>
             </div>
           )}
         </>

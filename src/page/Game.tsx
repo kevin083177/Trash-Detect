@@ -108,21 +108,36 @@ export const Game: React.FC = () => {
                 </div>
             ) : (
                 <div className="game-chapter">
-                    {filteredChapters.map((chapter, _) => {
-                        const originalIndex = chapters.findIndex(c => c.name === chapter.name);
-                        
-                        return (
-                            <div
-                                className="game-chapter-card"
-                                key={chapter.name}
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => handleChapterClick(chapter, originalIndex)}
-                            >
-                                <img src={chapter.image.url} className="chapter-image" />
-                                <div className="game-chapter-name">{chapter.name}</div>
+                    {filteredChapters.length === 0 ? (
+                        search ? (
+                            <div className="game-no-data">
+                                找不到符合 "{search}" 的遊戲主題
                             </div>
-                        );
-                    })}
+                        ) : (
+                            <div className="game-empty">
+                                <p>目前沒有任何遊戲主題</p>
+                                <button className="game-add-chapter-btn" onClick={handleOpenAddModal}>
+                                    新增第一個遊戲主題
+                                </button>
+                            </div>
+                        )
+                    ) : (
+                        filteredChapters.map((chapter, _) => {
+                            const originalIndex = chapters.findIndex(c => c.name === chapter.name);
+                            
+                            return (
+                                <div
+                                    className="game-chapter-card"
+                                    key={chapter.name}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleChapterClick(chapter, originalIndex)}
+                                >
+                                    <img src={chapter.image.url} className="chapter-image" />
+                                    <div className="game-chapter-name">{chapter.name}</div>
+                                </div>
+                            )
+                        })
+                    )}
                 </div>
             )}
 

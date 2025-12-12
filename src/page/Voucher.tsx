@@ -112,7 +112,7 @@ export const VoucherPage: React.FC = () => {
                             </div>
                         ) : (
                             <div className="voucher-empty">
-                                <p>尚未有電子票券</p>
+                                <p>目前沒有任何電子票券</p>
                                 <button className="voucher-add-btn" onClick={handleOpenAddModal}>
                                     新增第一個電子票券
                                 </button>

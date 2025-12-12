@@ -315,6 +315,10 @@ export const FeedbackPage: React.FC = () => {
                                 <span>載入訊息資料中...</span>
                             </div>
                         </div>
+                    ) : sortedFeedbackData.length === 0 ? (
+                        <div className="feedback-empty-state">
+                            <p className="feedback-empty-text">目前沒有任何回饋訊息</p>
+                        </div>
                     ) : (
                         <table className="feedback-table">
                             <thead>

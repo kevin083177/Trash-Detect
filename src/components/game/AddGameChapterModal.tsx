@@ -28,6 +28,9 @@ export const AddGameChapterModal: React.FC<AddGameChapterModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { showSuccess, showError } = useNotification();
 
+  const lastChapter = existingChapters[existingChapters.length - 1];
+  const lastRequirement = lastChapter?.trash_requirement || 0;
+
   useEffect(() => {
     if (isOpen) {
       setChapterName("");
@@ -49,10 +52,8 @@ export const AddGameChapterModal: React.FC<AddGameChapterModalProps> = ({
       return false;
     }
 
-    const lastRequirement = existingChapters[existingChapters.length - 1].trash_requirement;
-
     if (Number(trashRequirement.trim()) < lastRequirement) {
-      setError(`需大於上一主題的垃圾需求量: ${lastRequirement}`);
+      setError(`需大於或等於上一主題的垃圾需求量: ${lastRequirement}`);
       return false;
     }
 
@@ -216,7 +217,9 @@ export const AddGameChapterModal: React.FC<AddGameChapterModalProps> = ({
           
           <div className="add-chapter-modal-right">
             <div className="add-chapter-modal-field">
-              <label style={{textAlign: 'center', fontSize: '24px'}}>第{existingChapters.length + 1}章</label>
+              <label style={{textAlign: 'center', fontSize: '24px'}}>
+                第{existingChapters.length + 1}章
+              </label>
               <label>主題名稱 <span className="required">*</span></label>
               <input
                 className="add-chapter-modal-name-input"
@@ -237,8 +240,8 @@ export const AddGameChapterModal: React.FC<AddGameChapterModalProps> = ({
                 value={trashRequirement}
                 onChange={(e) => handleInputChange('trashRequirement', e.target.value)}
                 disabled={isLoading}
-                defaultValue={existingChapters[existingChapters.length - 1].trash_requirement + 1}
-                min={existingChapters[existingChapters.length - 1].trash_requirement}
+                defaultValue={lastRequirement > 0 ? lastRequirement + 1 : 10}
+                min={lastRequirement > 0 ? lastRequirement : 1}
               />
             </div>
           </div>

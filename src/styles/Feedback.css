@@ -51,6 +51,19 @@
     border-radius: 8px;
 }
 
+.feedback-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    background: white;
+    border-radius: 8px;
+}
+
+.feedback-empty-text {
+    font-size: 18px;
+    font-weight: 500;
+}
+
 .feedback-table {
     width: 100%;
     border-collapse: collapse;

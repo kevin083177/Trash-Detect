@@ -54,10 +54,10 @@ export const Home: React.FC = () => {
     };
 
     const monthlyTrashTotals = useMemo(() => {
-        if (!dailyTotals || dailyTotals.length === 0) return null;
+        if (!Array.isArray(dailyTotals) || dailyTotals.length === 0) return null;
 
         const monthlyData = dailyTotals.filter(item => 
-            item.date.substring(0, 7) === selectedMonth
+            item.date && item.date.substring(0, 7) === selectedMonth
         );
 
         if (monthlyData.length === 0) return null;
