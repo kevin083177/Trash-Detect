@@ -20,6 +20,8 @@ export const MonthlyChart: React.FC<MonthlyChartProps> = ({
     const groupedByMonth = useMemo(() => {
         const groups: { [key: string]: Daily[] } = {};
         
+        if (!Array.isArray(dailyTotals) || dailyTotals.length === 0) return groups;
+
         dailyTotals.forEach(item => {
             const monthKey = item.date.substring(0, 7);
             if (!groups[monthKey]) {

@@ -91,7 +91,7 @@ export const Home: React.FC = () => {
                     }
                 });
                 if (response && response.body) {
-                    setDailyTotals(response.body.daily_stats);
+                    setDailyTotals(response.body.daily_stats || []);
                 }
 
                 console.log(response);
