@@ -34,7 +34,7 @@
 
 1. 安裝並啟動 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-2. 設置環境變數 (.env)
+2. 設置環境變數 `./.env`
 
 3. 啟動
     - 部屬至伺服器端
@@ -45,19 +45,20 @@
         > [!IMPORTANT]
         > 請確認 `CURRENT_IP` 是否為主機之 IP (非 localhost)
         > 並請將手機與主機進行 `adb` 連線
-        
-
         ```bash
         ./setup.sh
         ```
 
-    > [!Note] 獲取主機 IP 方法
-    > \*# macOS
-    > ipconfig getifaddr en0
-    > \*# Linux
-    > hostname -I | awk '{print $1}'
-    > \*# Windows
-    > ipconfig \*# find ipv4
+        > [!NOTE]
+        > 獲取主機 IP 方法
+        > ```bash
+        > # macOS
+        > ipconfig getifaddr en0
+        > # Linux
+        > hostname -I | awk '{print $1}'
+        > # Windows
+        > ipconfig  # find ipv4
+        > ```
 
 ### 錯誤處理
 
