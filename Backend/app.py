@@ -5,12 +5,12 @@ from flask_cors import CORS
 from sockets import start_server
 from config import Config
 from routes import register_blueprints
-from utils import logger, start_scheduler, stop_scheduler
+from utils import logger, start_scheduler, stop_scheduler, init_default_data
 from gevent import pywsgi
 import sys, signal
 from services import DetectionService
 
-ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", Config.ADMIN_PATH)
+ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", Config.ADMIN_PATH, "dist")
 
 app = Flask(__name__, static_folder=ADMIN_DIST, static_url_path="/")
 CORS(app)
@@ -38,6 +38,7 @@ def create_app():
         
         # Blueprint
         with app.app_context():
+            init_default_data(mongodb)
             register_blueprints(app)
         
         # Log server startup
@@ -58,11 +59,15 @@ def create_app():
         logger.error(f"Failed to start server: {str(e)}")
         raise e
 
+try:
+    app = create_app()
+    
+except Exception as e:
+    print(f"Error during app initialization: {e}")
+
 if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-    
-    app = create_app()
     
     # 根據環境變數決定使用哪種伺服器
     if Config.ENV == 'development':
