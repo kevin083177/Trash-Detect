@@ -30,85 +30,34 @@
 - JWT 驗證
 - 錯誤處理
 
-### 安裝與使用說明
+### 一鍵部屬
 
-1. 安裝相依套件
-```bash
-pip install -r requirements.txt
-```
+1. 安裝並啟動 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-2. 環境設定
-建立 `.env` 檔案並設定以下參數:
+2. 設置環境變數 (.env)
 
-```bash
-# MongoDB 設定
-MONGO_USERNAME="使用者名稱"     # MongoDB 連線用戶名
-MONGO_PASSWORD="密碼"          # MongoDB 連線密碼
-MONGO_HOST="主機位址"          # MongoDB 主機位址 (例如: localhost 或雲端服務位址)
-DB_NAME="資料庫名稱"           # MongoDB 資料庫名稱
-MONGO_OPTIONS="連線選項"       # MongoDB 連線選項 (例如: retryWrites=true&w=majority)
+3. 啟動
+    - 部屬至伺服器端
+        ```bash
+        docker-compose up --build -d
+        ```
+    - 本地端啟動 (包含客戶端)
+        > [!IMPORTANT]
+        > 請確認 `CURRENT_IP` 是否為主機之 IP (非 localhost)
+        > 並請將手機與主機進行 `adb` 連線
+        
 
-# 日誌設定
-LogPath="logs"                # 日誌檔案儲存路徑
+        ```bash
+        ./setup.sh
+        ```
 
-# 管理員頁面設定
-AdminPath="Admin"
-
-# JWT 設定
-SECRET_KEY="密鑰"             # JWT 加密用密鑰，建議使用強密碼
-
-# Flask 設定
-PORT="埠號"                   # 伺服器監聽埠號 (例如: 8000)
-FLASK_ENV="production"        # 執行環境 (development/production)
-
-# Socket 設定
-SOCKET_PORT="8001"
-
-# Cloudinary 設定
-CLOUD_NAME="CLOUD_NAME"
-CLOUD_KEY="CLOUD_KEY"
-CLOUD_SECRET="CLOUD_SECRET"
-
-# Email 設定
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT="587"
-
-EMAIL_USER="garbi.tw@gmail.com"
-EMAIL_PASSWORD="EMAIL_PASSWORD"
-EMAIL_FROM_NAME="Garbi"
-
-```
-
-3. 切換至後端目錄
-```bash
-cd ./Backend/
-```
-
-4. 放置 Admin page 檔案
-- 另開一個資料夾
-    ```bash
-    git checkout admin
-    ```
-
-- 設定 .env
-    ```bash
-    VITE_API_URL = "http://localhost:8000"
-    VITE_SOCKET_URL = "http://localhost:8001"
-    VITE_GOOGLE_MAPS_API_KEY = "A1B2C3D4E5F6G7H8I9J0K1L2"
-    ```
-
-- 建立靜態檔案
-    ```bash
-    npm run build
-    ```
-
-- 將資源放入 backend Admin folder(.env settings)
-    > assets, .html, .js, .css
-
-5. 啟動伺服器
-```bash
-python app.py
-```
+    > [!Note] 獲取主機 IP 方法
+    > \*# macOS
+    > ipconfig getifaddr en0
+    > \*# Linux
+    > hostname -I | awk '{print $1}'
+    > \*# Windows
+    > ipconfig \*# find ipv4
 
 ### 錯誤處理
 
@@ -120,46 +69,9 @@ python app.py
 - 404: 資源不存在
 - 500: 伺服器內部錯誤
 
-
 ## 前端 (Frontend)
 
 ### 環境需求
-- Node.js 16+
+- Node.js 22+
 - npm or yarn
 - Expo CLI
-
-## 安裝與使用說明
-
-1. 安裝依賴
-```bash
-npm install
-# or 
-yarn install
-```
-
-2. 配置環境變數
-建立 `.env` 檔案：
-```env
-EXPO_PUBLIC_API_URL=your_api_url
-EXPO_PUBLIC_API_PORT=8000
-EXPO_PUBLIC_SOCKET_PORT=8001
-```
-
-3. 啟動開發伺服器
-```bash
-npx expo start
-# or 
-yarn start
-```
-
-## 開發指令
-```bash
-# 在 Android 模擬器上運行
-npx expo start --android
-yarn android
-
-# 在 iOS 模擬器上運行
-npx expo start --ios
-yarn ios
-```
-
