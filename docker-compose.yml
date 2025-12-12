@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  garbi-app:
+    build:
+      context: .
+      args:
+        - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    container_name: garbi-backend
+    restart: always
+    ports:
+      - "${FLASK_PORT:-8000}:${FLASK_PORT:-8000}"
+      - "${SOCKET_PORT:-8001}:${SOCKET_PORT:-8001}"
+    environment:
+      - MONGO_HOST=mongodb_container
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - FLASK_ENV=production
+      - FLASK_PORT=${FLASK_PORT:-8000}
+      - SOCKET_PORT=${SOCKET_PORT:-8001}
+      - AdminPath=${AdminPath}
+      - LogPath=${LogPath}
+      - SECRET_KEY=${SECRET_KEY}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_KEY=${CLOUD_KEY}
+      - CLOUD_SECRET=${CLOUD_SECRET}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FORM_NAME=${EMAIL_FORM_NAME}
+      - DEFAULT_ADMIN_USER=${DEFAULT_ADMIN_USER}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD}
+      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
+    depends_on:
+      - mongodb_container
+
+  mongodb_container:
+    image: mongo:latest
+    container_name: garbi-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
