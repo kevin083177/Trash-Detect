@@ -2,7 +2,7 @@ FROM node:22.6-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 COPY Admin/package.json Admin/package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 COPY Admin/ .
 
@@ -20,9 +20,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
-    gcc pkg-config libavdevice-dev libavfilter-dev libopus-dev libvpx-dev \
-    libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
-    libgl1 libglib2.0-0 python3-dev \
+    gcc \
+    python3-dev \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/Backend
