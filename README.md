@@ -18,8 +18,13 @@
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Clone the repository
+```bash
+git clone https://github.com/kevin083177/Trash-Detect.git
+git submodule update --init --recursive
+```
 
+### Prerequisites
 - You need **Docker** and **Docker Compose** installed to run this project.
 
     - **Windows / macOS:** Recommend installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
@@ -80,8 +85,8 @@ Before running the setup script, ensure you have the following:
     </details>
 
 - **Execute the setup script**
-    ```
-    ./setup.sh
+    ```bash
+    ./setup.sh # or sudo ./setup.sh
     ```
 #### Choose Your Deployment Method
 You will be prompted with two options:
