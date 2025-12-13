@@ -1,8 +1,7 @@
-<div align="center" flexDirection="row">
-    <h1>Garbi</h1>
-    <img style="margin-bottom:24px;" src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300"/>
-    <iframe width="560" height="315" src="https://www.youtube.com/watch?v=ispaY8WzI5A" title="Garbi Youtube" frameborder="0" allow="accelerometer; clipboard-write;encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+# Garbi
+
+[![Garbi(https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png)](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=ispaY8WzI5A)
+
 
 ## 📚 Documentation
 
