@@ -1,6 +1,7 @@
 <div align="center" flexDirection="row">
-    <h1 style="border: none">Garbi</h1>
-    <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300">
+    <h1>Garbi</h1>
+    <img style="margin-bottom:24px;" src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300"/>
+    <iframe width="560" height="315" src="https://www.youtube.com/watch?v=ispaY8WzI5A" title="Garbi Youtube" frameborder="0" allow="accelerometer; clipboard-write;encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ## 📚 Documentation
@@ -14,10 +15,29 @@
 
 ### Prerequisites
 
-You need **Docker** and **Docker Compose** installed to run this project.
+- You need **Docker** and **Docker Compose** installed to run this project.
 
-- **Windows / macOS:** Recommend installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
-- **Linux:** Install `docker-ce` and `docker-compose-plugin`.
+    - **Windows / macOS:** Recommend installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
+    - **Linux:** Install `docker-ce` and `docker-compose-plugin`.
+
+- You also need **Git LFS (Large File Storage)** installed.
+    <details>
+        <summary>Click to expand</summary>
+
+    ```bash
+    # macOS
+    brew install git-lfs
+    git lfs install
+
+    # Linux
+    sudo apt-get update
+    sudo apt-get install -y git-lfs
+    git lfs install
+
+    # Or download installer from:
+    https://git-lfs.github.com/
+    ```
+    </details>
 
 ### Setup Instructions
 
