@@ -1,5 +1,5 @@
 <div align="center" flexDirection="row">
-    <p style="font-size: 2.5em; font-weight: bold; margin-bottom: 24px;">Garbi</p>
+    <h1 style="border: none">Garbi</h1>
     <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300">
 </div>
 
