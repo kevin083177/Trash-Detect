@@ -1,7 +1,13 @@
-# Garbi
-
-[![Garbi(https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png)](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=ispaY8WzI5A)
-
+<div align="center">
+    <h1>Garbi</h1>
+    <a href="https://www.youtube.com/watch?v=ispaY8WzI5A">
+        <img
+            src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png"
+            alt="Garbi"
+            width="500"
+        />
+    </a>
+</div>
 
 ## 📚 Documentation
 
