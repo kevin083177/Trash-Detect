@@ -1,78 +1,111 @@
 # Garbi App
-一款結合 AI 垃圾識別與環保教育的互動式應用程式
 
-<img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Logo" width="300" height="300">
+<div align="center">
+  <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300">
+</div>
 
-## 後端 (Backend)
+---
 
-### 技術架構
+## 📚 Documentation
 
-- Web Framework: Flask
-- 資料庫: MongoDB
-- 認證機制: JWT (JSON Web Token)
-- 日誌系統: Python logging
+- **[API Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/API.md)** - Comprehensive API endpoint reference
+- **[Middleware Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md)** - Middleware configuration and usage
 
-### API 文件
+---
 
-詳細的 API 端點說明請參考: [API Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/API.md)
+## 🚀 Quick Start
 
-主要功能包括:
-- 使用者認證與授權
-- 歷史記錄查詢
-- 系統管理功能
+### Prerequisites
 
-### 中介文件
+You need **Docker** and **Docker Compose** installed to run this project.
 
-中介相關說明請參考: [Middleware Documentation](https://github.com/kevin083177/Trash-Detect/blob/main/Backend/Middleware.md)
+- **Windows / macOS:** Recommend installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
+- **Linux:** Install `docker-ce` and `docker-compose-plugin`.
 
-實作功能包括:
-- 請求日誌記錄
-- JWT 驗證
-- 錯誤處理
+### Setup Instructions
 
-### 一鍵部屬
+#### 1️⃣ Configure Environment Variables
 
-1. 安裝並啟動 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+Create and configure your `.env` file in the project root directory.
 
-2. 設置環境變數 `./.env`
+#### 2️⃣ Choose Your Deployment Method
 
-3. 啟動
-    - 部屬至伺服器端
-        ```bash
-        docker-compose up --build -d
-        ```
-    - 本地端啟動 (包含客戶端)
-        > [!IMPORTANT]
-        > 請確認 `CURRENT_IP` 是否為主機之 IP (非 localhost)
-        > 並請將手機與主機進行 `adb` 連線
-        ```bash
-        ./setup.sh
-        ```
+##### **Option A: Server Deployment**
 
-        > [!NOTE]
-        > 獲取主機 IP 方法
-        > ```bash
-        > # macOS
-        > ipconfig getifaddr en0
-        > # Linux
-        > hostname -I | awk '{print $1}'
-        > # Windows
-        > ipconfig  # find ipv4
-        > ```
+Deploy the backend services to your server:
+```bash
+docker-compose up --build -d
+```
 
-### 錯誤處理
+##### **Option B: Local Development (with Client)**
 
-系統錯誤代碼說明:
-- 200: 請求成功
-- 400: 請求參數錯誤
-- 401: 未授權訪問
-- 403: 禁止訪問(權限)
-- 404: 資源不存在
-- 500: 伺服器內部錯誤
+Run the full stack including the mobile client on your local machine:
 
-## 前端 (Frontend)
+<details>
+	<summary>Click to expand</summary>
 
-### 環境需求
-- Node.js 22+
-- npm or yarn
-- Expo CLI
+- Ensure `CURRENT_IP` is set to your machine's network IP (not `localhost`)
+- Connect your mobile device to the host machine via `adb`
+- Run the command:
+    ```bash
+    ./setup.sh
+    ```
+</details>
+
+How to get your host machine IP？
+<details>
+	<summary>Click to expand</summary>
+
+```bash
+# macOS
+ipconfig getifaddr en0
+
+# Linux
+hostname -I | awk '{print $1}'
+
+# Windows (PowerShell)
+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi").IPAddress
+
+# Windows (CMD)
+ipconfig  # Look for IPv4 Address
+```
+</details>
+
+---
+
+## 📱 Mobile Device Setup
+
+To run the app on a physical device:
+
+1. Enable **Developer Options** and **USB Debugging** on your Android device
+2. Connect your device to your computer via USB
+3. Verify connection: `adb devices`
+4. Run the setup script as shown above
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend (Mobile App)
+- **Framework:** React Native (via Expo SDK 52)
+- **Language:** TypeScript
+- **Features:** Vision Camera (Scanning), Socket.io-client (Real-time), React Native Maps
+
+### Backend (API & WebSocket)
+- **Framework:** Flask
+- **Real-time:** Flask-SocketIO
+- **Server:** Gevent (WSGI)
+- **Database:** MongoDB
+
+### AI & Computer Vision
+- **Object Detection:** Ultralytics YOLOv11
+- **Image Processing:** OpenCV
+
+### Infrastructure & Services
+- **Containerization:** Docker, Docker Compose
+- **Cloud Storage:** Cloudinary
+
+---
+
+## 📄 License
+This project is licensed under the [MIT License](LICENSE)
