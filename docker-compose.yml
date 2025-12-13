@@ -5,6 +5,7 @@ services:
       context: .
       args:
         - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+        - CURRENT_IP=${CURRENT_IP}
     container_name: garbi-backend
     restart: always
     ports:

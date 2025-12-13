@@ -6,11 +6,12 @@ RUN npm ci
 
 COPY Admin/ .
 
+ARG CURRENT_IP
 ARG GOOGLE_API_KEY
 
-RUN echo "VITE_API_URL=http://localhost:8000" > .env && \
-    echo "VITE_SOCKET_URL=http://localhost:8001" >> .env && \
-    echo "VITE_GOOGLE_MAPS_API_KEY=$GOOGLE_API_KEY" >> .env
+RUN echo "VITE_API_URL=http://${CURRENT_IP}:8000" > .env && \
+    echo "VITE_SOCKET_URL=http://${CURRENT_IP}:8001" >> .env && \
+    echo "VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_API_KEY}" >> .env
 
 RUN npm run build
 
