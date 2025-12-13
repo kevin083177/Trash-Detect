@@ -21,53 +21,51 @@ You need **Docker** and **Docker Compose** installed to run this project.
 
 ### Setup Instructions
 
-#### 1️⃣ Configure Environment Variables
-
+#### Configure Environment Variables
 Create and configure your `.env` file in the project root directory.
 
-#### 2️⃣ Choose Your Deployment Method
+#### Run Setup Script
+Before running the setup script, ensure you have the following:
+- **Cloudinary Account:** Sign up and get your cloud name and API credentials
+    - Register at: https://cloudinary.com/users/register_free
+    - After registration, find your credentials in the Dashboard
 
-##### **Option A: Server Deployment**
+- **Google API Services:** Enable required Google APIs and obtain credentials
+    - Access Google Cloud Console: https://console.cloud.google.com/
+    - Create a new project or select an existing one
+    - Enable necessary APIs (e.g., Maps API, Places API, etc.)
+    - Create credentials (API Key or OAuth 2.0)
+- **Network Configuration:** Ensure `CURRENT_IP` is set to your machine's IP (not localhost)
+    <details>
+        <summary>How to get your host machine IP?</summary>
 
-Deploy the backend services to your server:
-```bash
-docker-compose up --build -d
-```
-
-##### **Option B: Local Development (with Client)**
-
-Run the full stack including the mobile client on your local machine:
-
-<details>
-	<summary>Click to expand</summary>
-
-- Ensure `CURRENT_IP` is set to your machine's network IP (not `localhost`)
-- Connect your mobile device to the host machine via `adb`
-- Run the command:
     ```bash
+    # macOS
+    ipconfig getifaddr en0
+
+    # Linux
+    hostname -I | awk '{print $1}'
+
+    # Windows (PowerShell)
+    (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi").IPAddress
+
+    # Windows (CMD)
+    ipconfig  # Look for IPv4 Address
+    ```
+    </details>
+
+- **Execute the setup script**
+    ```
     ./setup.sh
     ```
-</details>
+#### Choose Your Deployment Method
+You will be prompted with two options:
 
-How to get your host machine IP?
-<details>
-	<summary>Click to expand</summary>
+- ##### **Option 1: Backend Only**
+    Run only the backend services (Docker Compose) without setting up the frontend.
 
-```bash
-# macOS
-ipconfig getifaddr en0
-
-# Linux
-hostname -I | awk '{print $1}'
-
-# Windows (PowerShell)
-(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi").IPAddress
-
-# Windows (CMD)
-ipconfig  # Look for IPv4 Address
-```
-</details>
-
+- ##### **Option 2: Full Stack**
+    Run the complete stack including backend services and mobile client.
 ---
 
 ## 📱 Mobile Device Setup
