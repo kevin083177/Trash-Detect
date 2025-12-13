@@ -1,10 +1,7 @@
-# Garbi App
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300">
+<div align="center" flexDirection="row">
+    <p style="font-size: 2.5em; font-weight: bold; margin-bottom: 24px;">Garbi</p>
+    <img src="https://raw.githubusercontent.com/kevin083177/Trash-Detect/refs/heads/main/Frontend/src/assets/images/icon.png" alt="Garbi App Logo" width="300" height="300">
 </div>
-
----
 
 ## 📚 Documentation
 
@@ -52,7 +49,7 @@ Run the full stack including the mobile client on your local machine:
     ```
 </details>
 
-How to get your host machine IP？
+How to get your host machine IP?
 <details>
 	<summary>Click to expand</summary>
 
@@ -91,6 +88,10 @@ To run the app on a physical device:
 - **Language:** TypeScript
 - **Features:** Vision Camera (Scanning), Socket.io-client (Real-time), React Native Maps
 
+### Frontend (Admin Web)
+- **Framework:** React (via Vite)
+- **Language:** TypeScript
+
 ### Backend (API & WebSocket)
 - **Framework:** Flask
 - **Real-time:** Flask-SocketIO
@@ -98,7 +99,7 @@ To run the app on a physical device:
 - **Database:** MongoDB
 
 ### AI & Computer Vision
-- **Object Detection:** Ultralytics YOLOv11
+- **Object Detection:** Ultralytics YOLO11
 - **Image Processing:** OpenCV
 
 ### Infrastructure & Services
